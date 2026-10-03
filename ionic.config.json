@@ -1,0 +1,7 @@
+{
+  "name": "boardmate-app",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue-vite"
+}
