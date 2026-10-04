@@ -16,7 +16,7 @@
 
       <template v-else-if="listing">
         <div class="gallery">
-          <img v-for="(url, i) in listing.photos" :key="url" :src="url" :alt="`Photo ${i + 1}`" />
+          <img v-for="(url, i) in listing.photos" :key="url" :src="url" :alt="`Photo ${i + 1}`" :loading="i === 0 ? 'eager' : 'lazy'" />
         </div>
 
         <div class="narrow ion-padding">
@@ -33,9 +33,9 @@
             <ion-card-content>
               <strong>{{ mine.status_label }}</strong>
               <p v-if="mine.status === 'approved'">
-                {{ mine.unit?.label }} is reserved for you until {{ manila(mine.reserved_until!).format('MMM D, YYYY') }}.
+                {{ mine.unit?.label }} is reserved for you until {{ manilaDate(mine.reserved_until!).format('MMM D, YYYY') }}.
               </p>
-              <p v-else>You applied for move-in on {{ manila(mine.planned_move_in_on).format('MMM D, YYYY') }}.</p>
+              <p v-else>You applied for move-in on {{ manilaDate(mine.planned_move_in_on).format('MMM D, YYYY') }}.</p>
               <ion-button size="small" fill="outline" color="dark" router-link="/boarder/bookings">My bookings</ion-button>
             </ion-card-content>
           </ion-card>
@@ -73,7 +73,7 @@
             </ion-item>
             <ion-item>
               <ion-label>Curfew</ion-label>
-              <ion-note slot="end">{{ listing.curfew_time ? manila(`2000-01-01T${listing.curfew_time}`).format('h:mm A') : 'None' }}</ion-note>
+              <ion-note slot="end">{{ listing.curfew_time ? clockTime(listing.curfew_time) : 'None' }}</ion-note>
             </ion-item>
             <ion-item>
               <ion-label>Owner</ion-label>
@@ -113,7 +113,7 @@ import {
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import ListingMap from '@/components/ListingMap.vue'
-import { manila } from '@/lib/dayjs'
+import { clockTime, manilaDate } from '@/lib/dayjs'
 import { peso } from '@/lib/money'
 import { errorMessage } from '@/services/api'
 import { listingService } from '@/services/listings'

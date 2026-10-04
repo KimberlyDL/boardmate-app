@@ -71,6 +71,9 @@
                 </ion-chip>
               </p>
               <p v-else class="muted">No properties assigned yet. Open a property → Caretakers.</p>
+              <p v-if="c.levels_differ" class="muted">
+                Levels differ per property. Choosing a level here applies it to all of them.
+              </p>
             </ion-label>
             <ion-select
               slot="end"

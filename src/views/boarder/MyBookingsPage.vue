@@ -30,10 +30,10 @@
             <p>{{ a.property.address ?? a.property.area }}</p>
             <p v-if="a.status === 'approved'">
               <strong>{{ a.unit?.label }}</strong> · {{ peso(a.unit?.rent_centavos) }} / month<br />
-              Reserved until <strong>{{ manila(a.reserved_until!).format('MMM D, YYYY') }}</strong>. Move in by then and bring
+              Reserved until <strong>{{ manilaDate(a.reserved_until!).format('MMM D, YYYY') }}</strong>. Move in by then and bring
               the deposit and first month's rent.
             </p>
-            <p v-else-if="a.status === 'pending'">Move-in {{ manila(a.planned_move_in_on).format('MMM D, YYYY') }}. Waiting for the owner.</p>
+            <p v-else-if="a.status === 'pending'">Move-in {{ manilaDate(a.planned_move_in_on).format('MMM D, YYYY') }}. Waiting for the owner.</p>
             <p v-if="a.closed_reason" class="muted">{{ a.closed_reason }}</p>
             <p class="muted small">Applied {{ manila(a.created_at).format('MMM D, YYYY') }} · Owner: {{ a.property.owner_name }}</p>
             <ion-button v-if="a.can_cancel" size="small" fill="outline" color="dark" @click="cancel(a)">
@@ -69,7 +69,7 @@ import {
 } from '@ionic/vue'
 import { searchOutline } from 'ionicons/icons'
 import { ref } from 'vue'
-import { manila } from '@/lib/dayjs'
+import { manila, manilaDate } from '@/lib/dayjs'
 import { peso } from '@/lib/money'
 import { errorMessage } from '@/services/api'
 import { bookingService } from '@/services/bookings'

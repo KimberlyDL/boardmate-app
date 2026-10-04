@@ -4,7 +4,7 @@
 
     <div class="grid">
       <div v-for="(photo, i) in property.photos" :key="photo.id" class="photo">
-        <img :src="photo.url" :alt="`Photo ${i + 1}`" />
+        <img :src="photo.thumb_url" :alt="`Photo ${i + 1}`" loading="lazy" />
         <ion-badge v-if="photo.is_cover" class="cover">Cover</ion-badge>
         <div v-if="canEdit" class="tools">
           <ion-button size="small" fill="clear" :disabled="i === 0" aria-label="Move left" @click="move(i, -1)">
@@ -26,7 +26,7 @@
     <template v-if="canEdit && property.photos.length < 15">
       <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden @change="upload" />
       <ion-button expand="block" fill="outline" :disabled="busy" @click="fileInput?.click()">
-        <ion-icon slot="start" :icon="imagesOutline" /> {{ busy ? 'Uploading…' : 'Add photos' }}
+        <ion-icon slot="start" :icon="imagesOutline" /> {{ progress ? `Uploading ${progress.done + 1} of ${progress.total}…` : busy ? 'Saving…' : 'Add photos' }}
       </ion-button>
     </template>
   </div>
@@ -62,10 +62,36 @@ async function run(action: () => Promise<Property>) {
   }
 }
 
+const progress = ref<{ done: number; total: number } | null>(null)
+
+/**
+ * One photo per request: each is resized on the server, so a big batch in one
+ * request could pass the server's time limit. Stops at the first refusal.
+ */
 async function upload(event: Event) {
   const files = Array.from((event.target as HTMLInputElement).files ?? [])
-  if (files.length) await run(() => propertyService.uploadPhotos(props.property.id, files))
   if (fileInput.value) fileInput.value.value = ''
+  if (!files.length) return
+
+  const room = 15 - props.property.photos.length
+  if (files.length > room) {
+    toast.error(`A listing can have up to 15 photos. Only the first ${room} will be added.`)
+    files.splice(room)
+  }
+
+  busy.value = true
+  progress.value = { done: 0, total: files.length }
+  try {
+    for (const file of files) {
+      emit('updated', await propertyService.uploadPhotos(props.property.id, [file]))
+      progress.value.done++
+    }
+  } catch (e) {
+    toast.error(`${files[progress.value.done]?.name ?? 'Photo'}: ${Object.values(fieldErrors(e))[0]?.[0] ?? errorMessage(e)}`)
+  } finally {
+    busy.value = false
+    progress.value = null
+  }
 }
 
 function move(index: number, delta: number) {

@@ -193,12 +193,14 @@ export const FilePurpose = {
   ProfilePhoto: 'profile_photo',
   ListingPhoto: 'listing_photo',
   IdDocument: 'id_document',
+  OwnerDocument: 'owner_document',
 } as const
 export type FilePurpose = (typeof FilePurpose)[keyof typeof FilePurpose]
 export const FilePurposeLabels: Record<FilePurpose, string> = {
   'profile_photo': 'Profile photo',
   'listing_photo': 'Listing photo',
   'id_document': 'ID',
+  'owner_document': 'Owner document',
 }
 
 export const FinalUtilityHandling = {
@@ -269,6 +271,20 @@ export const NotificationEventLabels: Record<NotificationEvent, string> = {
   'booking_cancelled': 'Booking cancelled',
   'reservation_expiring_soon': 'Reservation expiring',
   'reservation_expired': 'Reservation expired',
+}
+
+export const OwnerDocumentKind = {
+  GovernmentId: 'government_id',
+  PropertyProof: 'property_proof',
+  BusinessPermit: 'business_permit',
+  Other: 'other',
+} as const
+export type OwnerDocumentKind = (typeof OwnerDocumentKind)[keyof typeof OwnerDocumentKind]
+export const OwnerDocumentKindLabels: Record<OwnerDocumentKind, string> = {
+  'government_id': 'Valid government ID',
+  'property_proof': 'Proof of the property (title, lease, or a utility bill in your name)',
+  'business_permit': 'Business or barangay permit',
+  'other': 'Other document',
 }
 
 export const OwnerVerificationStatus = {

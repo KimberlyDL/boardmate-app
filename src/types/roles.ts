@@ -1,6 +1,7 @@
 import type {
   CaretakerAccessLevel,
   CaretakerInvitationStatus,
+  OwnerDocumentKind,
   OwnerVerificationStatus,
   UserRole,
 } from './enums'
@@ -13,7 +14,22 @@ export interface OwnerProfile {
   submitted_at: string | null
   reviewed_at: string | null
   review_reason: string | null
+  /** Proof sent with the application; files are deleted 90 days after the decision. */
+  documents: OwnerDocument[]
   payment: OwnerPaymentDetails
+}
+
+export interface OwnerDocument {
+  id: number
+  kind: OwnerDocumentKind
+  kind_label: string
+  original_name: string
+  mime_type: string
+  size_bytes: number
+  /** Signed, expiring link; null once purged */
+  url: string | null
+  uploaded_at: string | null
+  purged_at: string | null
 }
 
 export interface OwnerPaymentDetails {
@@ -45,6 +61,8 @@ export interface CaretakerLink {
   }
   /** The owner's properties this caretaker runs, with the level for each. */
   properties: { id: number; name: string; access_level: CaretakerAccessLevel; access_level_label: string }[]
+  /** Per-property levels no longer all match the level chosen here. */
+  levels_differ: boolean
   since: string
 }
 

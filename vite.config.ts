@@ -18,6 +18,8 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    environment: 'jsdom'
+    environment: 'jsdom',
+    // A device zone ahead of Manila, where date-only values used to show a day early.
+    env: { TZ: 'Asia/Tokyo' },
   }
 })

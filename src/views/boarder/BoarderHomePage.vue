@@ -17,7 +17,7 @@
             <ion-card-title>{{ reservation.property.name }}</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            {{ reservation.unit?.label }} · move in by {{ manila(reservation.reserved_until!).format('MMM D, YYYY') }}
+            {{ reservation.unit?.label }} · move in by {{ manilaDate(reservation.reserved_until!).format('MMM D, YYYY') }}
           </ion-card-content>
         </ion-card>
 
@@ -57,7 +57,7 @@ import {
   onIonViewWillEnter,
 } from '@ionic/vue'
 import { computed, ref } from 'vue'
-import { manila } from '@/lib/dayjs'
+import { manilaDate } from '@/lib/dayjs'
 import { bookingService } from '@/services/bookings'
 import { useAuthStore } from '@/stores/auth'
 import type { BookingApplication } from '@/types/booking'

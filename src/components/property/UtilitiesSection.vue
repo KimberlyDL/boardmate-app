@@ -16,7 +16,7 @@
             <span v-if="account.billed_by === 'group'"> · handled by the boarders</span>
           </p>
           <p v-if="account.upcoming_amount" class="upcoming">
-            {{ peso(account.upcoming_amount.amount_centavos) }} from {{ manila(account.upcoming_amount.effective_from).format('MMM D, YYYY') }}
+            {{ peso(account.upcoming_amount.amount_centavos) }} from {{ manilaDate(account.upcoming_amount.effective_from).format('MMM D, YYYY') }}
           </p>
         </ion-label>
         <template v-if="canEdit">
@@ -83,7 +83,7 @@ import {
 } from '@ionic/vue'
 import { trashOutline } from 'ionicons/icons'
 import { computed, reactive, ref } from 'vue'
-import { manila } from '@/lib/dayjs'
+import { manila, manilaDate } from '@/lib/dayjs'
 import { peso, toCentavos, toPesoInput } from '@/lib/money'
 import { errorMessage, fieldErrors } from '@/services/api'
 import { propertyService } from '@/services/properties'

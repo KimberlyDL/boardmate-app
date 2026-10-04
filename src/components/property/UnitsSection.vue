@@ -14,7 +14,7 @@
             <span v-if="unit.kind === 'whole'"> · up to {{ unit.capacity }} occupants</span>
           </p>
           <p v-if="unit.upcoming_rent" class="upcoming">
-            {{ peso(unit.upcoming_rent.amount_centavos) }} from {{ manila(unit.upcoming_rent.effective_from).format('MMM D, YYYY') }}
+            {{ peso(unit.upcoming_rent.amount_centavos) }} from {{ manilaDate(unit.upcoming_rent.effective_from).format('MMM D, YYYY') }}
           </p>
           <p>
             <ion-badge :color="unit.status === 'available' ? 'success' : 'medium'">{{ unit.status_label }}</ion-badge>
@@ -22,7 +22,7 @@
             <span v-if="unit.not_ready_reason" class="muted"> {{ unit.not_ready_reason }}</span>
           </p>
           <p v-if="unit.reservation" class="reserved">
-            Reserved for {{ unit.reservation.boarder_name }} until {{ manila(unit.reservation.reserved_until).format('MMM D, YYYY') }}
+            Reserved for {{ unit.reservation.boarder_name }} until {{ manilaDate(unit.reservation.reserved_until).format('MMM D, YYYY') }}
             · <router-link to="/applications">Applications</router-link>
           </p>
         </ion-label>
@@ -65,8 +65,8 @@
             <ion-label>
               <h2>{{ peso(rule.amount_centavos) }}</h2>
               <p>
-                {{ manila(rule.effective_from).format('MMM D, YYYY') }} –
-                {{ rule.effective_to ? manila(rule.effective_to).format('MMM D, YYYY') : 'onwards' }}
+                {{ manilaDate(rule.effective_from).format('MMM D, YYYY') }} –
+                {{ rule.effective_to ? manilaDate(rule.effective_to).format('MMM D, YYYY') : 'onwards' }}
               </p>
               <p class="muted">Set by {{ rule.set_by ?? '—' }}</p>
             </ion-label>
@@ -102,7 +102,7 @@ import {
 } from '@ionic/vue'
 import { ellipsisVertical } from 'ionicons/icons'
 import { computed, reactive, ref } from 'vue'
-import { manila } from '@/lib/dayjs'
+import { manila, manilaDate } from '@/lib/dayjs'
 import { peso, toCentavos, toPesoInput } from '@/lib/money'
 import { errorMessage, fieldErrors } from '@/services/api'
 import { propertyService } from '@/services/properties'

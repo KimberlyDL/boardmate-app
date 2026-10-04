@@ -38,6 +38,17 @@
             <p class="notes">{{ o.owner_profile?.application_notes }}</p>
             <p v-if="o.owner_profile?.review_reason" class="muted">Last reason: {{ o.owner_profile.review_reason }}</p>
 
+            <!-- Proof documents: signed links that expire, so pull to refresh if one stops opening. -->
+            <div v-if="o.owner_profile?.documents.length" class="documents" data-test="owner-documents">
+              <template v-for="doc in o.owner_profile.documents" :key="doc.id">
+                <a v-if="doc.url" :href="doc.url" target="_blank" rel="noopener" class="document">
+                  <strong>{{ doc.kind_label.split(' (')[0] }}</strong> · {{ doc.original_name }}
+                </a>
+                <span v-else class="document muted">{{ doc.kind_label.split(' (')[0] }} · deleted</span>
+              </template>
+            </div>
+            <p v-else class="warn">No proof documents attached (applied before they were required).</p>
+
             <div class="actions">
               <template v-if="status === OwnerVerificationStatus.Pending">
                 <ion-button size="small" color="success" @click="act(o, 'verify')">Verify</ion-button>
@@ -179,6 +190,15 @@ async function act(owner: AdminUser, action: 'verify' | 'reject' | 'suspend' | '
 </script>
 
 <style scoped>
+.documents {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0;
+}
+.document {
+  font-size: 0.9em;
+}
 .notes {
   white-space: pre-wrap;
   margin: 8px 0;

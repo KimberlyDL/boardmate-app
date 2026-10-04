@@ -30,12 +30,12 @@
           </ion-card-header>
           <ion-card-content>
             <p>{{ a.applicant?.phone }} · {{ a.applicant?.email }}</p>
-            <p>Move-in <strong>{{ manila(a.planned_move_in_on).format('MMM D, YYYY') }}</strong> · applied {{ manila(a.created_at).format('MMM D') }}</p>
+            <p>Move-in <strong>{{ manilaDate(a.planned_move_in_on).format('MMM D, YYYY') }}</strong> · applied {{ manila(a.created_at).format('MMM D') }}</p>
             <p v-if="a.message" class="message">“{{ a.message }}”</p>
             <p v-if="a.id_document_url"><a :href="a.id_document_url" target="_blank" rel="noopener">View ID</a></p>
             <p v-else-if="a.id_document_purged" class="muted small">ID deleted (30 days after closing)</p>
             <p v-if="a.status === 'approved'">
-              Reserved until <strong>{{ manila(a.reserved_until!).format('MMM D, YYYY') }}</strong>
+              Reserved until <strong>{{ manilaDate(a.reserved_until!).format('MMM D, YYYY') }}</strong>
               <span v-if="a.decided_by"> · approved by {{ a.decided_by }}</span>
             </p>
             <p v-if="a.closed_reason" class="muted">{{ a.closed_reason }}</p>
@@ -84,7 +84,7 @@ import {
   onIonViewWillEnter,
 } from '@ionic/vue'
 import { ref } from 'vue'
-import { manila } from '@/lib/dayjs'
+import { manila, manilaDate } from '@/lib/dayjs'
 import { peso } from '@/lib/money'
 import { errorMessage, fieldErrors } from '@/services/api'
 import { bookingService } from '@/services/bookings'

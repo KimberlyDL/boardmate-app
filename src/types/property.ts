@@ -52,7 +52,10 @@ export interface PriceRule {
 
 export interface PropertyPhoto {
   id: number
+  /** 1600 px WebP, for the gallery */
   url: string
+  /** 480 px WebP, for grids and cards */
+  thumb_url: string
   is_cover: boolean
   sort_order: number
 }

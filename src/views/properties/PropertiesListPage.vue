@@ -26,7 +26,7 @@
         </template>
 
         <ion-card v-for="p in properties" :key="p.id" button :router-link="`/properties/${p.id}`" class="card">
-          <img v-if="p.cover_photo_url" :src="p.cover_photo_url" alt="" class="cover" />
+          <img v-if="p.cover_photo_url" :src="p.cover_photo_url" alt="" class="cover" loading="lazy" />
           <div v-else class="cover placeholder"><ion-icon :icon="homeOutline" /></div>
           <ion-card-header>
             <ion-card-subtitle>

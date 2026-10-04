@@ -23,7 +23,10 @@ export interface ListingSummary {
 export interface ListingDetail extends ListingSummary {
   description: string | null
   street: string | null
+  /** 1600 px WebP, for the gallery */
   photos: string[]
+  /** 480 px WebP versions, same order as `photos` */
+  photo_thumbs: string[]
   slots: { id: number; label: string; kind: string; capacity: number; rent_centavos: number | null }[]
   utilities: {
     type: string

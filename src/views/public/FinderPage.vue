@@ -46,7 +46,7 @@
         <template v-else>
           <p v-if="!loading && !items.length" class="muted center">No places match. Try fewer filters or another area.</p>
           <ion-card v-for="l in items" :key="l.id" button class="card" @click="open(l.id)">
-            <img v-if="l.cover_photo_url" :src="l.cover_photo_url" alt="" class="cover" />
+            <img v-if="l.cover_photo_url" :src="l.cover_photo_url" alt="" class="cover" loading="lazy" />
             <ion-card-header>
               <ion-card-subtitle>{{ l.type_label }} · {{ [l.barangay, l.city].filter(Boolean).join(', ') }}</ion-card-subtitle>
               <ion-card-title>{{ l.name }}</ion-card-title>
