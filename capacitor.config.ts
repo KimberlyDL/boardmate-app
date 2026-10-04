@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
-  appName: 'boardmate-app',
+  appId: 'com.boardmate.app',
+  appName: 'BoardMate',
   webDir: 'dist'
 };
 

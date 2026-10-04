@@ -1,6 +1,6 @@
-describe('My First Test', () => {
-  it('Visits the app root url', () => {
+describe('Home', () => {
+  it('loads the home page', () => {
     cy.visit('/')
-    cy.contains('ion-content', 'Tab 1 page')
+    cy.contains('ion-content', 'BoardMate')
   })
 })

@@ -1,0 +1,20 @@
+/* App-wide layout helpers. Colors live in variables.css. */
+
+/* Keeps forms and text readable on wide screens; full width on phones. */
+.narrow {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.form-actions {
+  margin-top: 16px;
+}
+
+.muted {
+  color: var(--ion-color-medium);
+  font-size: 0.9rem;
+}
+
+.center {
+  text-align: center;
+}
