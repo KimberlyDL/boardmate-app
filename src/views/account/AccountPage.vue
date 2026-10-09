@@ -62,7 +62,10 @@
           </ion-item>
         </ion-list>
 
-        <ion-button expand="block" fill="clear" color="medium" @click="logout">Log out</ion-button>
+        <h3>Appearance</h3>
+        <theme-toggle />
+
+        <ion-button expand="block" fill="clear" color="medium" class="form-actions" @click="logout">Log out</ion-button>
       </div>
     </ion-content>
   </ion-page>
@@ -84,6 +87,7 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/vue'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 import { homeOutline, listOutline, personCircleOutline, personOutline, shieldCheckmarkOutline, walletOutline } from 'ionicons/icons'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'

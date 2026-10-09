@@ -1,48 +1,40 @@
 <template>
-  <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Check your email</ion-title>
-      </ion-toolbar>
-    </ion-header>
+  <auth-layout title="Check your email" back-to="/register">
+    <div class="center">
+      <ion-icon :icon="mailOutline" class="icon" />
+      <h3>Confirm your email</h3>
+      <p v-if="auth.pendingConfirmationEmail">
+        We sent a link to <strong>{{ auth.pendingConfirmationEmail }}</strong>. Open it to confirm your address, then
+        log in.
+      </p>
+      <p v-else>We sent a confirmation link to your email. Open it to confirm your address, then log in.</p>
+      <p class="muted">The link works for 24 hours. Check your spam folder if you don't see it.</p>
 
-    <ion-content class="ion-padding">
-      <div class="narrow center">
-        <ion-icon :icon="mailOutline" class="icon" />
-        <h2>Confirm your email</h2>
-        <p v-if="auth.pendingConfirmationEmail">
-          We sent a link to <strong>{{ auth.pendingConfirmationEmail }}</strong>. Open it to confirm your address, then
-          log in.
-        </p>
-        <p v-else>We sent a confirmation link to your email. Open it to confirm your address, then log in.</p>
-        <p class="muted">The link works for 24 hours. Check your spam folder if you don't see it.</p>
+      <ion-button expand="block" router-link="/login">Go to log in</ion-button>
 
-        <ion-button expand="block" router-link="/login">Go to log in</ion-button>
-
-        <h3 class="resend-title">Didn't get it?</h3>
-        <form @submit.prevent="resend">
-          <ion-input
-            v-if="!auth.pendingConfirmationEmail"
-            v-model="email"
-            type="email"
-            label="Email"
-            label-placement="stacked"
-            fill="outline"
-            autocomplete="email"
-          />
-          <ion-button type="submit" expand="block" fill="outline" class="form-actions" :disabled="busy || !targetEmail">
-            Resend email
-          </ion-button>
-        </form>
-      </div>
-    </ion-content>
-  </ion-page>
+      <h3 class="resend-title">Didn't get it?</h3>
+      <form @submit.prevent="resend">
+        <auth-field
+          v-if="!auth.pendingConfirmationEmail"
+          v-model="email"
+          :icon="mailOutline"
+          label="Email"
+          type="email"
+          placeholder="Email"
+          autocomplete="email"
+        />
+        <ion-button type="submit" expand="block" fill="outline" :disabled="busy || !targetEmail">Resend email</ion-button>
+      </form>
+    </div>
+  </auth-layout>
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonContent, IonHeader, IonIcon, IonInput, IonPage, IonTitle, IonToolbar } from '@ionic/vue'
+import { IonButton, IonIcon } from '@ionic/vue'
 import { mailOutline } from 'ionicons/icons'
 import { computed, ref } from 'vue'
+import AuthField from '@/components/AuthField.vue'
+import AuthLayout from '@/components/AuthLayout.vue'
 import { errorMessage } from '@/services/api'
 import { authService } from '@/services/auth'
 import { useAuthStore } from '@/stores/auth'
@@ -68,9 +60,8 @@ async function resend() {
 
 <style scoped>
 .icon {
-  font-size: 64px;
+  font-size: 56px;
   color: var(--ion-color-primary);
-  margin-top: 24px;
 }
 .resend-title {
   margin-top: 32px;

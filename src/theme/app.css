@@ -18,3 +18,14 @@
 .center {
   text-align: center;
 }
+
+/* Auth pages (see components/AuthLayout.vue): pill buttons on the sheet. */
+.auth-sheet ion-button {
+  --border-radius: 999px;
+  min-height: 48px;
+}
+.auth-sheet a {
+  color: var(--ion-color-primary);
+  font-weight: 600;
+  text-decoration: none;
+}

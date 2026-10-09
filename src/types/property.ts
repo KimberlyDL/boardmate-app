@@ -1,3 +1,4 @@
+import type { RoomLeader } from './tenancy'
 import type {
   BilledBy,
   PropertyAbility,
@@ -11,6 +12,7 @@ import type {
 
 export interface Unit {
   id: number
+  room_id: number
   kind: UnitKind
   label: string
   sort_order: number
@@ -23,6 +25,24 @@ export interface Unit {
   upcoming_rent: { amount_centavos: number; effective_from: string } | null
   /** Set while a boarder holds a reservation on this unit (F2). */
   reservation: { application_id: number; boarder_name: string; reserved_until: string } | null
+}
+
+/** A room of a property, rented whole or by bedspace (B1). */
+export interface Room {
+  id: number
+  property_id: number
+  /** e.g. B1-F4-03; building and floor parts are left out when absent */
+  code: string
+  number: number
+  floor: number | null
+  rental_mode: RentalMode
+  rental_mode_label: string
+  counts: { units: number; available: number }
+  units: Unit[]
+  /** The room's current leader, if it has one */
+  leader?: RoomLeader | null
+  /** People staying in a room rented whole (the leader included) */
+  occupants_count?: number
 }
 
 export interface UtilityAccount {
@@ -82,13 +102,14 @@ export interface PropertySummary {
   name: string
   type: PropertyType
   type_label: string
-  rental_mode: RentalMode
+  /** Summary over the property's rooms: all whole, all by bedspace, or a mix. */
+  rental_mode: RentalMode | 'mixed'
   rental_mode_label: string
   building: { id: number; name: string } | null
   city: string | null
   is_published: boolean
   cover_photo_url: string | null
-  counts: { units: number; available: number; not_ready: number }
+  counts: { rooms: number; units: number; available: number; not_ready: number }
   my_role: PropertyRole | null
   owner_name: string
 }
@@ -102,6 +123,7 @@ export interface Property extends PropertySummary {
   latitude: number | null
   longitude: number | null
   published_at: string | null
+  rooms: Room[]
   units: Unit[]
   utility_accounts: UtilityAccount[]
   photos: PropertyPhoto[]
@@ -122,10 +144,12 @@ export interface PropertySettings {
 export interface Building {
   id: number
   name: string
+  /** Used in room codes (B1, B2) */
+  number: number
   properties_count?: number
 }
 
-/** Units spec when creating a property or switching its mode. */
+/** Units spec when creating a property or room, or switching a room's mode. */
 export interface UnitSpec {
   capacity?: number
   rent_centavos?: number | null

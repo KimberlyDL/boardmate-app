@@ -1,56 +1,28 @@
 <template>
-  <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start"><ion-back-button default-href="/login" /></ion-buttons>
-        <ion-title>Forgot password</ion-title>
-      </ion-toolbar>
-    </ion-header>
+  <auth-layout title="Forgot password" back-to="/login" back-label="Back to log in">
+    <template v-if="sentMessage">
+      <p>{{ sentMessage }}</p>
+      <p class="muted">The link works for 60 minutes. Check your spam folder if you don't see it.</p>
+      <ion-button expand="block" fill="outline" router-link="/login">Back to log in</ion-button>
+    </template>
 
-    <ion-content class="ion-padding">
-      <div class="narrow">
-        <template v-if="sentMessage">
-          <p>{{ sentMessage }}</p>
-          <p class="muted">The link works for 60 minutes. Check your spam folder if you don't see it.</p>
-          <ion-button expand="block" fill="outline" router-link="/login">Back to log in</ion-button>
-        </template>
-
-        <form v-else @submit.prevent="submit">
-          <p>Enter the email you signed up with. We'll send you a link to set a new password.</p>
-          <ion-input
-            v-model="email"
-            type="email"
-            label="Email"
-            label-placement="stacked"
-            fill="outline"
-            autocomplete="email"
-            :class="{ 'ion-invalid ion-touched': errors.email }"
-            :error-text="errors.email?.[0]"
-          />
-          <ion-button expand="block" type="submit" class="form-actions" :disabled="busy">
-            <ion-spinner v-if="busy" name="crescent" />
-            <span v-else>Send reset link</span>
-          </ion-button>
-        </form>
-      </div>
-    </ion-content>
-  </ion-page>
+    <form v-else @submit.prevent="submit">
+      <p>Enter the email you signed up with. We'll send you a link to set a new password.</p>
+      <auth-field v-model="email" :icon="mailOutline" label="Email" type="email" placeholder="Email" autocomplete="email" :error="errors.email?.[0]" />
+      <ion-button expand="block" type="submit" :disabled="busy">
+        <ion-spinner v-if="busy" name="crescent" />
+        <span v-else>Send reset link</span>
+      </ion-button>
+    </form>
+  </auth-layout>
 </template>
 
 <script setup lang="ts">
-import {
-  IonBackButton,
-  IonButton,
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonInput,
-  IonPage,
-  IonSpinner,
-  IonTitle,
-  IonToolbar,
-} from '@ionic/vue'
+import { IonButton, IonSpinner } from '@ionic/vue'
+import { mailOutline } from 'ionicons/icons'
 import { ref } from 'vue'
+import AuthField from '@/components/AuthField.vue'
+import AuthLayout from '@/components/AuthLayout.vue'
 import { errorMessage, fieldErrors } from '@/services/api'
 import { authService } from '@/services/auth'
 import { useToast } from '@/composables/useToast'

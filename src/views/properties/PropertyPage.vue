@@ -33,6 +33,7 @@
         </template>
 
         <units-section v-else-if="tab === 'units'" :property="property" @changed="reload" />
+        <tenants-section v-else-if="tab === 'tenants'" :property="property" @changed="reload" />
         <utilities-section v-else-if="tab === 'utilities'" :property="property" @changed="reload" />
         <settings-section v-else-if="tab === 'settings'" :property="property" />
         <photos-section v-else-if="tab === 'photos'" :property="property" @updated="property = $event" />
@@ -65,6 +66,7 @@ import PhotosSection from '@/components/property/PhotosSection.vue'
 import PropertyDetailsForm from '@/components/property/PropertyDetailsForm.vue'
 import PublishCard from '@/components/property/PublishCard.vue'
 import SettingsSection from '@/components/property/SettingsSection.vue'
+import TenantsSection from '@/components/property/TenantsSection.vue'
 import UnitsSection from '@/components/property/UnitsSection.vue'
 import UtilitiesSection from '@/components/property/UtilitiesSection.vue'
 import { errorMessage, fieldErrors } from '@/services/api'
@@ -94,7 +96,8 @@ const backHref = computed(() => (property.value?.my_role === 'owner' ? '/owner/p
 
 const tabs = computed(() => [
   { id: 'overview', label: 'Overview' },
-  { id: 'units', label: property.value?.rental_mode === 'whole' ? 'Unit' : 'Bedspaces' },
+  { id: 'units', label: 'Rooms' },
+  { id: 'tenants', label: 'Tenants' },
   { id: 'utilities', label: 'Utilities' },
   { id: 'settings', label: 'Settings' },
   { id: 'photos', label: 'Photos' },

@@ -7,6 +7,7 @@ export const ApplicationStatus = {
   Declined: 'declined',
   Cancelled: 'cancelled',
   Expired: 'expired',
+  MovedIn: 'moved_in',
 } as const
 export type ApplicationStatus = (typeof ApplicationStatus)[keyof typeof ApplicationStatus]
 export const ApplicationStatusLabels: Record<ApplicationStatus, string> = {
@@ -15,6 +16,7 @@ export const ApplicationStatusLabels: Record<ApplicationStatus, string> = {
   'declined': 'Declined',
   'cancelled': 'Cancelled',
   'expired': 'Expired',
+  'moved_in': 'Moved in',
 }
 
 export const AuditEvent = {
@@ -38,6 +40,9 @@ export const AuditEvent = {
   PropertyDeleted: 'property.deleted',
   PropertyPublished: 'property.published',
   PropertyUnpublished: 'property.unpublished',
+  RoomAdded: 'room.added',
+  RoomUpdated: 'room.updated',
+  RoomRemoved: 'room.removed',
   RentalModeSwitched: 'property.rental_mode_switched',
   UnitsAdded: 'unit.added',
   UnitUpdated: 'unit.updated',
@@ -56,6 +61,16 @@ export const AuditEvent = {
   BookingDeclined: 'booking.declined',
   BookingCancelled: 'booking.cancelled',
   ReservationExpired: 'booking.expired',
+  LeaderAppointed: 'room.leader_appointed',
+  LeaderReplaced: 'room.leader_replaced',
+  OccupantAdded: 'room.occupant_added',
+  OccupantUpdated: 'room.occupant_updated',
+  OccupantRemoved: 'room.occupant_removed',
+  TenancyStarted: 'tenancy.started',
+  ActivationOverridden: 'tenancy.activation_overridden',
+  EmergencyContactChanged: 'tenancy.emergency_contact_changed',
+  DiscountSet: 'tenancy.discount_set',
+  DiscountEnded: 'tenancy.discount_ended',
   EmailChanged: 'account.email_changed',
   PasswordChanged: 'account.password_changed',
   PasswordSet: 'account.password_set',
@@ -83,7 +98,10 @@ export const AuditEventLabels: Record<AuditEvent, string> = {
   'property.deleted': 'Deleted a property',
   'property.published': 'Published a listing',
   'property.unpublished': 'Unpublished a listing',
-  'property.rental_mode_switched': 'Switched rental mode',
+  'room.added': 'Added a room',
+  'room.updated': 'Changed a room',
+  'room.removed': 'Removed a room',
+  'property.rental_mode_switched': 'Switched a room\'s rental mode',
   'unit.added': 'Added units',
   'unit.updated': 'Changed a unit',
   'unit.removed': 'Removed a unit',
@@ -101,6 +119,16 @@ export const AuditEventLabels: Record<AuditEvent, string> = {
   'booking.declined': 'Declined a booking',
   'booking.cancelled': 'Cancelled a booking',
   'booking.expired': 'A reservation expired',
+  'room.leader_appointed': 'Appointed a room leader',
+  'room.leader_replaced': 'Replaced a room leader',
+  'room.occupant_added': 'Added an occupant',
+  'room.occupant_updated': 'Changed an occupant',
+  'room.occupant_removed': 'Removed an occupant',
+  'tenancy.started': 'Moved someone in',
+  'tenancy.activation_overridden': 'Moved in without the deposit and first rent',
+  'tenancy.emergency_contact_changed': 'Changed a tenant\'s emergency contact',
+  'tenancy.discount_set': 'Set a tenant\'s discount',
+  'tenancy.discount_ended': 'Ended a tenant\'s discount',
   'account.email_changed': 'Changed email',
   'account.password_changed': 'Changed password',
   'account.password_set': 'Set a password',
@@ -163,6 +191,16 @@ export const DepositRuleLabels: Record<DepositRule, string> = {
   'one_month_rent': 'One month\'s rent',
   'fixed_amount': 'Fixed amount',
   'none': 'No deposit',
+}
+
+export const DiscountKind = {
+  Fixed: 'fixed',
+  Percent: 'percent',
+} as const
+export type DiscountKind = (typeof DiscountKind)[keyof typeof DiscountKind]
+export const DiscountKindLabels: Record<DiscountKind, string> = {
+  'fixed': 'Fixed amount',
+  'percent': 'Percent',
 }
 
 export const DocumentType = {
@@ -248,6 +286,12 @@ export const NotificationEvent = {
   BookingCancelled: 'booking_cancelled',
   ReservationExpiringSoon: 'reservation_expiring_soon',
   ReservationExpired: 'reservation_expired',
+  TenancyStarted: 'tenancy_started',
+  LeaderAppointed: 'leader_appointed',
+  LeaderEnded: 'leader_ended',
+  OccupantsChanged: 'occupants_changed',
+  ApplicationWithdrawnOnMoveIn: 'application_withdrawn_on_move_in',
+  DiscountChanged: 'discount_changed',
 } as const
 export type NotificationEvent = (typeof NotificationEvent)[keyof typeof NotificationEvent]
 export const NotificationEventLabels: Record<NotificationEvent, string> = {
@@ -271,6 +315,12 @@ export const NotificationEventLabels: Record<NotificationEvent, string> = {
   'booking_cancelled': 'Booking cancelled',
   'reservation_expiring_soon': 'Reservation expiring',
   'reservation_expired': 'Reservation expired',
+  'tenancy_started': 'Moved in',
+  'leader_appointed': 'Named room leader',
+  'leader_ended': 'No longer room leader',
+  'occupants_changed': 'Room occupants changed',
+  'application_withdrawn_on_move_in': 'Application withdrawn after move-in',
+  'discount_changed': 'Agreed rate changed',
 }
 
 export const OwnerDocumentKind = {
@@ -313,6 +363,18 @@ export const PartialPeriodHandlingLabels: Record<PartialPeriodHandling, string> 
   'waived': 'Free until the common due date',
 }
 
+export const PaymentMethod = {
+  Cash: 'cash',
+  BankTransfer: 'bank_transfer',
+  EWallet: 'e_wallet',
+} as const
+export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
+export const PaymentMethodLabels: Record<PaymentMethod, string> = {
+  'cash': 'Cash',
+  'bank_transfer': 'Bank transfer',
+  'e_wallet': 'E-wallet (GCash, Maya)',
+}
+
 export const PropertyAbility = {
   View: 'view',
   RecordPayments: 'record_payments',
@@ -346,6 +408,7 @@ export const PropertyType = {
   Dorm: 'dorm',
   BoardingHouse: 'boarding_house',
   MiniHouse: 'mini_house',
+  Studio: 'studio',
 } as const
 export type PropertyType = (typeof PropertyType)[keyof typeof PropertyType]
 export const PropertyTypeLabels: Record<PropertyType, string> = {
@@ -353,6 +416,7 @@ export const PropertyTypeLabels: Record<PropertyType, string> = {
   'dorm': 'Dorm',
   'boarding_house': 'Boarding house',
   'mini_house': 'Mini house',
+  'studio': 'Studio',
 }
 
 export const RentalMode = {
@@ -361,7 +425,7 @@ export const RentalMode = {
 } as const
 export type RentalMode = (typeof RentalMode)[keyof typeof RentalMode]
 export const RentalModeLabels: Record<RentalMode, string> = {
-  'whole': 'Whole property',
+  'whole': 'Whole room',
   'bedspaces': 'By bedspace',
 }
 
@@ -405,13 +469,31 @@ export const SplitMethodLabels: Record<SplitMethod, string> = {
   'weighted_absorb': 'By weight, landlord covers the rest',
 }
 
+export const TenancyPaymentKind = {
+  Deposit: 'deposit',
+  FirstRent: 'first_rent',
+} as const
+export type TenancyPaymentKind = (typeof TenancyPaymentKind)[keyof typeof TenancyPaymentKind]
+export const TenancyPaymentKindLabels: Record<TenancyPaymentKind, string> = {
+  'deposit': 'Deposit',
+  'first_rent': 'First rent (advance)',
+}
+
+export const TenancyStatus = {
+  Active: 'active',
+} as const
+export type TenancyStatus = (typeof TenancyStatus)[keyof typeof TenancyStatus]
+export const TenancyStatusLabels: Record<TenancyStatus, string> = {
+  'active': 'Active',
+}
+
 export const UnitKind = {
   Whole: 'whole',
   Bedspace: 'bedspace',
 } as const
 export type UnitKind = (typeof UnitKind)[keyof typeof UnitKind]
 export const UnitKindLabels: Record<UnitKind, string> = {
-  'whole': 'Whole property',
+  'whole': 'Whole room',
   'bedspace': 'Bedspace',
 }
 

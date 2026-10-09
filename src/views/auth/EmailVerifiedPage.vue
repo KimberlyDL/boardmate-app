@@ -1,25 +1,18 @@
 <template>
-  <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Email confirmation</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content class="ion-padding">
-      <div class="narrow center">
-        <h2>{{ content.title }}</h2>
-        <p>{{ content.body }}</p>
-        <ion-button expand="block" :router-link="auth.isLoggedIn ? '/account' : '/login'">
-          {{ auth.isLoggedIn ? 'Go to my account' : 'Log in' }}
-        </ion-button>
-      </div>
-    </ion-content>
-  </ion-page>
+  <auth-layout title="Email confirmation" back-to="/">
+    <div class="center">
+      <h3>{{ content.title }}</h3>
+      <p>{{ content.body }}</p>
+      <ion-button expand="block" :router-link="auth.isLoggedIn ? '/account' : '/login'">
+        {{ auth.isLoggedIn ? 'Go to my account' : 'Log in' }}
+      </ion-button>
+    </div>
+  </auth-layout>
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/vue'
+import { IonButton } from '@ionic/vue'
+import AuthLayout from '@/components/AuthLayout.vue'
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'

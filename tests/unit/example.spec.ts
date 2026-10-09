@@ -1,37 +1,43 @@
-import { flushPromises, mount } from '@vue/test-utils'
-import { createPinia, setActivePinia } from 'pinia'
+import { mount } from '@vue/test-utils'
+import { createPinia } from 'pinia'
 import { IonicVue } from '@ionic/vue'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import HomePage from '@/views/public/HomePage.vue'
-import { systemService } from '@/services/system'
 
-describe('HomePage.vue', () => {
-  beforeEach(() => {
-    setActivePinia(createPinia())
+vi.mock('vue-router', () => ({ useRouter: () => ({ push: vi.fn() }) }))
+
+const mountHome = () => mount(HomePage, { global: { plugins: [IonicVue, createPinia()], stubs: { 'router-link': true } } })
+
+describe('HomePage.vue (onboarding)', () => {
+  test('introduces BoardMate in five slides, then the sign-in screen', () => {
+    const wrapper = mountHome()
+    const text = wrapper.text()
+    for (const heading of [
+      'Find a place that fits.',
+      'Apply when you find the right one.',
+      'Know what you owe.',
+      'Split shared expenses fairly.',
+      'More than just a rental app.',
+      'Ready to get started?',
+    ]) {
+      expect(text).toContain(heading)
+    }
+    expect(wrapper.findAll('.slide')).toHaveLength(6)
+    expect(wrapper.findAll('.dot')).toHaveLength(5)
   })
 
-  test('shows "API connected" when the health check succeeds', async () => {
-    vi.spyOn(systemService, 'health').mockResolvedValue({
-      app: 'BoardMate',
-      api_version: 'v1',
-      database: 'ok',
-      server_time: '2026-10-03T21:00:00+08:00',
-      timezone: 'Asia/Manila',
-    })
-
-    const wrapper = mount(HomePage, { global: { plugins: [IonicVue] } })
-    await flushPromises()
-
-    expect(wrapper.get('[data-test="api-status"]').text()).toBe('API connected')
-    expect(wrapper.text()).toContain('Oct 3, 2026 9:00 PM')
+  test('offers sign up, sign in and browsing', () => {
+    const text = mountHome().text()
+    expect(text).toContain('Create an account')
+    expect(text).toContain('Sign in to your account')
+    expect(text).toContain('Already have an account?')
+    expect(text).toContain('Explore available places')
   })
 
-  test('shows an error when the API cannot be reached', async () => {
-    vi.spyOn(systemService, 'health').mockRejectedValue(new Error('down'))
-
-    const wrapper = mount(HomePage, { global: { plugins: [IonicVue] } })
-    await flushPromises()
-
-    expect(wrapper.get('[data-test="api-status"]').text()).toBe('API not reachable')
+  test('Get started moves to the next slide', async () => {
+    const wrapper = mountHome()
+    expect(wrapper.find('.foot').text()).toContain('Get started')
+    await wrapper.find('.foot ion-button').trigger('click')
+    expect(wrapper.find('.dot.on').attributes('aria-label')).toContain('Slide 2')
   })
 })

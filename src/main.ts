@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router';
 import './lib/dayjs';
+import { initTheme } from './composables/useTheme';
 
 import { IonicVue } from '@ionic/vue';
 
@@ -30,8 +31,7 @@ import '@ionic/vue/css/display.css';
  */
 
 /* @import '@ionic/vue/css/palettes/dark.always.css'; */
-/* @import '@ionic/vue/css/palettes/dark.class.css'; */
-import '@ionic/vue/css/palettes/dark.system.css';
+import '@ionic/vue/css/palettes/dark.class.css';
 
 /* Theme variables */
 import './theme/variables.css';
@@ -42,6 +42,6 @@ const app = createApp(App)
   .use(createPinia())
   .use(router);
 
-router.isReady().then(() => {
+Promise.all([router.isReady(), initTheme()]).then(() => {
   app.mount('#app');
 });

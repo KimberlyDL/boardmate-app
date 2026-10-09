@@ -87,7 +87,7 @@
           <ion-segment v-model="filters.mode">
             <ion-segment-button value=""><ion-label>Any</ion-label></ion-segment-button>
             <ion-segment-button value="bedspaces"><ion-label>Bedspace</ion-label></ion-segment-button>
-            <ion-segment-button value="whole"><ion-label>Whole place</ion-label></ion-segment-button>
+            <ion-segment-button value="whole"><ion-label>Whole room</ion-label></ion-segment-button>
           </ion-segment>
           <h3>Included in the rent</h3>
           <ion-chip
@@ -138,9 +138,9 @@ import {
 } from '@ionic/vue'
 import { listOutline, mapOutline, optionsOutline } from 'ionicons/icons'
 import { computed, onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import ListingMap from '@/components/ListingMap.vue'
-import { activeCount, emptyFilters, toQuery } from '@/lib/listingFilters'
+import { activeCount, emptyFilters, fromRouteQuery, toQuery } from '@/lib/listingFilters'
 import { peso } from '@/lib/money'
 import { errorMessage } from '@/services/api'
 import { listingService } from '@/services/listings'
@@ -150,9 +150,10 @@ import type { ListingSummary } from '@/types/booking'
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 const toast = useToast()
 
-const filters = reactive(emptyFilters())
+const filters = reactive({ ...emptyFilters(), ...fromRouteQuery(route.query) })
 const items = ref<ListingSummary[]>([])
 const view = ref<'list' | 'map'>('list')
 const filtersOpen = ref(false)

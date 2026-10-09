@@ -36,7 +36,7 @@
           </ion-card-header>
           <ion-card-content>
             <p>
-              {{ p.counts.available }} of {{ p.counts.units }} {{ p.rental_mode === 'whole' ? 'unit' : 'bedspaces' }} available
+              {{ p.counts.available }} of {{ p.counts.units }} {{ p.rental_mode === 'whole' ? (p.counts.units === 1 ? 'room' : 'rooms') : p.rental_mode === 'bedspaces' ? 'bedspaces' : 'units' }} available
               <span v-if="p.counts.not_ready"> · {{ p.counts.not_ready }} not ready</span>
             </p>
             <ion-badge :color="p.is_published ? 'success' : 'medium'">{{ p.is_published ? 'Published' : 'Draft' }}</ion-badge>

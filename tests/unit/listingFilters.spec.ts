@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { activeCount, emptyFilters, toQuery } from '@/lib/listingFilters'
+import { activeCount, emptyFilters, fromRouteQuery, toQuery, toRouteQuery } from '@/lib/listingFilters'
 
 describe('Dorm Finder filters → API query', () => {
   test('empty filters only send the page', () => {
@@ -36,5 +36,18 @@ describe('Dorm Finder filters → API query', () => {
 
   test('invalid prices are ignored rather than sent', () => {
     expect(toQuery({ ...emptyFilters(), minPrice: 'abc' })).toEqual({ page: 1 })
+  })
+})
+
+describe('route query round trip', () => {
+  test('carries the landing search into /find filters', () => {
+    const f = { ...emptyFilters(), q: 'Sampaloc', maxPrice: '3000', mode: 'bedspaces' as const, includes: ['water', 'internet'] }
+    const query = toRouteQuery(f)
+    expect(query).toEqual({ q: 'Sampaloc', max: '3000', mode: 'bedspaces', includes: 'water,internet' })
+    expect(fromRouteQuery(query)).toEqual({ q: 'Sampaloc', maxPrice: '3000', mode: 'bedspaces', includes: ['water', 'internet'] })
+  })
+
+  test('ignores invalid values', () => {
+    expect(fromRouteQuery({ mode: 'castle', includes: 'gold,water' })).toEqual({ includes: ['water'] })
   })
 })

@@ -10,8 +10,19 @@
       <div class="narrow">
         <h2>Hi, {{ firstName }}</h2>
 
+        <!-- Moved in -->
+        <ion-card v-if="stay" color="success" button router-link="/stay">
+          <ion-card-header>
+            <ion-card-subtitle>Your stay</ion-card-subtitle>
+            <ion-card-title>{{ stay.property.name }}</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            Room {{ stay.room.code }} · {{ stay.unit.label }} · next rent due {{ manilaDate(stay.next_rent_due_on).format('MMM D, YYYY') }}
+          </ion-card-content>
+        </ion-card>
+
         <!-- Active reservation -->
-        <ion-card v-if="reservation" color="success" button router-link="/boarder/bookings">
+        <ion-card v-else-if="reservation" color="success" button router-link="/boarder/bookings">
           <ion-card-header>
             <ion-card-subtitle>Your reservation</ion-card-subtitle>
             <ion-card-title>{{ reservation.property.name }}</ion-card-title>
@@ -59,13 +70,16 @@ import {
 import { computed, ref } from 'vue'
 import { manilaDate } from '@/lib/dayjs'
 import { bookingService } from '@/services/bookings'
+import { tenancyService } from '@/services/tenancies'
 import { useAuthStore } from '@/stores/auth'
 import type { BookingApplication } from '@/types/booking'
+import type { Tenancy } from '@/types/tenancy'
 
 const auth = useAuthStore()
 const firstName = computed(() => auth.user?.name.split(' ')[0] ?? '')
 const reservation = ref<BookingApplication | null>(null)
 const pending = ref(0)
+const stay = ref<Tenancy | null>(null)
 
 onIonViewWillEnter(async () => {
   try {
@@ -74,6 +88,11 @@ onIonViewWillEnter(async () => {
     pending.value = items.filter((a) => a.status === 'pending').length
   } catch {
     // Home still works without it.
+  }
+  try {
+    stay.value = (await tenancyService.mine())[0] ?? null
+  } catch {
+    // Same: the card is a convenience.
   }
 })
 </script>

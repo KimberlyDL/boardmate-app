@@ -1,108 +1,62 @@
 <template>
-  <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start"><ion-back-button default-href="/" /></ion-buttons>
-        <ion-title>Create an account</ion-title>
-      </ion-toolbar>
-    </ion-header>
+  <auth-layout title="Create an account" back-to="/">
+    <form @submit.prevent="submit">
+      <p class="muted intro">You start as a boarder. Owners can apply to list a property after signing up.</p>
 
-    <ion-content class="ion-padding">
-      <form class="narrow" @submit.prevent="submit">
-        <p class="muted">You start as a boarder. Owners can apply to list a property after signing up.</p>
+      <auth-field v-model="form.name" :icon="personOutline" label="Full name" placeholder="Full name" autocomplete="name" :error="errors.name?.[0]" />
+      <auth-field v-model="form.email" :icon="mailOutline" label="Email" type="email" placeholder="Email" autocomplete="email" :error="errors.email?.[0]" />
+      <auth-field
+        v-model="form.phone"
+        :icon="callOutline"
+        label="Mobile number (optional)"
+        type="tel"
+        placeholder="Mobile number (optional)"
+        autocomplete="tel"
+        :error="errors.phone?.[0]"
+      />
+      <auth-field
+        v-model="form.password"
+        :icon="lockClosedOutline"
+        label="Password"
+        type="password"
+        placeholder="Password"
+        autocomplete="new-password"
+        helper="At least 8 characters, with letters and numbers."
+        :error="errors.password?.[0]"
+      />
+      <auth-field
+        v-model="form.password_confirmation"
+        :icon="lockClosedOutline"
+        label="Confirm password"
+        type="password"
+        placeholder="Confirm password"
+        autocomplete="new-password"
+      />
 
-        <ion-input
-          v-model="form.name"
-          label="Full name"
-          label-placement="stacked"
-          fill="outline"
-          autocomplete="name"
-          :class="{ 'ion-invalid ion-touched': errors.name }"
-          :error-text="errors.name?.[0]"
-        />
-        <ion-input
-          v-model="form.email"
-          type="email"
-          label="Email"
-          label-placement="stacked"
-          fill="outline"
-          autocomplete="email"
-          class="ion-margin-top"
-          :class="{ 'ion-invalid ion-touched': errors.email }"
-          :error-text="errors.email?.[0]"
-        />
-        <ion-input
-          v-model="form.phone"
-          type="tel"
-          label="Mobile number (optional)"
-          label-placement="stacked"
-          fill="outline"
-          autocomplete="tel"
-          placeholder="0917 123 4567"
-          class="ion-margin-top"
-          :class="{ 'ion-invalid ion-touched': errors.phone }"
-          :error-text="errors.phone?.[0]"
-        />
-        <ion-input
-          v-model="form.password"
-          type="password"
-          label="Password"
-          label-placement="stacked"
-          fill="outline"
-          autocomplete="new-password"
-          helper-text="At least 8 characters, with letters and numbers."
-          class="ion-margin-top"
-          :class="{ 'ion-invalid ion-touched': errors.password }"
-          :error-text="errors.password?.[0]"
-        >
-          <ion-input-password-toggle slot="end" />
-        </ion-input>
-        <ion-input
-          v-model="form.password_confirmation"
-          type="password"
-          label="Confirm password"
-          label-placement="stacked"
-          fill="outline"
-          autocomplete="new-password"
-          class="ion-margin-top"
-        />
+      <ion-checkbox v-model="form.consent" label-placement="end" justify="start" class="consent">
+        I agree to the <router-link to="/privacy" target="_blank">privacy notice</router-link>.
+      </ion-checkbox>
+      <ion-note v-if="errors.consent" color="danger" class="block">{{ errors.consent[0] }}</ion-note>
 
-        <ion-checkbox v-model="form.consent" label-placement="end" justify="start" class="ion-margin-top consent">
-          I agree to the <router-link to="/privacy" target="_blank">privacy notice</router-link>.
-        </ion-checkbox>
-        <ion-note v-if="errors.consent" color="danger" class="block">{{ errors.consent[0] }}</ion-note>
+      <ion-button expand="block" type="submit" class="submit" :disabled="busy">
+        <ion-spinner v-if="busy" name="crescent" />
+        <span v-else>Create account</span>
+      </ion-button>
 
-        <ion-button expand="block" type="submit" class="form-actions" :disabled="busy">
-          <ion-spinner v-if="busy" name="crescent" />
-          <span v-else>Create account</span>
-        </ion-button>
+      <google-sign-in-button :consent="form.consent" />
 
-        <google-sign-in-button :consent="form.consent" />
-
-        <p class="center muted">Already have an account? <router-link to="/login">Log in</router-link></p>
-      </form>
-    </ion-content>
-  </ion-page>
+      <p class="center muted foot">Already have an account? <router-link to="/login">Log in</router-link></p>
+    </form>
+  </auth-layout>
 </template>
 
 <script setup lang="ts">
-import {
-  IonBackButton,
-  IonButton,
-  IonButtons,
-  IonCheckbox,
-  IonContent,
-  IonHeader,
-  IonInput,
-  IonInputPasswordToggle,
-  IonNote,
-  IonPage,
-  IonSpinner,
-  IonTitle,
-  IonToolbar,
-} from '@ionic/vue'
+import { IonButton, IonCheckbox, IonNote, IonSpinner } from '@ionic/vue'
+import { callOutline, lockClosedOutline, mailOutline, personOutline } from 'ionicons/icons'
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import AuthField from '@/components/AuthField.vue'
+import AuthLayout from '@/components/AuthLayout.vue'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 import { errorMessage, fieldErrors } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
@@ -139,8 +93,17 @@ async function submit() {
 </script>
 
 <style scoped>
+.intro {
+  margin-top: 0;
+}
 .consent {
   white-space: normal;
+}
+.submit {
+  margin-top: 18px;
+}
+.foot {
+  margin-top: 22px;
 }
 .block {
   display: block;

@@ -1,2 +1,85 @@
-/* For information on how to create your own theme, please refer to:
-http://ionicframework.com/docs/theming/ */
+/* BoardMate brand theme: teal (primary), amber (secondary), slate (tertiary).
+   Dark values live under .ion-palette-dark, toggled by composables/useTheme. */
+
+:root {
+  --ion-font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --ion-color-primary: #0f766e;
+  --ion-color-primary-rgb: 15, 118, 110;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #0d6861;
+  --ion-color-primary-tint: #278480;
+
+  --ion-color-secondary: #f59e0b;
+  --ion-color-secondary-rgb: 245, 158, 11;
+  --ion-color-secondary-contrast: #1f1300;
+  --ion-color-secondary-contrast-rgb: 31, 19, 0;
+  --ion-color-secondary-shade: #d88b09;
+  --ion-color-secondary-tint: #f6a823;
+
+  --ion-color-tertiary: #475569;
+  --ion-color-tertiary-rgb: 71, 85, 105;
+  --ion-color-tertiary-contrast: #ffffff;
+  --ion-color-tertiary-contrast-rgb: 255, 255, 255;
+  --ion-color-tertiary-shade: #3e4b5c;
+  --ion-color-tertiary-tint: #596578;
+
+  --ion-background-color: #f8fafb;
+  --ion-background-color-rgb: 248, 250, 251;
+  --ion-text-color: #14232b;
+  --ion-text-color-rgb: 20, 35, 43;
+
+  --bm-surface: #ffffff;
+  --bm-surface-alt: #eef6f5;
+  --bm-border: #dbe5e4;
+  --bm-sheet: #eef4f3;
+  --bm-hero-from: #0f766e;
+  --bm-hero-to: #134e4a;
+}
+
+:root.ion-palette-dark {
+  --ion-color-primary: #2dd4bf;
+  --ion-color-primary-rgb: 45, 212, 191;
+  --ion-color-primary-contrast: #042f2b;
+  --ion-color-primary-contrast-rgb: 4, 47, 43;
+  --ion-color-primary-shade: #28bba8;
+  --ion-color-primary-tint: #42d8c5;
+
+  --ion-color-secondary: #fbbf24;
+  --ion-color-secondary-rgb: 251, 191, 36;
+  --ion-color-secondary-contrast: #1f1300;
+  --ion-color-secondary-contrast-rgb: 31, 19, 0;
+  --ion-color-secondary-shade: #dda820;
+  --ion-color-secondary-tint: #fbc53a;
+
+  --ion-color-tertiary: #94a3b8;
+  --ion-color-tertiary-rgb: 148, 163, 184;
+  --ion-color-tertiary-contrast: #0b1215;
+  --ion-color-tertiary-contrast-rgb: 11, 18, 21;
+  --ion-color-tertiary-shade: #8190a2;
+  --ion-color-tertiary-tint: #9dacbf;
+
+  --ion-background-color: #0b1417;
+  --ion-background-color-rgb: 11, 20, 23;
+  --ion-text-color: #e6f0ef;
+  --ion-text-color-rgb: 230, 240, 239;
+
+  --bm-surface: #132126;
+  --bm-surface-alt: #10201f;
+  --bm-border: #24383c;
+  --bm-sheet: #0e1a1d;
+  --bm-hero-from: #0b3d39;
+  --bm-hero-to: #0b1417;
+}
+
+ion-toolbar {
+  --background: var(--bm-surface);
+}
+
+ion-button {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 700;
+  --border-radius: 14px;
+}

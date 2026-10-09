@@ -2,6 +2,7 @@ import { api } from './api'
 import type { ApiEnvelope } from '@/types/api'
 import type { PageMeta } from '@/types/roles'
 import type { BookableUnit, BookingApplication } from '@/types/booking'
+import type { PlannedOccupant } from '@/types/tenancy'
 
 export interface ApplyInput {
   planned_move_in_on: string
@@ -45,8 +46,9 @@ export const bookingService = {
     return { application: data.data, units: data.meta?.bookable_units ?? [] }
   },
 
-  async approve(id: number, unitId: number): Promise<string> {
-    const { data } = await api.post<ApiEnvelope<BookingApplication>>(`/applications/${id}/approve`, { unit_id: unitId })
+  /** `leader` names the applicant the room's leader (bedspace); `occupants` lists who else will stay (room rented whole). */
+  async approve(id: number, unitId: number, extras: { leader?: boolean; occupants?: PlannedOccupant[] } = {}): Promise<string> {
+    const { data } = await api.post<ApiEnvelope<BookingApplication>>(`/applications/${id}/approve`, { unit_id: unitId, ...extras })
     return data.message ?? ''
   },
 

@@ -37,6 +37,7 @@ describe('property settings form config', () => {
 
   test('the setup wizard shows the key settings', () => {
     const key = SETTING_SECTIONS.flatMap((s) => s.fields.filter((f) => f.key_setting).map((f) => f.key))
-    expect(key).toEqual(expect.arrayContaining(['due_date_policy', 'deposit_rule', 'grace_days', 'curfew_time']))
+    expect(key).toEqual(expect.arrayContaining(['deposit_rule', 'grace_days', 'curfew_time']))
+    expect(SETTING_SECTIONS.flatMap((s) => s.fields.map((f) => f.key))).not.toContain('due_date_policy')
   })
 })

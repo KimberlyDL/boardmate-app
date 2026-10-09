@@ -20,11 +20,13 @@
         <template v-else-if="step === 3 && !property">
           <ion-segment v-model="mode">
             <ion-segment-button value="bedspaces"><ion-label>By bedspace</ion-label></ion-segment-button>
-            <ion-segment-button value="whole"><ion-label>Whole property</ion-label></ion-segment-button>
+            <ion-segment-button value="whole"><ion-label>Whole room</ion-label></ion-segment-button>
           </ion-segment>
           <p class="muted">
-            {{ mode === 'whole' ? 'Leased as a whole, e.g. to a group or a family.' : 'Each bed is rented separately.' }}
+            {{ mode === 'whole' ? 'Leased as a whole, e.g. to a group or a family. A house or studio is one whole room.' : 'Each bed is rented separately.' }}
+            You can add more rooms from the property page.
           </p>
+          <ion-input v-model="floor" type="number" label="Floor (optional)" label-placement="stacked" fill="outline" class="ion-margin-bottom" />
 
           <template v-if="mode === 'bedspaces'">
             <ion-input v-model.number="units.count" type="number" min="1" label="How many bedspaces" label-placement="stacked" fill="outline" />
@@ -110,7 +112,7 @@ import { propertyService, type PropertyDetailsInput } from '@/services/propertie
 import { useToast } from '@/composables/useToast'
 import type { Property } from '@/types/property'
 
-const STEPS = ['Details', 'Location', 'Bedspaces or whole', 'Utilities', 'Settings', 'Photos', 'Review']
+const STEPS = ['Details', 'Location', 'First room', 'Utilities', 'Settings', 'Photos', 'Review']
 
 const toast = useToast()
 const step = ref(1)
@@ -122,6 +124,7 @@ const details = ref<PropertyDetailsInput>({ name: '', type: 'boarding_house', bu
 const mode = ref<'bedspaces' | 'whole'>('bedspaces')
 const units = reactive({ count: 4, label_pattern: 'Bed {n}', capacity: 4 })
 const rent = ref('')
+const floor = ref('')
 
 const preview = computed(() => {
   const label = (n: number) => (units.label_pattern.includes('{n}') ? units.label_pattern.replace('{n}', String(n)) : `${units.label_pattern} ${n}`)
@@ -138,12 +141,16 @@ async function create() {
   const rentCentavos = rent.value ? toCentavos(rent.value) : null
   if (rent.value && rentCentavos === null) return toast.error('Enter the rent in pesos, e.g. 1800.')
 
+  const floorNumber = floor.value.trim() === '' ? null : Number(floor.value)
+  if (floorNumber !== null && !Number.isInteger(floorNumber)) return toast.error('The floor must be a whole number, or empty.')
+
   busy.value = true
   errors.value = {}
   try {
     property.value = await propertyService.create({
       ...details.value,
       rental_mode: mode.value,
+      floor: floorNumber,
       units:
         mode.value === 'whole'
           ? { capacity: units.capacity, rent_centavos: rentCentavos }

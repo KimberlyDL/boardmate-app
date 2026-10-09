@@ -68,6 +68,8 @@ function roleLink(path: string, target: (auth: ReturnType<typeof useAuthStore>) 
 const routes: Array<RouteRecordRaw> = [
   // Public
   { path: '/', name: 'home', component: () => import('@/views/public/HomePage.vue'), meta: { guestOnly: true } },
+  { path: '/about', name: 'about', component: () => import('@/views/public/AboutPage.vue') },
+  { path: '/contact', name: 'contact', component: () => import('@/views/public/ContactPage.vue') },
   { path: '/privacy', name: 'privacy', component: () => import('@/views/public/PrivacyPage.vue') },
   { path: '/invitations/:token', name: 'invitation', component: () => import('@/views/caretaker/InvitationPage.vue') },
   // Dorm Finder (F1): anyone, signed in or not.
@@ -85,6 +87,7 @@ const routes: Array<RouteRecordRaw> = [
 
   // Any signed-in user (pushed over the tabs)
   { path: '/profile', name: 'profile', component: () => import('@/views/account/ProfilePage.vue'), meta: { requiresAuth: true } },
+  { path: '/stay', name: 'stay', component: () => import('@/views/boarder/MyStayPage.vue'), meta: { requiresAuth: true, role: UserRole.Boarder } },
   { path: '/apply-owner', name: 'apply-owner', component: () => import('@/views/owner/ApplyOwnerPage.vue'), meta: { requiresAuth: true } },
   { path: '/owner/business', name: 'owner-business', component: () => import('@/views/owner/OwnerBusinessPage.vue'), meta: { requiresAuth: true, role: UserRole.Owner } },
   { path: '/owner/properties/new', name: 'property-new', component: () => import('@/views/owner/PropertyWizardPage.vue'), meta: { requiresAuth: true, role: UserRole.Owner } },

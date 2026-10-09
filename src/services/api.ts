@@ -62,3 +62,8 @@ export function fieldErrors(error: unknown): Record<string, string[]> {
   }
   return {}
 }
+
+/** The first validation message if there is one, otherwise the general error: one line for a toast. */
+export function firstError(error: unknown): string {
+  return Object.values(fieldErrors(error))[0]?.[0] ?? errorMessage(error)
+}

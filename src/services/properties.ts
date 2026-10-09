@@ -7,6 +7,7 @@ import type {
   PropertyCaretakerAssignment,
   PropertySettings,
   PropertySummary,
+  Room,
   SettingsValues,
   Unit,
   UnitSpec,
@@ -48,7 +49,7 @@ export const propertyService = {
     return data.data
   },
 
-  async create(input: PropertyDetailsInput & { rental_mode: string; units: UnitSpec }): Promise<Property> {
+  async create(input: PropertyDetailsInput & { rental_mode: string; floor?: number | null; units: UnitSpec }): Promise<Property> {
     const { data } = await api.post<ApiEnvelope<Property>>('/properties', input)
     return data.data
   },
@@ -68,14 +69,29 @@ export const propertyService = {
     return { property: data.data, message: data.message ?? '' }
   },
 
-  async switchMode(id: number, rentalMode: string, units: UnitSpec): Promise<Property> {
-    const { data } = await api.post<ApiEnvelope<Property>>(`/properties/${id}/rental-mode`, { rental_mode: rentalMode, units })
+  // Rooms
+  async addRoom(propertyId: number, input: { rental_mode: string; floor?: number | null; units: UnitSpec }): Promise<Room> {
+    const { data } = await api.post<ApiEnvelope<Room>>(`/properties/${propertyId}/rooms`, input)
+    return data.data
+  },
+
+  async updateRoom(roomId: number, input: { floor: number | null }): Promise<Room> {
+    const { data } = await api.patch<ApiEnvelope<Room>>(`/rooms/${roomId}`, input)
+    return data.data
+  },
+
+  async removeRoom(roomId: number): Promise<void> {
+    await api.delete(`/rooms/${roomId}`)
+  },
+
+  async switchRoomMode(roomId: number, rentalMode: string, units: UnitSpec): Promise<Room> {
+    const { data } = await api.post<ApiEnvelope<Room>>(`/rooms/${roomId}/rental-mode`, { rental_mode: rentalMode, units })
     return data.data
   },
 
   // Units
-  async addBedspaces(id: number, input: { count: number; label_pattern?: string; rent_centavos?: number | null }): Promise<Unit[]> {
-    const { data } = await api.post<ApiEnvelope<Unit[]>>(`/properties/${id}/units`, input)
+  async addBedspaces(roomId: number, input: { count: number; label_pattern?: string; rent_centavos?: number | null }): Promise<Unit[]> {
+    const { data } = await api.post<ApiEnvelope<Unit[]>>(`/rooms/${roomId}/bedspaces`, input)
     return data.data
   },
 

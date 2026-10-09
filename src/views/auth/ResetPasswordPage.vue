@@ -1,67 +1,46 @@
 <template>
-  <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Set a new password</ion-title>
-      </ion-toolbar>
-    </ion-header>
+  <auth-layout title="Set a new password" back-to="/login" back-label="Back to log in">
+    <template v-if="!token || !email">
+      <p>This reset link is incomplete. Please open the link from your email again, or request a new one.</p>
+      <ion-button expand="block" router-link="/forgot-password">Request a new link</ion-button>
+    </template>
 
-    <ion-content class="ion-padding">
-      <div class="narrow">
-        <template v-if="!token || !email">
-          <p>This reset link is incomplete. Please open the link from your email again, or request a new one.</p>
-          <ion-button expand="block" router-link="/forgot-password">Request a new link</ion-button>
-        </template>
-
-        <form v-else @submit.prevent="submit">
-          <p class="muted">For {{ email }}</p>
-          <ion-input
-            v-model="password"
-            type="password"
-            label="New password"
-            label-placement="stacked"
-            fill="outline"
-            autocomplete="new-password"
-            helper-text="At least 8 characters, with letters and numbers."
-            :class="{ 'ion-invalid ion-touched': errors.password || errors.email }"
-            :error-text="(errors.password ?? errors.email)?.[0]"
-          >
-            <ion-input-password-toggle slot="end" />
-          </ion-input>
-          <ion-input
-            v-model="passwordConfirmation"
-            type="password"
-            label="Confirm new password"
-            label-placement="stacked"
-            fill="outline"
-            autocomplete="new-password"
-            class="ion-margin-top"
-          />
-          <ion-button expand="block" type="submit" class="form-actions" :disabled="busy">
-            <ion-spinner v-if="busy" name="crescent" />
-            <span v-else>Save new password</span>
-          </ion-button>
-          <p v-if="errors.email" class="center"><router-link to="/forgot-password">Request a new link</router-link></p>
-        </form>
-      </div>
-    </ion-content>
-  </ion-page>
+    <form v-else @submit.prevent="submit">
+      <p class="muted">For {{ email }}</p>
+      <auth-field
+        v-model="password"
+        :icon="lockClosedOutline"
+        label="New password"
+        type="password"
+        placeholder="New password"
+        autocomplete="new-password"
+        helper="At least 8 characters, with letters and numbers."
+        :error="(errors.password ?? errors.email)?.[0]"
+      />
+      <auth-field
+        v-model="passwordConfirmation"
+        :icon="lockClosedOutline"
+        label="Confirm new password"
+        type="password"
+        placeholder="Confirm new password"
+        autocomplete="new-password"
+      />
+      <ion-button expand="block" type="submit" :disabled="busy">
+        <ion-spinner v-if="busy" name="crescent" />
+        <span v-else>Save new password</span>
+      </ion-button>
+      <p v-if="errors.email" class="center"><router-link to="/forgot-password">Request a new link</router-link></p>
+    </form>
+  </auth-layout>
 </template>
 
 <script setup lang="ts">
-import {
-  IonButton,
-  IonContent,
-  IonHeader,
-  IonInput,
-  IonInputPasswordToggle,
-  IonPage,
-  IonSpinner,
-  IonTitle,
-  IonToolbar,
-} from '@ionic/vue'
+import { IonButton, IonSpinner } from '@ionic/vue'
+import { lockClosedOutline } from 'ionicons/icons'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import AuthField from '@/components/AuthField.vue'
+import AuthLayout from '@/components/AuthLayout.vue'
 import { errorMessage, fieldErrors } from '@/services/api'
 import { authService } from '@/services/auth'
 import { useAuthStore } from '@/stores/auth'

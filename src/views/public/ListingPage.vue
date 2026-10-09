@@ -47,12 +47,12 @@
           <ion-list lines="inset">
             <ion-item v-for="s in listing.slots" :key="s.id">
               <ion-label>
-                {{ s.label }}<span v-if="s.kind === 'whole'"> · up to {{ s.capacity }} people</span>
+                <span v-if="s.room">Room {{ s.room.code }} · </span>{{ s.label }}<span v-if="s.kind === 'whole'"> · up to {{ s.capacity }} people</span>
               </ion-label>
               <ion-note slot="end">{{ peso(s.rent_centavos) }}</ion-note>
             </ion-item>
           </ion-list>
-          <p v-if="listing.rental_mode === 'bedspaces'" class="muted small">The owner assigns your bedspace when approving.</p>
+          <p v-if="listing.rental_mode !== 'whole'" class="muted small">The owner assigns your bedspace when approving.</p>
 
           <h3>Utilities</h3>
           <ion-list lines="inset">
