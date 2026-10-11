@@ -6,63 +6,82 @@
       <span v-if="property.counts.not_ready"> · {{ property.counts.not_ready }} not ready</span>
     </p>
 
-    <template v-for="group in floors" :key="group.key">
-      <h3 v-if="showFloors" class="floor">{{ group.label }}</h3>
+    <ion-segment v-model="layout" class="layout">
+      <ion-segment-button value="floors"><ion-label>Floors</ion-label></ion-segment-button>
+      <ion-segment-button value="list"><ion-label>List</ion-label></ion-segment-button>
+    </ion-segment>
 
-      <ion-card v-for="room in group.rooms" :key="room.id" class="room">
-        <ion-card-header>
-          <div class="room-head">
-            <div>
-              <ion-card-title>Room {{ room.code }}</ion-card-title>
-              <ion-card-subtitle>
-                {{ room.rental_mode_label }} · {{ room.counts.available }} of {{ room.counts.units }} available
-              </ion-card-subtitle>
+    <template v-if="layout === 'floors'">
+      <p class="muted small">Who lives where. Tap a room to see its people and emergency contacts.</p>
+      <rooms-stack :tiles="tiles" @select="openTile" />
+    </template>
+
+    <template v-else>
+      <template v-for="group in floors" :key="group.key">
+        <h3 v-if="showFloors" class="floor">{{ group.label }}</h3>
+
+        <ion-card v-for="room in group.rooms" :key="room.id" class="room">
+          <ion-card-header>
+            <div class="room-head">
+              <div>
+                <ion-card-title>
+                  Room {{ room.label }}
+                  <small v-if="room.door_no" class="muted code">{{ room.code }}</small>
+                </ion-card-title>
+                <ion-card-subtitle>
+                  {{ room.rental_mode_label }} · {{ room.counts.available }} of {{ room.counts.units }} available
+                  <span v-if="room.who_can_stay !== 'any'"> · {{ room.who_can_stay_label }}</span>
+                </ion-card-subtitle>
+              </div>
+              <ion-buttons v-if="canEdit">
+                <ion-button aria-label="Room actions" @click="openRoomActions(room)">
+                  <ion-icon slot="icon-only" :icon="ellipsisVertical" />
+                </ion-button>
+              </ion-buttons>
             </div>
-            <ion-buttons v-if="canEdit">
-              <ion-button aria-label="Room actions" @click="openRoomActions(room)">
-                <ion-icon slot="icon-only" :icon="ellipsisVertical" />
-              </ion-button>
-            </ion-buttons>
-          </div>
-        </ion-card-header>
+          </ion-card-header>
 
-        <ion-item v-if="hasPeople(room)" lines="full" button detail @click="peopleRoom = room">
-          <ion-label class="ion-text-wrap">
-            <h3>{{ room.leader ? `Leader: ${room.leader.user.name}` : 'No leader yet' }}</h3>
-            <p v-if="room.rental_mode === 'whole'">{{ room.occupants_count ?? 0 }} staying</p>
-            <p class="muted">Leader and who lives here</p>
-          </ion-label>
-        </ion-item>
-
-        <ion-list lines="full">
-          <ion-item v-for="unit in room.units" :key="unit.id">
+          <ion-item v-if="hasPeople(room)" lines="full" button detail @click="peopleRoom = room">
             <ion-label class="ion-text-wrap">
-              <h2>{{ unit.label }}</h2>
-              <p>
-                <strong>{{ unit.rent_centavos === null ? 'No rent set' : `${peso(unit.rent_centavos)} / month` }}</strong>
-                <span v-if="unit.kind === 'whole'"> · up to {{ unit.capacity }} occupants</span>
-              </p>
-              <p v-if="unit.upcoming_rent" class="upcoming">
-                {{ peso(unit.upcoming_rent.amount_centavos) }} from {{ manilaDate(unit.upcoming_rent.effective_from).format('MMM D, YYYY') }}
-              </p>
-              <p>
-                <ion-badge :color="unit.status === 'available' ? 'success' : 'medium'">{{ unit.status_label }}</ion-badge>
-                <ion-badge v-if="unit.not_ready" color="warning" class="gap">Not ready</ion-badge>
-                <span v-if="unit.not_ready_reason" class="muted"> {{ unit.not_ready_reason }}</span>
-              </p>
-              <p v-if="unit.reservation" class="reserved">
-                Reserved for {{ unit.reservation.boarder_name }} until {{ manilaDate(unit.reservation.reserved_until).format('MMM D, YYYY') }}
-                · <router-link to="/applications">Applications</router-link>
-              </p>
+              <h3>{{ room.leader ? `Leader: ${room.leader.user.name}` : 'No leader yet' }}</h3>
+              <p v-if="room.let_whole">{{ room.occupants_count ?? 0 }} staying</p>
+              <p class="muted">Leader and who lives here</p>
             </ion-label>
-            <ion-buttons v-if="canEdit || canPrice" slot="end">
-              <ion-button aria-label="Unit actions" @click="openActions(unit)">
-                <ion-icon slot="icon-only" :icon="ellipsisVertical" />
-              </ion-button>
-            </ion-buttons>
           </ion-item>
-        </ion-list>
-      </ion-card>
+
+          <ion-list lines="full">
+            <ion-item v-for="unit in room.units" :key="unit.id">
+              <ion-label class="ion-text-wrap">
+                <h2>{{ unit.label }}<span v-if="unit.is_whole_option" class="muted"> · also offered as one room</span></h2>
+                <p>
+                  <strong>{{ unit.rent_centavos === null ? 'No rent set' : `${peso(unit.rent_centavos)} / month` }}</strong>
+                  <span v-if="unit.kind === 'whole'"> · up to {{ unit.capacity }} occupants</span>
+                </p>
+                <p v-if="unit.upcoming_rent" class="upcoming">
+                  {{ peso(unit.upcoming_rent.amount_centavos) }} from {{ manilaDate(unit.upcoming_rent.effective_from).format('MMM D, YYYY') }}
+                </p>
+                <p>
+                  <ion-badge :color="unit.status === 'available' ? 'success' : 'medium'">{{ unit.status_label }}</ion-badge>
+                  <ion-badge v-if="unit.not_ready" color="warning" class="gap">Not ready</ion-badge>
+                  <ion-badge v-if="unit.blocked" color="medium" class="gap">
+                    {{ unit.is_whole_option ? 'Not offered: a bedspace is taken' : 'Held: room rented whole' }}
+                  </ion-badge>
+                  <span v-if="unit.not_ready_reason" class="muted"> {{ unit.not_ready_reason }}</span>
+                </p>
+                <p v-if="unit.reservation" class="reserved">
+                  Reserved for {{ unit.reservation.boarder_name }} until {{ manilaDate(unit.reservation.reserved_until).format('MMM D, YYYY') }}
+                  · <router-link to="/applications">Applications</router-link>
+                </p>
+              </ion-label>
+              <ion-buttons v-if="canEdit || canPrice" slot="end">
+                <ion-button aria-label="Unit actions" @click="openActions(unit)">
+                  <ion-icon slot="icon-only" :icon="ellipsisVertical" />
+                </ion-button>
+              </ion-buttons>
+            </ion-item>
+          </ion-list>
+        </ion-card>
+      </template>
     </template>
 
     <ion-card v-if="canEdit">
@@ -74,6 +93,10 @@
         </ion-segment>
         <div class="row">
           <ion-input v-model="newRoom.floor" type="number" label="Floor (optional)" label-placement="stacked" fill="outline" />
+          <ion-input v-model="newRoom.door" :maxlength="10" label="Door no. (optional)" placeholder="e.g. 201" label-placement="stacked" fill="outline" />
+          <ion-select v-model="newRoom.who" label="Who can stay" label-placement="stacked" fill="outline" interface="popover">
+            <ion-select-option v-for="(label, value) in WhoCanStayLabels" :key="value" :value="value">{{ label }}</ion-select-option>
+          </ion-select>
           <ion-input
             v-if="newRoom.mode === 'bedspaces'"
             v-model.number="newRoom.count"
@@ -157,6 +180,8 @@ import {
   IonModal,
   IonSegment,
   IonSegmentButton,
+  IonSelect,
+  IonSelectOption,
   IonTitle,
   IonToolbar,
 } from '@ionic/vue'
@@ -166,9 +191,11 @@ import { manila, manilaDate } from '@/lib/dayjs'
 import { peso, toCentavos, toPesoInput } from '@/lib/money'
 import { errorMessage, fieldErrors } from '@/services/api'
 import RoomPeopleModal from '@/components/tenancy/RoomPeopleModal.vue'
+import RoomsStack, { type StackTile } from '@/components/rooms/RoomsStack.vue'
 import { propertyService } from '@/services/properties'
 import { usePrompt } from '@/composables/usePrompt'
 import { useToast } from '@/composables/useToast'
+import { WhoCanStayLabels } from '@/types/enums'
 import type { PriceRule, Property, Room, Unit } from '@/types/property'
 
 const props = defineProps<{ property: Property }>()
@@ -185,7 +212,53 @@ const peopleRoom = ref<Room | null>(null)
 const hasPeople = (room: Room) => room.units.some((u) => u.status !== 'available')
 const busy = ref(false)
 const history = ref<PriceRule[] | null>(null)
-const newRoom = reactive({ mode: 'bedspaces', floor: '', count: 4, capacity: 2, rent: '' })
+const layout = ref<'floors' | 'list'>('floors')
+
+/** Who is in each unit: the tenant, or the boarder holding a reservation. */
+function people(room: Room): string[] {
+  const names: string[] = []
+  for (const unit of room.units) {
+    if (unit.tenant_name) names.push(unit.tenant_name)
+    else if (unit.reservation) names.push(`${unit.reservation.boarder_name} (reserved)`)
+  }
+  const others = room.let_whole ? (room.occupants_count ?? 0) - 1 : 0
+  if (names.length && others > 0) names[names.length - 1] += ` +${others}`
+  return names
+}
+
+const tiles = computed<StackTile[]>(() =>
+  props.property.rooms.map((room) => {
+    const places = room.units.filter((u) => !u.is_whole_option)
+    const option = room.units.find((u) => u.is_whole_option)
+    const free = places.filter((u) => u.status === 'available' && !u.not_ready && !u.blocked).length
+    const notReady = places.some((u) => u.status === 'available' && u.not_ready)
+    const names = people(room)
+    return {
+      id: room.id,
+      floor: room.floor,
+      title: room.label,
+      status: free || (option && option.status === 'available' && !option.not_ready && !option.blocked) ? 'available' : notReady ? 'not_ready' : 'full',
+      line1: names.length ? names.join(', ') : 'No one yet',
+      line2:
+        room.rental_mode === 'whole'
+          ? free
+            ? 'Whole room · free'
+            : 'Whole room'
+          : room.let_whole
+            ? 'Rented whole'
+            : `${free}/${places.length} beds free${option ? ' · or whole' : ''}`,
+    }
+  }),
+)
+
+function openTile(id: number) {
+  const room = props.property.rooms.find((r) => r.id === id)
+  if (!room) return
+  if (hasPeople(room)) peopleRoom.value = room
+  else if (canEdit.value) openRoomActions(room)
+}
+
+const newRoom = reactive({ mode: 'bedspaces', floor: '', door: '', who: 'any', count: 4, capacity: 2, rent: '' })
 
 /** Rooms grouped by floor; the API already orders them (no floor first, then by floor and number). */
 const floors = computed(() => {
@@ -230,12 +303,18 @@ function parseFloor(value: unknown): number | null | undefined {
 
 async function openRoomActions(room: Room) {
   const buttons = []
-  if (room.rental_mode === 'bedspaces') buttons.push({ text: 'Add bedspaces', handler: () => addBedspaces(room) })
+  if (room.rental_mode === 'bedspaces') {
+    buttons.push({ text: 'Add bedspaces', handler: () => addBedspaces(room) })
+    const option = room.units.find((u) => u.is_whole_option)
+    if (canPrice.value) buttons.push({ text: option ? 'Whole-room price…' : 'Also rent as a whole room…', handler: () => offerWhole(room) })
+  }
   buttons.push({ text: 'Change floor', handler: () => changeFloor(room) })
+  buttons.push({ text: room.door_no ? 'Change door no.' : 'Set door no.', handler: () => changeDoor(room) })
+  buttons.push({ text: 'Who can stay', handler: () => changeWho(room) })
   buttons.push({ text: room.rental_mode === 'whole' ? 'Rent by bedspace instead' : 'Rent as a whole room instead', handler: () => switchMode(room) })
   buttons.push({ text: 'Remove room', role: 'destructive', handler: () => removeRoom(room) })
   buttons.push({ text: 'Cancel', role: 'cancel' })
-  const sheet = await actionSheetController.create({ header: `Room ${room.code}`, buttons })
+  const sheet = await actionSheetController.create({ header: `Room ${room.label}`, buttons })
   await sheet.present()
 }
 
@@ -249,6 +328,7 @@ async function openActions(unit: Unit) {
     buttons.push({ text: unit.not_ready ? 'Mark ready' : 'Mark not ready', handler: () => toggleReady(unit) })
     buttons.push({ text: unit.kind === 'whole' ? 'Change max occupants' : 'Rename', handler: () => editUnit(unit) })
     if (unit.kind === 'bedspace') buttons.push({ text: 'Remove', role: 'destructive', handler: () => removeUnit(unit) })
+    if (unit.is_whole_option) buttons.push({ text: 'Stop renting as a whole room', role: 'destructive', handler: () => removeUnit(unit) })
   }
   buttons.push({ text: 'Cancel', role: 'cancel' })
   const sheet = await actionSheetController.create({ header: unit.label, buttons })
@@ -302,7 +382,32 @@ async function editUnit(unit: Unit) {
   await run(() => propertyService.updateUnit(unit.id, whole ? { capacity: Number(data.values.v) } : { label: String(data.values.v) }))
 }
 
+async function offerWhole(room: Room) {
+  const option = room.units.find((u) => u.is_whole_option)
+  const beds = room.units.filter((u) => !u.is_whole_option).length
+  const alert = await alertController.create({
+    header: `Rent room ${room.label} as a whole`,
+    message: 'Offered only while every bedspace is free. While someone holds the whole room, its bedspaces are not offered.',
+    inputs: [
+      { name: 'rent', type: 'text', placeholder: 'Monthly rent for the whole room in ₱', value: toPesoInput(option?.rent_centavos ?? null), attributes: { inputmode: 'decimal' } },
+      { name: 'capacity', type: 'number', placeholder: `Most people (default ${beds})`, value: option?.capacity ?? '', min: 1 },
+    ],
+    buttons: [{ text: 'Cancel', role: 'cancel' }, { text: 'Save', role: 'confirm' }],
+  })
+  await alert.present()
+  const { role, data } = await alert.onDidDismiss()
+  if (role !== 'confirm') return
+  const rent = toCentavos(data?.values?.rent)
+  if (rent === null || rent <= 0) return toast.error('Enter the whole-room rent in pesos, e.g. 6000.')
+  const capacity = Number(data?.values?.capacity) || null
+  await run(() => propertyService.offerWhole(room.id, { rent_centavos: rent, capacity }), `Room ${room.label} can also be rented whole.`)
+}
+
 async function removeUnit(unit: Unit) {
+  if (unit.is_whole_option) {
+    if (!(await prompt.confirm('Stop renting as a whole room?', 'Boarders can still book its bedspaces. The whole-room price history is kept.', 'Stop'))) return
+    return run(() => propertyService.removeUnit(unit.id), 'The room is no longer offered as a whole.')
+  }
   if (!(await prompt.confirm('Remove bedspace?', `${unit.label} will be archived with its rent history.`, 'Remove'))) return
   await run(() => propertyService.removeUnit(unit.id), `${unit.label} removed.`)
 }
@@ -317,15 +422,18 @@ async function addRoom() {
     await propertyService.addRoom(props.property.id, {
       rental_mode: newRoom.mode,
       floor,
+      door_no: newRoom.door.trim() || null,
+      who_can_stay: newRoom.who,
       units: whole ? { capacity: newRoom.capacity || 1, rent_centavos: rent } : { count: newRoom.count || 1, rent_centavos: rent },
     })
     newRoom.rent = ''
+    newRoom.door = ''
   }, 'Room added.')
 }
 
 async function addBedspaces(room: Room) {
   const alert = await alertController.create({
-    header: `Add bedspaces to room ${room.code}`,
+    header: `Add bedspaces to room ${room.label}`,
     inputs: [
       { name: 'count', type: 'number', placeholder: 'How many', value: 1, min: 1 },
       { name: 'rent', type: 'text', placeholder: 'Rent each in ₱ (optional)', attributes: { inputmode: 'decimal' } },
@@ -343,7 +451,7 @@ async function addBedspaces(room: Room) {
 
 async function changeFloor(room: Room) {
   const alert = await alertController.create({
-    header: `Floor of room ${room.code}`,
+    header: `Floor of room ${room.label}`,
     message: 'Leave empty if the room has no floor. The room code changes with the floor.',
     inputs: [{ name: 'floor', type: 'number', placeholder: 'Floor', value: room.floor ?? '' }],
     buttons: [{ text: 'Cancel', role: 'cancel' }, { text: 'Save', role: 'confirm' }],
@@ -356,15 +464,41 @@ async function changeFloor(room: Room) {
   await run(() => propertyService.updateRoom(room.id, { floor }), 'Floor saved.')
 }
 
+async function changeDoor(room: Room) {
+  const alert = await alertController.create({
+    header: `Door no. of room ${room.label}`,
+    message: 'The number on the door, e.g. 201 or 2B. Boarders see it instead of the room code. Leave empty to use the code.',
+    inputs: [{ name: 'door', type: 'text', placeholder: 'Door no.', value: room.door_no ?? '', attributes: { maxlength: 10 } }],
+    buttons: [{ text: 'Cancel', role: 'cancel' }, { text: 'Save', role: 'confirm' }],
+  })
+  await alert.present()
+  const { role, data } = await alert.onDidDismiss()
+  if (role !== 'confirm') return
+  const door = String(data?.values?.door ?? '').trim() || null
+  await run(() => propertyService.updateRoom(room.id, { door_no: door }), 'Door no. saved.')
+}
+
+async function changeWho(room: Room) {
+  const alert = await alertController.create({
+    header: `Who can stay in room ${room.label}`,
+    inputs: Object.entries(WhoCanStayLabels).map(([value, label]) => ({ type: 'radio' as const, label, value, checked: value === room.who_can_stay })),
+    buttons: [{ text: 'Cancel', role: 'cancel' }, { text: 'Save', role: 'confirm' }],
+  })
+  await alert.present()
+  const { role, data } = await alert.onDidDismiss()
+  if (role !== 'confirm' || !data?.values) return
+  await run(() => propertyService.updateRoom(room.id, { who_can_stay: data.values }), 'Saved.')
+}
+
 async function removeRoom(room: Room) {
-  if (!(await prompt.confirm('Remove room?', `Room ${room.code} and its units will be archived with their rent history.`, 'Remove'))) return
-  await run(() => propertyService.removeRoom(room.id), `Room ${room.code} removed.`)
+  if (!(await prompt.confirm('Remove room?', `Room ${room.label} and its units will be archived with their rent history.`, 'Remove'))) return
+  await run(() => propertyService.removeRoom(room.id), `Room ${room.label} removed.`)
 }
 
 async function switchMode(room: Room) {
   const toWhole = room.rental_mode === 'bedspaces'
   const alert = await alertController.create({
-    header: toWhole ? `Rent room ${room.code} as a whole` : `Rent room ${room.code} by bedspace`,
+    header: toWhole ? `Rent room ${room.label} as a whole` : `Rent room ${room.label} by bedspace`,
     message: 'The current units are archived with their rent history. Not allowed while anyone is booked or living in the room.',
     inputs: toWhole
       ? [
@@ -395,6 +529,12 @@ async function switchMode(room: Room) {
 </script>
 
 <style scoped>
+.layout {
+  margin: 4px 0 8px;
+}
+.small {
+  font-size: 0.8rem;
+}
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -403,6 +543,11 @@ async function switchMode(room: Room) {
 }
 .floor {
   margin: 16px 16px 0;
+}
+.code {
+  font-size: 0.6em;
+  font-weight: normal;
+  margin-left: 4px;
 }
 .room-head {
   display: flex;

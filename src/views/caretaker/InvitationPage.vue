@@ -35,7 +35,7 @@
           <!-- Signed out: sign in or sign up with the invited email, then come back -->
           <template v-else-if="!auth.isLoggedIn">
             <p class="muted">
-              Log in or create a BoardMate account with the invited email address to accept. We'll bring you back here.
+              Log in or create a DormLink account with the invited email address to accept. We'll bring you back here.
             </p>
             <ion-button expand="block" @click="goTo('/login')">Log in</ion-button>
             <ion-button expand="block" fill="outline" @click="goTo('/register')">Create an account</ion-button>

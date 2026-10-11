@@ -15,7 +15,7 @@
           <ion-card>
             <ion-card-content>
               <p>
-                <strong>Room {{ tenancy.room.code }} · {{ tenancy.unit.label }}</strong><br />
+                <strong>Room {{ tenancy.room.label }} · {{ tenancy.unit.label }}</strong><br />
                 {{ tenancy.tenant.phone ?? 'No phone' }}<template v-if="tenancy.tenant.email"> · {{ tenancy.tenant.email }}</template>
               </p>
               <p>

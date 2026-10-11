@@ -2,7 +2,7 @@
   <ion-modal :is-open="!!room" @did-dismiss="emit('close')">
     <ion-header>
       <ion-toolbar>
-        <ion-title>Room {{ room?.code }}</ion-title>
+        <ion-title>Room {{ room?.label }}</ion-title>
         <ion-buttons slot="end"><ion-button @click="emit('close')">Close</ion-button></ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -78,7 +78,7 @@
                   <ion-input v-model="draft.contact_phone" type="tel" label="Phone (optional)" label-placement="stacked" fill="outline" />
                   <ion-input v-model="draft.joined_on" type="date" :max="today" label="Joined on" label-placement="stacked" fill="outline" />
                 </div>
-                <ion-input v-model="draft.email" type="email" label="BoardMate account email (optional)" label-placement="stacked" fill="outline" class="gap" />
+                <ion-input v-model="draft.email" type="email" label="DormLink account email (optional)" label-placement="stacked" fill="outline" class="gap" />
                 <ion-input v-model="draft.emergency_contact_name" label="Emergency contact" label-placement="stacked" fill="outline" class="gap" />
                 <div class="row">
                   <ion-input v-model="draft.emergency_contact_relationship" label="Relationship" label-placement="stacked" fill="outline" />
@@ -127,7 +127,7 @@ import type { NewOccupantInput, RoomLeader, RoomOccupant, Tenancy } from '@/type
  * property (sees emergency contacts; `canManage` = may change things). Otherwise
  * the room's leader, who can add people and mark them as left.
  */
-const props = defineProps<{ room: Pick<Room, 'id' | 'code' | 'rental_mode'> | null; propertyId: number; staff: boolean; canManage: boolean }>()
+const props = defineProps<{ room: Pick<Room, 'id' | 'code' | 'label' | 'rental_mode'> & { let_whole?: boolean } | null; propertyId: number; staff: boolean; canManage: boolean }>()
 const emit = defineEmits<{ close: []; changed: [] }>()
 
 const toast = useToast()
@@ -141,7 +141,7 @@ const adding = ref(false)
 const today = ref(manila().format('YYYY-MM-DD'))
 const draft = reactive<NewOccupantInput>(blankDraft())
 
-const whole = computed(() => props.room?.rental_mode === 'whole')
+const whole = computed(() => props.room?.let_whole ?? props.room?.rental_mode === 'whole')
 const staying = computed(() => occupants.value.filter((o) => o.is_staying))
 
 function blankDraft(): NewOccupantInput {
@@ -201,7 +201,7 @@ async function chooseLeader() {
   if (role !== 'confirm' || !data?.values) return
   const chosen = candidates.find((m) => m.tenant.id === Number(data.values))
   if (!chosen) return
-  if (!(await prompt.confirm('Did they agree?', `${chosen.tenant.name} agreed to be the leader of room ${props.room.code}: billed for its shared bills. Your approval is recorded.`, 'Yes, appoint'))) return
+  if (!(await prompt.confirm('Did they agree?', `${chosen.tenant.name} agreed to be the leader of room ${props.room.label}: billed for its shared bills. Your approval is recorded.`, 'Yes, appoint'))) return
   await run(() => tenancyService.setLeader(props.room!.id, chosen.tenant.id), `${chosen.tenant.name} is the leader.`)
 }
 

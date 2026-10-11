@@ -4,7 +4,7 @@ import type { ApiEnvelope } from '@/types/api'
 import type { CaretakerLink, InvitationDetails } from '@/types/roles'
 import type { User } from '@/types/user'
 
-const PENDING_INVITE_KEY = 'boardmate.pendingInvite'
+const PENDING_INVITE_KEY = 'dormlink.pendingInvite'
 
 export const caretakerService = {
   async invitation(token: string): Promise<InvitationDetails> {

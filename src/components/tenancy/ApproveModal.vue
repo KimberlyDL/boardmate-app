@@ -10,15 +10,21 @@
     <ion-content class="ion-padding">
       <div class="narrow">
         <p class="muted">Choose the room or bedspace to hold for {{ firstName }}.</p>
+        <p v-if="application?.room">
+          {{ firstName }} asked for <strong>{{ application.wants_whole ? 'the whole of ' : '' }}room {{ application.room.label }}</strong>.
+          <span v-if="!units.some((u) => u.room_id === application?.room?.id)" class="warn">It has no free place now.</span>
+        </p>
 
         <ion-radio-group v-model="unitId">
           <ion-item v-for="u in units" :key="u.id">
             <ion-radio :value="u.id" label-placement="end" justify="start" class="ion-text-wrap">
-              {{ u.room_code ? `Room ${u.room_code} · ` : '' }}{{ u.label }} · {{ peso(u.rent_centavos) }}
+              {{ u.room_label ? `Room ${u.room_label} · ` : '' }}{{ u.label }} · {{ peso(u.rent_centavos) }}
               <span v-if="u.kind === 'whole'" class="muted"> · up to {{ u.capacity }} people</span>
             </ion-radio>
           </ion-item>
         </ion-radio-group>
+
+        <p v-if="placedElsewhere" class="warn">{{ firstName }} will be told you placed them in room {{ unit?.room_label }} instead.</p>
 
         <!-- A room rented whole: the applicant leads it; note who else will stay -->
         <template v-if="unit?.kind === 'whole'">
@@ -90,13 +96,16 @@ const leader = ref(false)
 const occupants = ref<PlannedOccupant[]>([])
 
 const unit = computed(() => props.units.find((u) => u.id === unitId.value) ?? null)
+const placedElsewhere = computed(() => !!props.application?.room && !!unit.value && unit.value.room_id !== props.application.room.id)
 const firstName = computed(() => props.application?.applicant?.name.split(' ')[0] ?? 'the applicant')
 
 watch(
   () => props.application,
   (a) => {
     if (!a) return
-    unitId.value = props.units[0]?.id ?? null
+    // Start with a free place in the room they asked for.
+    const inRoom = props.units.filter((u) => u.room_id === a.room?.id)
+    unitId.value = (inRoom.find((u) => !!u.is_whole_option === a.wants_whole) ?? inRoom[0] ?? props.units[0])?.id ?? null
     leader.value = false
     occupants.value = []
   },
@@ -128,6 +137,9 @@ async function approve() {
 </script>
 
 <style scoped>
+.warn {
+  color: var(--ion-color-warning-shade);
+}
 .add {
   margin: 8px 0;
 }

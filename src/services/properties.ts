@@ -1,7 +1,6 @@
 import { api } from './api'
 import type { ApiEnvelope } from '@/types/api'
 import type {
-  Building,
   PriceRule,
   Property,
   PropertyCaretakerAssignment,
@@ -19,7 +18,6 @@ export interface PropertyDetailsInput {
   type?: string
   description?: string | null
   who_can_apply?: string | null
-  building_id?: number | null
   street?: string | null
   barangay?: string | null
   city?: string | null
@@ -70,12 +68,15 @@ export const propertyService = {
   },
 
   // Rooms
-  async addRoom(propertyId: number, input: { rental_mode: string; floor?: number | null; units: UnitSpec }): Promise<Room> {
+  async addRoom(
+    propertyId: number,
+    input: { rental_mode: string; floor?: number | null; door_no?: string | null; who_can_stay?: string; units: UnitSpec },
+  ): Promise<Room> {
     const { data } = await api.post<ApiEnvelope<Room>>(`/properties/${propertyId}/rooms`, input)
     return data.data
   },
 
-  async updateRoom(roomId: number, input: { floor: number | null }): Promise<Room> {
+  async updateRoom(roomId: number, input: { floor?: number | null; door_no?: string | null; who_can_stay?: string }): Promise<Room> {
     const { data } = await api.patch<ApiEnvelope<Room>>(`/rooms/${roomId}`, input)
     return data.data
   },
@@ -90,6 +91,12 @@ export const propertyService = {
   },
 
   // Units
+  /** Also rent a bedspace room as one room (adds or re-prices its whole-room option). */
+  async offerWhole(roomId: number, input: { rent_centavos: number; capacity?: number | null }): Promise<Room> {
+    const { data } = await api.put<ApiEnvelope<Room>>(`/rooms/${roomId}/whole-option`, input)
+    return data.data
+  },
+
   async addBedspaces(roomId: number, input: { count: number; label_pattern?: string; rent_centavos?: number | null }): Promise<Unit[]> {
     const { data } = await api.post<ApiEnvelope<Unit[]>>(`/rooms/${roomId}/bedspaces`, input)
     return data.data
@@ -187,17 +194,6 @@ export const propertyService = {
   // Caretakers
   async setCaretakers(id: number, assignments: { caretaker_id: number; access_level: string }[]): Promise<PropertyCaretakerAssignment[]> {
     const { data } = await api.put<ApiEnvelope<PropertyCaretakerAssignment[]>>(`/properties/${id}/caretakers`, { assignments })
-    return data.data
-  },
-
-  // Buildings
-  async buildings(): Promise<Building[]> {
-    const { data } = await api.get<ApiEnvelope<Building[]>>('/owner/buildings')
-    return data.data
-  },
-
-  async addBuilding(name: string): Promise<Building> {
-    const { data } = await api.post<ApiEnvelope<Building>>('/owner/buildings', { name })
     return data.data
   },
 }

@@ -26,7 +26,11 @@
 
         <ion-card v-for="a in items" :key="a.id">
           <ion-card-header>
-            <ion-card-subtitle>{{ a.property.name }}{{ a.unit ? ` · ${a.unit.label}` : '' }}</ion-card-subtitle>
+            <ion-card-subtitle>
+              {{ a.property.name }}
+              <template v-if="a.unit"> · {{ a.unit.room_label ? `Room ${a.unit.room_label} · ` : '' }}{{ a.unit.label }}</template>
+              <template v-else-if="a.room"> · wants {{ a.wants_whole ? 'the whole of ' : '' }}room {{ a.room.label }}</template>
+            </ion-card-subtitle>
             <ion-card-title>{{ a.applicant?.name }}</ion-card-title>
           </ion-card-header>
           <ion-card-content>

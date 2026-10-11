@@ -11,11 +11,11 @@
       <div class="narrow">
         <!-- Walk-in: who and where -->
         <template v-if="!application">
-          <ion-input v-model="email" type="email" inputmode="email" label="Their BoardMate account email" label-placement="stacked" fill="outline" />
+          <ion-input v-model="email" type="email" inputmode="email" label="Their DormLink account email" label-placement="stacked" fill="outline" />
           <p class="muted small">They need an account. Ask them to sign up first if they have none.</p>
           <ion-select v-model="unitId" label="Room or bedspace" label-placement="stacked" fill="outline" interface="popover" class="gap">
             <ion-select-option v-for="u in units" :key="u.id" :value="u.id">
-              {{ u.room_code ? `Room ${u.room_code} · ` : '' }}{{ u.label }} · {{ peso(u.rent_centavos) }}
+              {{ u.room_label ? `Room ${u.room_label} · ` : '' }}{{ u.label }} · {{ peso(u.rent_centavos) }}
             </ion-select-option>
           </ion-select>
           <p v-if="!units?.length" class="muted">No unit is free to rent right now.</p>
@@ -174,6 +174,7 @@ export interface MovableUnit {
   id: number
   label: string
   room_code: string | null
+  room_label: string | null
   kind: 'whole' | 'bedspace'
   rent_centavos: number | null
 }
@@ -280,7 +281,7 @@ async function requote() {
 
 async function submit() {
   if (!unitId.value) return toast.error('Choose a room or bedspace.')
-  if (!props.application && !email.value.trim()) return toast.error('Enter the email of their BoardMate account.')
+  if (!props.application && !email.value.trim()) return toast.error('Enter the email of their DormLink account.')
   if (!form.emergency.name.trim() || !form.emergency.phone.trim()) return toast.error('Add an emergency contact for the tenant.')
   if (override.value && form.overrideReason.trim().length < 3) return toast.error('Give a reason for moving in without the full deposit and first rent.')
   if (leads.value && !form.leaderConsent) return toast.error('Confirm that the tenant agreed to be the room\'s leader.')

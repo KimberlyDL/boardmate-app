@@ -8,7 +8,12 @@ export interface FinderFilters {
   mode: '' | 'bedspaces' | 'whole'
   includes: string[]
   who: string
-  sort: 'newest' | 'price'
+  /** Rooms for this group (rooms for anyone count too) */
+  whoCanStay: '' | 'female' | 'male'
+  /** Hide full places */
+  availableOnly: boolean
+  /** "nearest" needs a distance point (see toQuery's `near`) */
+  sort: 'newest' | 'price' | 'nearest'
   /** south, west, north, east — set by "Search this area" on the map. */
   bbox: [number, number, number, number] | null
 }
@@ -20,12 +25,22 @@ export const emptyFilters = (): FinderFilters => ({
   mode: '',
   includes: [],
   who: '',
+  whoCanStay: '',
+  availableOnly: false,
   sort: 'newest',
   bbox: null,
 })
 
-/** Turn the UI filters into API query params (centavos, comma bbox), dropping empty ones. */
-export function toQuery(f: FinderFilters, page = 1): Record<string, string | number | string[]> {
+/**
+ * Turn the UI filters into API query params (centavos, comma bbox), dropping
+ * empty ones. `near` (lat, lng) asks for distances; without it "nearest" falls
+ * back to newest.
+ */
+export function toQuery(
+  f: FinderFilters,
+  page = 1,
+  near: { lat: number; lng: number } | null = null,
+): Record<string, string | number | string[]> {
   const query: Record<string, string | number | string[]> = { page }
   if (f.q.trim()) query.q = f.q.trim()
   const min = toCentavos(f.minPrice)
@@ -35,14 +50,17 @@ export function toQuery(f: FinderFilters, page = 1): Record<string, string | num
   if (f.mode) query.rental_mode = f.mode
   if (f.includes.length) query.includes = f.includes
   if (f.who.trim()) query.who = f.who.trim()
-  if (f.sort !== 'newest') query.sort = f.sort
+  if (f.whoCanStay) query.who_can_stay = f.whoCanStay
+  if (f.availableOnly) query.available = 1
+  if (near) query.near = `${near.lat.toFixed(6)},${near.lng.toFixed(6)}`
+  if (f.sort === 'price' || (f.sort === 'nearest' && near)) query.sort = f.sort
   if (f.bbox) query.bbox = f.bbox.map((n) => n.toFixed(5)).join(',')
   return query
 }
 
 /** How many filters are active (for the "Filters (3)" button). */
 export function activeCount(f: FinderFilters): number {
-  return [f.minPrice, f.maxPrice, f.mode, f.who].filter(Boolean).length + f.includes.length + (f.bbox ? 1 : 0)
+  return [f.minPrice, f.maxPrice, f.mode, f.who, f.whoCanStay, f.availableOnly].filter(Boolean).length + f.includes.length + (f.bbox ? 1 : 0)
 }
 
 /** The Dorm Finder filters as URL query params (what the landing search sends to /find). */

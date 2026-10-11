@@ -7,6 +7,10 @@ import type { PlannedOccupant } from '@/types/tenancy'
 export interface ApplyInput {
   planned_move_in_on: string
   contact_phone: string
+  /** The room wanted (required when the place has more than one) */
+  room_id?: number | null
+  /** The whole room rather than a bedspace (where the owner offers it) */
+  whole?: boolean
   message?: string
   id_document?: File | null
 }
@@ -17,6 +21,8 @@ export const bookingService = {
     const form = new FormData()
     form.append('planned_move_in_on', input.planned_move_in_on)
     form.append('contact_phone', input.contact_phone)
+    if (input.room_id) form.append('room_id', String(input.room_id))
+    if (input.whole) form.append('whole', '1')
     if (input.message) form.append('message', input.message)
     if (input.id_document) form.append('id_document', input.id_document)
     const { data } = await api.post<ApiEnvelope<BookingApplication>>(`/listings/${propertyId}/applications`, form)

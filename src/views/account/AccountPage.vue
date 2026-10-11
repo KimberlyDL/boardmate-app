@@ -21,7 +21,7 @@
 
         <!-- Role switcher: one account can be e.g. an owner and a boarder -->
         <template v-if="auth.user.roles.length > 1">
-          <h3>Use BoardMate as</h3>
+          <h3>Use DormLink as</h3>
           <ion-segment :value="auth.user.active_role ?? undefined" @ion-change="onSwitch($event.detail.value as UserRole)">
             <ion-segment-button v-for="role in auth.user.roles" :key="role" :value="role">
               <ion-label>{{ UserRoleLabels[role] }}</ion-label>
@@ -53,7 +53,7 @@
             <ion-icon slot="start" :icon="homeOutline" />
             <ion-label>
               <h3>List your property</h3>
-              <p>Apply to be an owner on BoardMate</p>
+              <p>Apply to be an owner on DormLink</p>
             </ion-label>
           </ion-item>
           <ion-item button router-link="/privacy" detail>

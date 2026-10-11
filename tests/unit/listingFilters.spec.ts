@@ -34,6 +34,21 @@ describe('Dorm Finder filters → API query', () => {
     expect(activeCount(f)).toBe(7)
   })
 
+  test('who can stay, free rooms only, and distance from a point', () => {
+    const f = { ...emptyFilters(), whoCanStay: 'female' as const, availableOnly: true, sort: 'nearest' as const }
+
+    expect(toQuery(f, 1, { lat: 14.6096, lng: 120.9895 })).toEqual({
+      page: 1,
+      who_can_stay: 'female',
+      available: 1,
+      near: '14.609600,120.989500',
+      sort: 'nearest',
+    })
+    // No point to measure from: "nearest" falls back to the default order.
+    expect(toQuery(f)).toEqual({ page: 1, who_can_stay: 'female', available: 1 })
+    expect(activeCount(f)).toBe(2)
+  })
+
   test('invalid prices are ignored rather than sent', () => {
     expect(toQuery({ ...emptyFilters(), minPrice: 'abc' })).toEqual({ page: 1 })
   })

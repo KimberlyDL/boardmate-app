@@ -12,7 +12,7 @@
 
     <ion-card v-for="t in items" :key="t.id" button @click="openId = t.id">
       <ion-card-header>
-        <ion-card-subtitle>Room {{ t.room.code }} · {{ t.unit.label }}</ion-card-subtitle>
+        <ion-card-subtitle>Room {{ t.room.label }} · {{ t.unit.label }}</ion-card-subtitle>
         <ion-card-title>{{ t.tenant.name }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
@@ -70,7 +70,7 @@ const freeUnits = computed<MovableUnit[]>(() =>
   props.property.rooms.flatMap((room) =>
     room.units
       .filter((u) => u.status === 'available' && !u.not_ready)
-      .map((u) => ({ id: u.id, label: u.label, room_code: room.code, kind: u.kind, rent_centavos: u.rent_centavos })),
+      .map((u) => ({ id: u.id, label: u.label, room_code: room.code, room_label: room.label, kind: u.kind, rent_centavos: u.rent_centavos })),
   ),
 )
 

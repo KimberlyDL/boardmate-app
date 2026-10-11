@@ -10,7 +10,7 @@
     <ion-content class="ion-padding">
       <form class="narrow" @submit.prevent="submit">
         <p>
-          Owners are checked by the BoardMate team before their listings go public. You can start setting up while we
+          Owners are checked by the DormLink team before their listings go public. You can start setting up while we
           review your application.
         </p>
         <p v-if="previousReason" class="reason"><strong>Last review:</strong> {{ previousReason }}</p>
@@ -55,7 +55,7 @@
         <p class="muted">
           Attach a valid government ID and one proof of the property (title, lease, or a utility bill in your name). A
           business or barangay permit helps but is optional. Photos or PDFs, up to 5 MB each, {{ MAX_DOCUMENTS }} files in
-          all. Only the BoardMate team sees them, and they are deleted 90 days after we decide.
+          all. Only the DormLink team sees them, and they are deleted 90 days after we decide.
         </p>
 
         <ul class="required">

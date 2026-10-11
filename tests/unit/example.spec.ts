@@ -9,7 +9,7 @@ vi.mock('vue-router', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 const mountHome = () => mount(HomePage, { global: { plugins: [IonicVue, createPinia()], stubs: { 'router-link': true } } })
 
 describe('HomePage.vue (onboarding)', () => {
-  test('introduces BoardMate in five slides, then the sign-in screen', () => {
+  test('introduces DormLink in five slides, then the sign-in screen', () => {
     const wrapper = mountHome()
     const text = wrapper.text()
     for (const heading of [

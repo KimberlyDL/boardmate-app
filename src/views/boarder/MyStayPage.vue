@@ -19,7 +19,7 @@
         <template v-else>
           <ion-card>
             <ion-card-header>
-              <ion-card-subtitle>Room {{ stay.room.code }} · {{ stay.unit.label }}</ion-card-subtitle>
+              <ion-card-subtitle>Room {{ stay.room.label }} · {{ stay.unit.label }}</ion-card-subtitle>
               <ion-card-title>{{ stay.property.name }}</ion-card-title>
             </ion-card-header>
             <ion-card-content>
@@ -43,7 +43,7 @@
             <ion-card-content>
               <strong>You are the leader of this room.</strong>
               <p>You are billed for the room's shared bills.</p>
-              <ion-button v-if="stay.room.rental_mode === 'whole'" size="small" fill="outline" @click="people = true">Who stays in the room</ion-button>
+              <ion-button v-if="stay.room.let_whole" size="small" fill="outline" @click="people = true">Who stays in the room</ion-button>
             </ion-card-content>
           </ion-card>
 

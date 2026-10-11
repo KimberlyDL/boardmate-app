@@ -8,6 +8,7 @@ import type {
   UnitStatus,
   UtilityMethod,
   UtilityType,
+  WhoCanStay,
 } from './enums'
 
 export interface Unit {
@@ -23,6 +24,12 @@ export interface Unit {
   not_ready_reason: string | null
   rent_centavos: number | null
   upcoming_rent: { amount_centavos: number; effective_from: string } | null
+  /** Who lives here now (staff only) */
+  tenant_name: string | null
+  /** A bedspace room's "also rent whole" unit */
+  is_whole_option: boolean
+  /** Held back because the other side of the whole-room option is taken */
+  blocked: boolean
   /** Set while a boarder holds a reservation on this unit (F2). */
   reservation: { application_id: number; boarder_name: string; reserved_until: string } | null
 }
@@ -31,12 +38,21 @@ export interface Unit {
 export interface Room {
   id: number
   property_id: number
-  /** e.g. B1-F4-03; building and floor parts are left out when absent */
+  /** e.g. F4-03; the floor part is left out when the room has no floor */
   code: string
   number: number
   floor: number | null
+  /** The number on the door, typed by the owner; unique within the property */
+  door_no: string | null
+  /** What people call the room: the door number when set, else the code */
+  label: string
+  who_can_stay: WhoCanStay
+  who_can_stay_label: string
   rental_mode: RentalMode
   rental_mode_label: string
+  /** Rented as one room right now (whole, or its whole-room option is held) */
+  let_whole: boolean
+  /** Places only (the whole-room option is not counted) */
   counts: { units: number; available: number }
   units: Unit[]
   /** The room's current leader, if it has one */
@@ -105,7 +121,6 @@ export interface PropertySummary {
   /** Summary over the property's rooms: all whole, all by bedspace, or a mix. */
   rental_mode: RentalMode | 'mixed'
   rental_mode_label: string
-  building: { id: number; name: string } | null
   city: string | null
   is_published: boolean
   cover_photo_url: string | null
@@ -139,14 +154,6 @@ export interface PropertySettings {
   defaults: SettingsValues
   sections: Record<string, string[]>
   updated_at: string | null
-}
-
-export interface Building {
-  id: number
-  name: string
-  /** Used in room codes (B1, B2) */
-  number: number
-  properties_count?: number
 }
 
 /** Units spec when creating a property or room, or switching a room's mode. */

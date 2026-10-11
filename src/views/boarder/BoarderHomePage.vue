@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title>BoardMate</ion-title>
+        <ion-title>DormLink</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -17,7 +17,7 @@
             <ion-card-title>{{ stay.property.name }}</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            Room {{ stay.room.code }} · {{ stay.unit.label }} · next rent due {{ manilaDate(stay.next_rent_due_on).format('MMM D, YYYY') }}
+            Room {{ stay.room.label }} · {{ stay.unit.label }} · next rent due {{ manilaDate(stay.next_rent_due_on).format('MMM D, YYYY') }}
           </ion-card-content>
         </ion-card>
 

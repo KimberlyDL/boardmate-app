@@ -1,7 +1,7 @@
 import { api } from './api'
 import type { ApiEnvelope } from '@/types/api'
 import type { PageMeta } from '@/types/roles'
-import type { BookingApplication, ListingDetail, ListingSummary } from '@/types/booking'
+import type { BookingApplication, Campus, ListingDetail, ListingSummary } from '@/types/booking'
 
 /** Dorm Finder (F1): public, works signed out. */
 export const listingService = {
@@ -13,6 +13,12 @@ export const listingService = {
   /** `my_application` is set when a signed-in boarder already applied here. */
   async get(id: number): Promise<{ listing: ListingDetail; my_application: BookingApplication | null }> {
     const { data } = await api.get<ApiEnvelope<{ listing: ListingDetail; my_application: BookingApplication | null }>>(`/listings/${id}`)
+    return data.data
+  },
+
+  /** The default campus first. */
+  async campuses(): Promise<Campus[]> {
+    const { data } = await api.get<ApiEnvelope<Campus[]>>('/campuses')
     return data.data
   },
 }

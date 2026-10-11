@@ -1,4 +1,4 @@
-/** Success envelope returned by every BoardMate API endpoint. */
+/** Success envelope returned by every DormLink API endpoint. */
 export interface ApiEnvelope<T, M = Record<string, unknown>> {
   data: T
   meta?: M

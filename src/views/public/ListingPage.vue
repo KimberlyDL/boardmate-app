@@ -23,8 +23,10 @@
           <p class="muted">{{ listing.type_label }} · {{ area }}</p>
           <h1>{{ listing.name }}</h1>
           <p class="price">
-            <strong>{{ listing.price_from_centavos !== null ? `from ${peso(listing.price_from_centavos)}` : 'Price on request' }}</strong> / month
-            · {{ listing.availability.label }}
+            <template v-if="!listing.is_full">
+              <strong>{{ listing.price_from_centavos !== null ? `from ${peso(listing.price_from_centavos)}` : 'Price on request' }}</strong> / month ·
+            </template>
+            {{ listing.availability.label }}
           </p>
           <p v-if="listing.who_can_apply"><ion-chip>{{ listing.who_can_apply }}</ion-chip></p>
 
@@ -39,19 +41,18 @@
               <ion-button size="small" fill="outline" color="dark" router-link="/boarder/bookings">My bookings</ion-button>
             </ion-card-content>
           </ion-card>
+          <ion-card v-else-if="listing.is_full" color="light">
+            <ion-card-content>
+              <strong>Full right now</strong>
+              <p>Every room here is taken. Check again later, or find a place with a free room nearby.</p>
+            </ion-card-content>
+          </ion-card>
           <ion-button v-else expand="block" :router-link="`/listings/${listing.id}/apply`">Apply</ion-button>
 
           <p v-if="listing.description" class="description">{{ listing.description }}</p>
 
-          <h3>Available now</h3>
-          <ion-list lines="inset">
-            <ion-item v-for="s in listing.slots" :key="s.id">
-              <ion-label>
-                <span v-if="s.room">Room {{ s.room.code }} · </span>{{ s.label }}<span v-if="s.kind === 'whole'"> · up to {{ s.capacity }} people</span>
-              </ion-label>
-              <ion-note slot="end">{{ peso(s.rent_centavos) }}</ion-note>
-            </ion-item>
-          </ion-list>
+          <h3>Rooms &amp; availability</h3>
+          <listing-rooms :rooms="listing.rooms" :apply-href="mine ? null : `/listings/${listing.id}/apply`" />
           <p v-if="listing.rental_mode !== 'whole'" class="muted small">The owner assigns your bedspace when approving.</p>
 
           <h3>Utilities</h3>
@@ -113,6 +114,7 @@ import {
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import ListingMap from '@/components/ListingMap.vue'
+import ListingRooms from '@/components/rooms/ListingRooms.vue'
 import { clockTime, manilaDate } from '@/lib/dayjs'
 import { peso } from '@/lib/money'
 import { errorMessage } from '@/services/api'

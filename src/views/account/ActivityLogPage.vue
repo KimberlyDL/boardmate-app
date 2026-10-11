@@ -107,7 +107,7 @@ const ADMIN_EVENTS: string[] = [
   AuditEvent.AccountSuspended,
   AuditEvent.AccountUnsuspended,
 ]
-// Owners see their business events plus BoardMate's decisions about them;
+// Owners see their business events plus DormLink's decisions about them;
 // personal account-security events are not part of either log.
 const events = computed(() =>
   props.scope === 'admin' ? ADMIN_EVENTS : Object.values(AuditEvent).filter((e) => !e.startsWith('account.')),

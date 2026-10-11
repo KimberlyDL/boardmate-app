@@ -11,7 +11,42 @@
       <form class="narrow" @submit.prevent="submit">
         <p v-if="listingName">Applying for <strong>{{ listingName }}</strong>. No reservation fee.</p>
 
-        <ion-input :value="auth.user?.name" label="Name" label-placement="stacked" fill="outline" readonly />
+        <template v-if="rooms.length > 1">
+          <p class="label">Room</p>
+          <p class="muted small">The owner may place you in another room if this one is taken first.</p>
+          <ion-radio-group v-model="form.room_id">
+            <ion-item v-for="r in rooms" :key="r.id" :disabled="r.status !== 'available'" lines="inset">
+              <ion-radio :value="r.id" label-placement="end" justify="start" class="ion-text-wrap">
+                <strong>Room {{ r.label }}</strong>
+                <span class="muted"> · {{ r.floor === null ? 'no floor set' : `floor ${r.floor}` }}</span><br />
+                <span class="small">
+                  {{ r.status === 'available' ? r.availability_label : r.status === 'full' ? 'Full' : 'Not ready' }}
+                  <template v-if="r.rent_from_centavos !== null"> · {{ peso(r.rent_from_centavos) }} / month</template>
+                  <template v-if="r.who_can_stay !== 'any'"> · {{ r.who_can_stay_label }}</template>
+                </span>
+              </ion-radio>
+            </ion-item>
+          </ion-radio-group>
+          <ion-note v-if="errors.room_id" color="danger" class="block">{{ errors.room_id[0] }}</ion-note>
+        </template>
+        <template v-if="chosen?.whole_option">
+          <p class="label">Rent</p>
+          <ion-segment v-model="rentAs">
+            <ion-segment-button value="bed" :disabled="chosen.available === 0"><ion-label>A bedspace</ion-label></ion-segment-button>
+            <ion-segment-button value="whole" :disabled="!chosen.whole_option.available">
+              <ion-label>The whole room</ion-label>
+            </ion-segment-button>
+          </ion-segment>
+          <p v-if="rentAs === 'whole'" class="muted small">
+            Room {{ chosen.label }} for up to {{ chosen.whole_option.capacity }} people at
+            {{ chosen.whole_option.rent_centavos !== null ? peso(chosen.whole_option.rent_centavos) : 'the owner\'s price' }} / month. You will be its
+            leader.
+          </p>
+          <ion-note v-if="errors.whole" color="danger" class="block">{{ errors.whole[0] }}</ion-note>
+        </template>
+        <ion-note v-else-if="errors.room_id" color="danger" class="block">{{ errors.room_id[0] }}</ion-note>
+
+        <ion-input :value="auth.user?.name" label="Name" label-placement="stacked" fill="outline" readonly class="ion-margin-top" />
         <ion-input
           v-model="form.contact_phone"
           type="tel"
@@ -72,21 +107,29 @@ import {
   IonContent,
   IonHeader,
   IonInput,
+  IonItem,
+  IonLabel,
   IonNote,
   IonPage,
+  IonRadio,
+  IonRadioGroup,
+  IonSegment,
+  IonSegmentButton,
   IonSpinner,
   IonTextarea,
   IonTitle,
   IonToolbar,
 } from '@ionic/vue'
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { manila } from '@/lib/dayjs'
+import { peso } from '@/lib/money'
 import { errorCode, errorMessage, fieldErrors } from '@/services/api'
 import { bookingService } from '@/services/bookings'
 import { listingService } from '@/services/listings'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
+import type { PublicRoom } from '@/types/booking'
 
 const route = useRoute()
 const router = useRouter()
@@ -96,7 +139,21 @@ const toast = useToast()
 const id = Number(route.params.id)
 const today = manila().format('YYYY-MM-DD')
 const listingName = ref('')
-const form = reactive({ contact_phone: auth.user?.phone ?? '', planned_move_in_on: today, message: '' })
+const rooms = ref<PublicRoom[]>([])
+const chosen = computed(() => rooms.value.find((r) => r.id === form.room_id) ?? null)
+// `?whole=1` comes from "Rent the whole room".
+const rentAs = ref<'bed' | 'whole'>(route.query.whole === '1' ? 'whole' : 'bed')
+watch(chosen, (room) => {
+  if (!room?.whole_option?.available) rentAs.value = 'bed'
+  else if (room.available === 0) rentAs.value = 'whole'
+})
+// `?room=` comes from the room tapped on "Rooms & availability".
+const form = reactive({
+  contact_phone: auth.user?.phone ?? '',
+  planned_move_in_on: today,
+  message: '',
+  room_id: Number(route.query.room) || (null as number | null),
+})
 const idFile = ref<File | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 const errors = ref<Record<string, string[]>>({})
@@ -104,7 +161,12 @@ const busy = ref(false)
 
 onMounted(async () => {
   try {
-    listingName.value = (await listingService.get(id)).listing.name
+    const { listing } = await listingService.get(id)
+    listingName.value = listing.name
+    rooms.value = listing.rooms
+    if (!rooms.value.some((r) => r.id === form.room_id && r.status === 'available')) {
+      form.room_id = rooms.value.length === 1 ? rooms.value[0].id : null
+    }
   } catch {
     // The submit will explain if the listing is gone.
   }
@@ -118,7 +180,7 @@ async function submit() {
   busy.value = true
   errors.value = {}
   try {
-    const { message } = await bookingService.apply(id, { ...form, id_document: idFile.value })
+    const { message } = await bookingService.apply(id, { ...form, whole: rentAs.value === 'whole', id_document: idFile.value })
     toast.success(message)
     await router.replace('/boarder/bookings')
   } catch (e) {

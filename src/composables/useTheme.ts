@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 
 export type ThemeMode = 'system' | 'light' | 'dark'
 
-const KEY = 'boardmate.theme'
+const KEY = 'dormlink.theme'
 const mode = ref<ThemeMode>('system')
 const media = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null
 

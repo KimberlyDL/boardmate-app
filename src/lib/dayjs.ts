@@ -3,7 +3,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat'
 import timezone from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
 
-/** All BoardMate dates are Asia/Manila, matching the API. */
+/** All DormLink dates are Asia/Manila, matching the API. */
 export const MANILA_TZ = 'Asia/Manila'
 
 dayjs.extend(utc)

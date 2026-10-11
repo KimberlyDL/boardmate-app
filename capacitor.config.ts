@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.boardmate.app',
-  appName: 'BoardMate',
+  appId: 'com.dormlink.app',
+  appName: 'DormLink',
   webDir: 'dist'
 };
 

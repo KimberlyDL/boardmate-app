@@ -23,7 +23,7 @@ export interface ResetPasswordInput {
   password_confirmation: string
 }
 
-const DEVICE_NAME = 'boardmate-app'
+const DEVICE_NAME = 'dormlink-app'
 
 export const authService = {
   /** Creates the account and emails a confirmation link. Does not log in. */

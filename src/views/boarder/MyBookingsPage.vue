@@ -29,11 +29,15 @@
           <ion-card-content>
             <p>{{ a.property.address ?? a.property.area }}</p>
             <p v-if="a.status === 'approved'">
-              <strong>{{ a.unit?.label }}</strong> · {{ peso(a.unit?.rent_centavos) }} / month<br />
+              <strong>{{ a.unit?.room_label ? `Room ${a.unit.room_label} · ` : '' }}{{ a.unit?.label }}</strong> · {{ peso(a.unit?.rent_centavos) }} / month<br />
+              <template v-if="a.room && a.unit?.room_id !== a.room.id">The owner placed you here instead of room {{ a.room.label }}.<br /></template>
               Reserved until <strong>{{ manilaDate(a.reserved_until!).format('MMM D, YYYY') }}</strong>. Move in by then and bring
               the deposit and first month's rent.
             </p>
-            <p v-else-if="a.status === 'pending'">Move-in {{ manilaDate(a.planned_move_in_on).format('MMM D, YYYY') }}. Waiting for the owner.</p>
+            <p v-else-if="a.status === 'pending'">
+              <template v-if="a.room">Room {{ a.room.label }} · </template>Move-in {{ manilaDate(a.planned_move_in_on).format('MMM D, YYYY') }}. Waiting for
+              the owner.
+            </p>
             <p v-if="a.closed_reason" class="muted">{{ a.closed_reason }}</p>
             <p class="muted small">Applied {{ manila(a.created_at).format('MMM D, YYYY') }} · Owner: {{ a.property.owner_name }}</p>
             <ion-button v-if="a.can_cancel" size="small" fill="outline" color="dark" @click="cancel(a)">

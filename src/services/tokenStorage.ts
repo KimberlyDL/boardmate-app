@@ -4,7 +4,7 @@ import { Preferences } from '@capacitor/preferences'
  * Persists the Sanctum API token. Capacitor Preferences uses localStorage on
  * the web and native storage on Android, so the same code works on both.
  */
-const TOKEN_KEY = 'boardmate.token'
+const TOKEN_KEY = 'dormlink.token'
 
 let cached: string | null | undefined
 

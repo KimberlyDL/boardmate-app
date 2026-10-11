@@ -38,8 +38,8 @@ afterEach(() => {
 
 describe('ApproveModal', () => {
   const application = { id: 4, planned_move_in_on: '2026-10-25', applicant: { id: 5, name: 'Kim Santos' } } as unknown as BookingApplication
-  const house: BookableUnit = { id: 11, room_code: '01', label: 'Whole house', kind: 'whole', capacity: 3, room_has_leader: false, rent_centavos: 450000 }
-  const bed: BookableUnit = { id: 12, room_code: '02', label: 'Bed 1', kind: 'bedspace', capacity: 1, room_has_leader: false, rent_centavos: 200000 }
+  const house: BookableUnit = { id: 11, room_id: 1, room_code: '01', room_label: '01', label: 'Whole house', kind: 'whole', capacity: 3, room_has_leader: false, rent_centavos: 450000 }
+  const bed: BookableUnit = { id: 12, room_id: 2, room_code: '02', room_label: '02', label: 'Bed 1', kind: 'bedspace', capacity: 1, room_has_leader: false, rent_centavos: 200000 }
   const ledBed: BookableUnit = { ...bed, id: 13, label: 'Bed 2', room_has_leader: true }
 
   function mountApprove(units: BookableUnit[]) {
@@ -82,6 +82,33 @@ describe('ApproveModal', () => {
     expect(bookingService.approve).toHaveBeenLastCalledWith(4, 12, { leader: true })
   })
 
+  test('starts with a place in the room they asked for, and warns when placing them elsewhere', async () => {
+    vi.mocked(bookingService.approve).mockResolvedValue('Reserved.')
+    const wrapper = mountApprove([house, bed])
+    await show(wrapper, { application: { ...application, room: { id: 2, label: '02' } } })
+
+    expect(text()).toContain('Kim asked for room 02.')
+    expect(text()).not.toContain('will be told')
+    await press('Reserve')
+    expect(bookingService.approve).toHaveBeenLastCalledWith(4, 12, {})
+
+    ;(page().querySelectorAll('ion-radio')[0] as HTMLElement).click()
+    await flushPromises()
+    expect(text()).toContain('Kim will be told you placed them in room 01 instead.')
+  })
+
+  test('asked for the whole room: starts with its whole-room option', async () => {
+    vi.mocked(bookingService.approve).mockResolvedValue('Reserved.')
+    const option: BookableUnit = { ...house, id: 14, room_id: 2, room_label: '02', label: 'Whole room', is_whole_option: true, capacity: 4 }
+    const wrapper = mountApprove([bed, option])
+    await show(wrapper, { application: { ...application, room: { id: 2, label: '02' }, wants_whole: true } })
+
+    expect(text()).toContain('Kim asked for the whole of room 02.')
+    expect(text()).toContain('Who else will stay?')
+    await press('Reserve')
+    expect(bookingService.approve).toHaveBeenLastCalledWith(4, 14, { occupants: [] })
+  })
+
   test('a bedspace in a room that already has a leader offers nothing about leaders', async () => {
     const wrapper = mountApprove([ledBed])
     await show(wrapper, { application })
@@ -91,7 +118,7 @@ describe('ApproveModal', () => {
 })
 
 describe('RoomPeopleModal', () => {
-  const room = { id: 9, code: 'B1-F2-03', rental_mode: 'whole' as const }
+  const room = { id: 9, code: 'F2-03', label: '203', rental_mode: 'whole' as const }
   const kim: RoomOccupant = {
     id: 1, room_id: 9, name: 'Kim Santos', contact_phone: null, has_account: true, is_leader_holder: true,
     joined_on: '2026-10-01', left_on: null, is_staying: true,
@@ -118,7 +145,7 @@ describe('RoomPeopleModal', () => {
     const wrapper = mountPeople({ staff: true, canManage: true })
     await show(wrapper, { room })
 
-    expect(text()).toContain('Room B1-F2-03')
+    expect(text()).toContain('Room 203')
     expect(text()).toContain('Who stays (2)')
     expect(text()).toContain('Emergency: Marta Cruz · 0918 111 2222')
     expect(text()).toContain('Emergency: Marta Santos (Mother)')

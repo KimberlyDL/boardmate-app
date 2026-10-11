@@ -20,7 +20,7 @@ const kim = {
   id: 1,
   status: 'active',
   property: { id: 3, name: 'Santos House' },
-  room: { id: 9, code: 'B1-F2-03', rental_mode: 'whole' },
+  room: { id: 9, code: 'F2-03', door_no: '203', label: '203', rental_mode: 'whole', let_whole: true },
   unit: { id: 11, label: 'Whole house', kind: 'whole' },
   tenant: { id: 5, name: 'Kim Santos', phone: '0917 000 0001', photo_url: null, email: 'kim@example.com' },
   moved_in_on: '2026-10-25',
@@ -47,7 +47,7 @@ function property(abilities: string[], statuses: string[]): Property {
     abilities,
     rooms: [
       {
-        id: 9, code: '01', units: statuses.map((status, i) => ({ id: 10 + i, label: `Bed ${i + 1}`, kind: 'bedspace', status, not_ready: false, rent_centavos: 200000 })),
+        id: 9, code: '01', label: '01', units: statuses.map((status, i) => ({ id: 10 + i, label: `Bed ${i + 1}`, kind: 'bedspace', status, not_ready: false, rent_centavos: 200000 })),
       },
     ],
   } as unknown as Property
@@ -63,7 +63,7 @@ describe('TenantsSection', () => {
     await flushPromises()
 
     expect(tenancyService.list).toHaveBeenCalledWith(3, undefined, 1)
-    expect(text()).toContain('Room B1-F2-03 · Whole house')
+    expect(text()).toContain('Room 203 · Whole house')
     expect(text()).toContain('Kim Santos')
     expect(text()).toContain('next rent Nov 25')
     expect(text()).toContain('₱4,000.00 / month')
@@ -109,7 +109,7 @@ describe('MyStayPage', () => {
 
     const t = text()
     expect(t).toContain('Santos House')
-    expect(t).toContain('Room B1-F2-03 · Whole house')
+    expect(t).toContain('Room 203 · Whole house')
     expect(t).toContain('due every month on the 25')
     expect(t).toContain('Nov 25, 2026')
     expect(t).toContain('₱4,000.00 / month')
@@ -129,7 +129,7 @@ describe('MyStayPage', () => {
   })
 
   test('a leader of a bedspace room has no list of occupants to manage', async () => {
-    vi.mocked(tenancyService.mine).mockResolvedValue([{ ...kim, is_leader: true, room: { ...kim.room, rental_mode: 'bedspaces' } }])
+    vi.mocked(tenancyService.mine).mockResolvedValue([{ ...kim, is_leader: true, room: { ...kim.room, rental_mode: 'bedspaces', let_whole: false } }])
     mountStay()
     await flushPromises()
 

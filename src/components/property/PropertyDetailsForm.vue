@@ -23,21 +23,6 @@
         <ion-select-option v-for="(label, value) in PropertyTypeLabels" :key="value" :value="value">{{ label }}</ion-select-option>
       </ion-select>
 
-      <ion-select
-        v-if="buildings.length || !readonly"
-        v-model="model.building_id"
-        label="Building (optional)"
-        label-placement="stacked"
-        fill="outline"
-        interface="popover"
-        class="ion-margin-top"
-        :disabled="readonly"
-        @ion-change="onBuilding($event.detail.value)"
-      >
-        <ion-select-option :value="null">None</ion-select-option>
-        <ion-select-option v-for="b in buildings" :key="b.id" :value="b.id">{{ b.name }}</ion-select-option>
-        <ion-select-option v-if="!readonly" value="__new">+ New building…</ion-select-option>
-      </ion-select>
 
       <ion-textarea
         v-model="model.description"
@@ -90,14 +75,11 @@
 </template>
 
 <script setup lang="ts">
-import { alertController, IonChip, IonInput, IonNote, IonSelect, IonSelectOption, IonTextarea } from '@ionic/vue'
-import { computed, onMounted, ref } from 'vue'
+import { IonChip, IonInput, IonNote, IonSelect, IonSelectOption, IonTextarea } from '@ionic/vue'
+import { computed } from 'vue'
 import MapPicker, { type LatLng } from '@/components/MapPicker.vue'
-import { errorMessage } from '@/services/api'
-import { propertyService, type PropertyDetailsInput } from '@/services/properties'
-import { useToast } from '@/composables/useToast'
+import type { PropertyDetailsInput } from '@/services/properties'
 import { PropertyTypeLabels } from '@/types/enums'
-import type { Building } from '@/types/property'
 
 /**
  * Property details and location. `part` shows only one half (wizard steps);
@@ -108,9 +90,6 @@ defineProps<{ part?: 'details' | 'location'; readonly?: boolean; errors: Record<
 
 const WHO_OPTIONS = ['Female only', 'Male only', 'Students', 'Working professionals', 'Couples welcome', 'Anyone']
 
-const toast = useToast()
-const buildings = ref<Building[]>([])
-
 const pin = computed<LatLng | null>({
   get: () => (model.value.latitude != null && model.value.longitude != null ? { lat: model.value.latitude, lng: model.value.longitude } : null),
   set: (v) => {
@@ -119,35 +98,6 @@ const pin = computed<LatLng | null>({
   },
 })
 
-onMounted(async () => {
-  try {
-    buildings.value = await propertyService.buildings()
-  } catch {
-    // Caretakers cannot list buildings; the field just stays empty.
-  }
-})
-
-async function onBuilding(value: unknown) {
-  if (value !== '__new') return
-  model.value.building_id = null
-  const alert = await alertController.create({
-    header: 'New building',
-    message: 'A label that groups several of your properties.',
-    inputs: [{ name: 'name', placeholder: 'e.g. Sampaloc compound' }],
-    buttons: [{ text: 'Cancel', role: 'cancel' }, { text: 'Add', role: 'confirm' }],
-  })
-  await alert.present()
-  const { role, data } = await alert.onDidDismiss()
-  const name = (data?.values?.name ?? '').trim()
-  if (role !== 'confirm' || !name) return
-  try {
-    const building = await propertyService.addBuilding(name)
-    buildings.value.push(building)
-    model.value.building_id = building.id
-  } catch (e) {
-    toast.error(errorMessage(e))
-  }
-}
 </script>
 
 <style scoped>

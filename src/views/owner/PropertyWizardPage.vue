@@ -120,7 +120,7 @@ const busy = ref(false)
 const errors = ref<Record<string, string[]>>({})
 const property = ref<Property | null>(null)
 
-const details = ref<PropertyDetailsInput>({ name: '', type: 'boarding_house', building_id: null, latitude: null, longitude: null })
+const details = ref<PropertyDetailsInput>({ name: '', type: 'boarding_house', latitude: null, longitude: null })
 const mode = ref<'bedspaces' | 'whole'>('bedspaces')
 const units = reactive({ count: 4, label_pattern: 'Bed {n}', capacity: 4 })
 const rent = ref('')
@@ -161,7 +161,7 @@ async function create() {
   } catch (e) {
     errors.value = fieldErrors(e)
     const first = Object.keys(errors.value)[0]
-    if (first && ['name', 'type', 'description', 'who_can_apply', 'building_id'].includes(first)) step.value = 1
+    if (first && ['name', 'type', 'description', 'who_can_apply'].includes(first)) step.value = 1
     else if (first && ['street', 'barangay', 'city', 'province', 'latitude', 'longitude'].includes(first)) step.value = 2
     toast.error(Object.values(errors.value)[0]?.[0] ?? errorMessage(e))
   } finally {

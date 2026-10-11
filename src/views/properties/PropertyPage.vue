@@ -114,7 +114,6 @@ function syncDetails(p: Property) {
   details.value = {
     name: p.name,
     type: p.type,
-    building_id: p.building?.id ?? null,
     description: p.description,
     who_can_apply: p.who_can_apply,
     street: p.street,

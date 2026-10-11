@@ -8,6 +8,7 @@ import {
   notificationsOutline,
   peopleOutline,
   personCircleOutline,
+  schoolOutline,
   shieldCheckmarkOutline,
   storefrontOutline,
 } from 'ionicons/icons'
@@ -115,6 +116,7 @@ const routes: Array<RouteRecordRaw> = [
   roleArea('/admin', UserRole.PlatformAdmin, [
     { tab: 'owners', href: '/admin/owners', label: 'Owners', icon: shieldCheckmarkOutline, component: () => import('@/views/admin/AdminOwnersPage.vue') },
     { tab: 'users', href: '/admin/users', label: 'Accounts', icon: peopleOutline, component: () => import('@/views/admin/AdminUsersPage.vue') },
+    { tab: 'campuses', href: '/admin/campuses', label: 'Campuses', icon: schoolOutline, component: () => import('@/views/admin/AdminCampusesPage.vue') },
   ]),
 
   // Role-neutral links (emails, notifications) → the right role's area,

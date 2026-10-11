@@ -15,17 +15,26 @@
       </ion-toolbar>
       <ion-toolbar>
         <div class="bar">
-          <ion-segment v-model="view" class="view-toggle">
-            <ion-segment-button value="list"><ion-icon :icon="listOutline" /></ion-segment-button>
-            <ion-segment-button value="map"><ion-icon :icon="mapOutline" /></ion-segment-button>
+          <ion-segment v-model="view" class="view-toggle" @ion-change="search()">
+            <ion-segment-button value="map" aria-label="Map"><ion-icon :icon="mapOutline" /></ion-segment-button>
+            <ion-segment-button value="list" aria-label="List"><ion-icon :icon="listOutline" /></ion-segment-button>
           </ion-segment>
           <ion-button size="small" fill="outline" @click="filtersOpen = true">
             <ion-icon slot="start" :icon="optionsOutline" /> Filters{{ active ? ` (${active})` : '' }}
           </ion-button>
           <ion-select v-model="filters.sort" interface="popover" aria-label="Sort" class="sort" @ion-change="search()">
+            <ion-select-option v-if="distance.near.value" value="nearest">Nearest</ion-select-option>
             <ion-select-option value="newest">Newest</ion-select-option>
             <ion-select-option value="price">Lowest price</ion-select-option>
           </ion-select>
+        </div>
+        <div class="bar from">
+          <ion-chip outline @click="chooseFrom">
+            <ion-icon :icon="locationOutline" />
+            <ion-label>Distance from: {{ distance.label.value }}</ion-label>
+            <ion-icon :icon="chevronDown" />
+          </ion-chip>
+          <ion-button v-if="picking" size="small" fill="clear" @click="picking = false">Cancel</ion-button>
         </div>
       </ion-toolbar>
     </ion-header>
@@ -34,18 +43,50 @@
       <div class="narrow wide ion-padding">
         <p class="muted">{{ total }} {{ total === 1 ? 'place' : 'places' }} found<span v-if="filters.bbox"> in this map area · <a href="#" @click.prevent="clearArea">clear area</a></span></p>
 
-        <listing-map
-          v-if="view === 'map'"
-          :listings="items"
-          searchable
-          height="65vh"
-          @select="open"
-          @search-area="searchArea"
-        />
+        <template v-if="view === 'map'">
+          <listing-map
+            :listings="items"
+            :selected-id="selected?.id ?? null"
+            :origin="origin"
+            :picking="picking"
+            searchable
+            height="62vh"
+            @select="select"
+            @search-area="searchArea"
+            @pick="pickPoint"
+          />
+          <p class="muted legend">
+            <span class="dot free" /> Has free rooms <span class="dot full" /> Full right now
+            <span class="dot origin" /> {{ distance.label.value }}
+          </p>
+
+          <ion-card v-if="selected" class="pin-card">
+            <ion-card-header>
+              <ion-card-subtitle>{{ selected.type_label }} · {{ [selected.barangay, selected.city].filter(Boolean).join(', ') }}</ion-card-subtitle>
+              <ion-card-title>{{ selected.name }}</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <p v-if="selected.distance_m !== null">
+                <ion-icon :icon="walkOutline" /> {{ formatDistance(selected.distance_m) }} from {{ distance.label.value }} (straight line)
+              </p>
+              <p class="price">
+                <ion-badge v-if="selected.is_full" color="medium">Full right now</ion-badge>
+                <template v-else>
+                  <strong>{{ selected.price_from_centavos !== null ? `from ${peso(selected.price_from_centavos)}` : 'Price on request' }}</strong> / month
+                </template>
+              </p>
+              <p>{{ selected.availability.label }}</p>
+              <div class="card-actions">
+                <ion-button expand="block" @click="viewRooms(selected.id)">View rooms</ion-button>
+                <ion-button expand="block" fill="outline" @click="open(selected.id)">View details</ion-button>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </template>
 
         <template v-else>
           <p v-if="!loading && !items.length" class="muted center">No places match. Try fewer filters or another area.</p>
-          <ion-card v-for="l in items" :key="l.id" button class="card" @click="open(l.id)">
+          <ion-card v-for="l in items" :key="l.id" button class="card" :class="{ full: l.is_full }" @click="open(l.id)">
             <img v-if="l.cover_photo_url" :src="l.cover_photo_url" alt="" class="cover" loading="lazy" />
             <ion-card-header>
               <ion-card-subtitle>{{ l.type_label }} · {{ [l.barangay, l.city].filter(Boolean).join(', ') }}</ion-card-subtitle>
@@ -53,8 +94,12 @@
             </ion-card-header>
             <ion-card-content>
               <p class="price">
-                <strong>{{ l.price_from_centavos !== null ? `from ${peso(l.price_from_centavos)}` : 'Price on request' }}</strong> / month
+                <ion-badge v-if="l.is_full" color="medium">Full right now</ion-badge>
+                <template v-else>
+                  <strong>{{ l.price_from_centavos !== null ? `from ${peso(l.price_from_centavos)}` : 'Price on request' }}</strong> / month
+                </template>
               </p>
+              <p v-if="l.distance_m !== null">{{ formatDistance(l.distance_m) }} from {{ distance.label.value }}</p>
               <p>{{ l.availability.label }}</p>
               <p>
                 <ion-chip v-for="u in l.included_utilities" :key="u" class="chip" color="success">{{ u }} included</ion-chip>
@@ -67,6 +112,23 @@
           </ion-infinite-scroll>
         </template>
       </div>
+
+      <!-- Rooms & availability of the tapped place -->
+      <ion-modal :is-open="!!roomsOf" @did-dismiss="roomsOf = null">
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>{{ roomsOf?.name ?? 'Rooms' }}</ion-title>
+            <ion-buttons slot="end"><ion-button @click="roomsOf = null">Close</ion-button></ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <template v-if="roomsOf">
+            <h3>Rooms &amp; availability</h3>
+            <listing-rooms :rooms="roomsOf.rooms" :apply-href="`/listings/${roomsOf.id}/apply`" />
+            <ion-button expand="block" fill="outline" class="ion-margin-top" @click="open(roomsOf.id)">View details</ion-button>
+          </template>
+        </ion-content>
+      </ion-modal>
 
       <!-- Filters -->
       <ion-modal :is-open="filtersOpen" @did-dismiss="filtersOpen = false">
@@ -99,8 +161,16 @@
           >
             {{ u }}
           </ion-chip>
-          <h3>Who can apply</h3>
-          <ion-input v-model="filters.who" fill="outline" placeholder="e.g. female, students" aria-label="Who can apply" />
+          <h3>Who can stay</h3>
+          <ion-segment v-model="filters.whoCanStay">
+            <ion-segment-button value=""><ion-label>Anyone</ion-label></ion-segment-button>
+            <ion-segment-button value="female"><ion-label>Female</ion-label></ion-segment-button>
+            <ion-segment-button value="male"><ion-label>Male</ion-label></ion-segment-button>
+          </ion-segment>
+          <h3>Availability</h3>
+          <ion-item lines="none" class="toggle">
+            <ion-toggle v-model="filters.availableOnly">Only places with a free room</ion-toggle>
+          </ion-item>
         </ion-content>
       </ion-modal>
     </ion-content>
@@ -109,8 +179,10 @@
 
 <script setup lang="ts">
 import {
+  actionSheetController,
   type InfiniteScrollCustomEvent,
   IonBackButton,
+  IonBadge,
   IonButton,
   IonButtons,
   IonCard,
@@ -125,6 +197,7 @@ import {
   IonInfiniteScroll,
   IonInfiniteScrollContent,
   IonInput,
+  IonItem,
   IonLabel,
   IonModal,
   IonPage,
@@ -134,28 +207,42 @@ import {
   IonSelect,
   IonSelectOption,
   IonTitle,
+  IonToggle,
   IonToolbar,
 } from '@ionic/vue'
-import { listOutline, mapOutline, optionsOutline } from 'ionicons/icons'
+import { chevronDown, listOutline, locationOutline, mapOutline, optionsOutline, walkOutline } from 'ionicons/icons'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ListingMap from '@/components/ListingMap.vue'
-import { activeCount, emptyFilters, fromRouteQuery, toQuery } from '@/lib/listingFilters'
+import ListingRooms from '@/components/rooms/ListingRooms.vue'
+import { useDistanceFrom } from '@/composables/useDistanceFrom'
+import { formatDistance } from '@/lib/distance'
+import { activeCount, emptyFilters, type FinderFilters, fromRouteQuery, toQuery } from '@/lib/listingFilters'
 import { peso } from '@/lib/money'
 import { errorMessage } from '@/services/api'
 import { listingService } from '@/services/listings'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
-import type { ListingSummary } from '@/types/booking'
+import type { ListingDetail, ListingSummary } from '@/types/booking'
 
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 const toast = useToast()
 
-const filters = reactive({ ...emptyFilters(), ...fromRouteQuery(route.query) })
+/** The map shows up to this many pins at once; "Search this area" narrows it. */
+const MAP_LIMIT = 200
+
+const distance = useDistanceFrom()
+const filters = reactive<FinderFilters>({ ...emptyFilters(), sort: 'nearest', ...fromRouteQuery(route.query) })
 const items = ref<ListingSummary[]>([])
-const view = ref<'list' | 'map'>('list')
+const view = ref<'list' | 'map'>('map')
+const selectedId = ref<number | null>(null)
+const selected = computed(() => items.value.find((l) => l.id === selectedId.value) ?? null)
+const picking = ref(false)
+const origin = computed(() =>
+  distance.point.value ? { lat: distance.point.value.lat, lng: distance.point.value.lng, label: distance.label.value } : null,
+)
 const filtersOpen = ref(false)
 const loading = ref(false)
 const page = ref(1)
@@ -167,7 +254,8 @@ async function search(reset = true) {
   loading.value = true
   try {
     const next = reset ? 1 : page.value + 1
-    const { items: found, meta } = await listingService.search(toQuery(filters, next))
+    const query = { ...toQuery(filters, next, distance.near.value), ...(view.value === 'map' ? { per_page: MAP_LIMIT } : {}) }
+    const { items: found, meta } = await listingService.search(query)
     items.value = reset ? found : [...items.value, ...found]
     page.value = meta.current_page
     lastPage.value = meta.last_page
@@ -179,7 +267,60 @@ async function search(reset = true) {
   }
 }
 
-onMounted(() => search())
+onMounted(async () => {
+  await distance.ready
+  if (filters.sort === 'nearest' && !distance.near.value) filters.sort = 'newest'
+  search()
+})
+
+/** After choosing where to measure from, list the nearest places first. */
+function measured() {
+  if (filters.sort === 'newest') filters.sort = 'nearest'
+  search()
+}
+
+function select(id: number | null) {
+  selectedId.value = id
+}
+
+const roomsOf = ref<ListingDetail | null>(null)
+
+async function viewRooms(id: number) {
+  try {
+    roomsOf.value = (await listingService.get(id)).listing
+  } catch (e) {
+    toast.error(errorMessage(e))
+  }
+}
+
+async function chooseFrom() {
+  const buttons = [
+    ...distance.campuses.value.map((c) => ({ text: c.name, handler: () => void distance.chooseCampus(c).then(measured) })),
+    {
+      text: 'My location',
+      handler: () =>
+        void distance
+          .chooseMyLocation()
+          .then((ok) => (ok ? measured() : toast.error('Could not get your location. Choose a campus or a point instead.'))),
+    },
+    {
+      text: 'Choose a point on the map',
+      handler: () => {
+        view.value = 'map'
+        picking.value = true
+      },
+    },
+    { text: 'Cancel', role: 'cancel' },
+  ]
+  const sheet = await actionSheetController.create({ header: 'Measure distance from', buttons })
+  await sheet.present()
+}
+
+async function pickPoint(lat: number, lng: number) {
+  picking.value = false
+  await distance.choosePoint(lat, lng)
+  measured()
+}
 
 async function more(event: InfiniteScrollCustomEvent) {
   await search(false)
@@ -187,6 +328,7 @@ async function more(event: InfiniteScrollCustomEvent) {
 }
 
 function open(id: number) {
+  roomsOf.value = null
   router.push(`/listings/${id}`)
 }
 
@@ -226,6 +368,47 @@ function clearArea() {
 }
 .view-toggle {
   width: 110px;
+}
+.from {
+  padding-bottom: 4px;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 0.8rem;
+}
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: -6px;
+}
+.dot.free {
+  background: var(--ion-color-success);
+}
+.dot.full {
+  background: var(--ion-color-medium);
+}
+.dot.origin {
+  background: #3880ff;
+}
+.pin-card {
+  margin: 8px 0 16px;
+}
+.card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+.card.full {
+  opacity: 0.7;
+}
+.toggle {
+  --padding-start: 0;
 }
 .sort {
   margin-left: auto;

@@ -114,7 +114,7 @@ const statusCard = computed(() => {
     case OwnerVerificationStatus.Rejected:
       return { color: 'warning', text: 'We could not approve your application yet. Fix the details below and apply again.' }
     case OwnerVerificationStatus.Suspended:
-      return { color: 'danger', text: 'Your owner account is suspended and your listings are hidden. Contact BoardMate support.' }
+      return { color: 'danger', text: 'Your owner account is suspended and your listings are hidden. Contact DormLink support.' }
     default:
       return {
         color: 'light',

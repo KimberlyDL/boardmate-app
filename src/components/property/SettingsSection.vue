@@ -1,6 +1,6 @@
 <template>
   <div v-if="settings">
-    <p class="muted">Every setting starts from BoardMate's recommended default. Change only what you need.</p>
+    <p class="muted">Every setting starts from DormLink's recommended default. Change only what you need.</p>
 
     <template v-for="section in visibleSections" :key="section.id">
       <div class="section-head">
@@ -163,7 +163,7 @@ async function save() {
 
 async function reset(section: string) {
   const title = SETTING_SECTIONS.find((s) => s.id === section)?.title
-  if (!(await prompt.confirm('Reset to defaults?', `"${title}" goes back to BoardMate's recommended settings.`, 'Reset'))) return
+  if (!(await prompt.confirm('Reset to defaults?', `"${title}" goes back to DormLink's recommended settings.`, 'Reset'))) return
   try {
     settings.value = await propertyService.resetSettings(props.property.id, [section])
     draft.value = JSON.parse(JSON.stringify(settings.value.values))

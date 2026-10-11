@@ -9,7 +9,7 @@
 
     <ion-content class="ion-padding">
       <!--
-        DRAFT for the BoardMate team to review with counsel before launch.
+        DRAFT for the DormLink team to review with counsel before launch.
         Bump PRIVACY_POLICY_VERSION in the API .env whenever this text changes.
       -->
       <article class="narrow">
@@ -17,8 +17,8 @@
 
         <h3>What we collect</h3>
         <p>
-          Only what BoardMate needs to work: your name, email, and mobile number; an optional profile photo; and,
-          for boarders, one emergency contact. When you rent through BoardMate, your stay, bills and payments are
+          Only what DormLink needs to work: your name, email, and mobile number; an optional profile photo; and,
+          for boarders, one emergency contact. When you rent through DormLink, your stay, bills and payments are
           recorded for you and the property owner.
         </p>
 
@@ -44,7 +44,7 @@
         <h3>Your rights</h3>
         <p>
           Under the Data Privacy Act of 2012 you can ask to see, correct, or delete your personal data, and you can
-          withdraw your consent. Contact the BoardMate team to make a request.
+          withdraw your consent. Contact the DormLink team to make a request.
         </p>
       </article>
     </ion-content>

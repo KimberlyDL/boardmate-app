@@ -60,8 +60,8 @@ async function signIn(idToken: string, consent = props.consent ?? false) {
 
 async function askConsent(): Promise<boolean> {
   const alert = await alertController.create({
-    header: 'Create your BoardMate account',
-    message: 'You are new to BoardMate. Please agree to the privacy notice (see "Privacy notice" on the sign-up page) to continue.',
+    header: 'Create your DormLink account',
+    message: 'You are new to DormLink. Please agree to the privacy notice (see "Privacy notice" on the sign-up page) to continue.',
     inputs: [{ type: 'checkbox', label: 'I agree to the privacy notice', value: 'agree' }],
     buttons: [
       { text: 'Cancel', role: 'cancel' },

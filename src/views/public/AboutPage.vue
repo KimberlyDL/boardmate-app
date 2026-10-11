@@ -15,7 +15,7 @@
           available. Running a boarding house should not mean juggling notebooks, messages and receipts.
         </p>
         <p>
-          BoardMate brings both sides together. Boarders can search, compare and reserve a place. Owners and
+          DormLink brings both sides together. Boarders can search, compare and reserve a place. Owners and
           caretakers can list their rooms, review applications and keep bills, payments and receipts in order.
         </p>
 

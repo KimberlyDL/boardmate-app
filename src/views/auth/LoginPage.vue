@@ -1,5 +1,5 @@
 <template>
-  <auth-layout title="Login" greeting="Hello!" subtitle="Welcome to BoardMate" back-to="/">
+  <auth-layout title="Login" greeting="Hello!" subtitle="Welcome to DormLink" back-to="/">
     <form @submit.prevent="submit">
       <div v-if="unverified" class="notice">
         <p>{{ unverified }}</p>

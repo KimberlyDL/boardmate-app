@@ -136,7 +136,7 @@
         <footer v-else class="foot back">
           <ion-button fill="clear" color="medium" @click="goTo(0)">
             <ion-icon slot="start" :icon="arrowBackOutline" />
-            See what BoardMate does
+            See what DormLink does
           </ion-button>
         </footer>
       </div>
