@@ -34,6 +34,7 @@
 
         <units-section v-else-if="tab === 'units'" :property="property" @changed="reload" />
         <tenants-section v-else-if="tab === 'tenants'" :property="property" @changed="reload" />
+        <billing-section v-else-if="tab === 'billing'" :property="property" />
         <utilities-section v-else-if="tab === 'utilities'" :property="property" @changed="reload" />
         <settings-section v-else-if="tab === 'settings'" :property="property" />
         <photos-section v-else-if="tab === 'photos'" :property="property" @updated="property = $event" />
@@ -61,6 +62,7 @@ import {
 import { trashOutline } from 'ionicons/icons'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import BillingSection from '@/components/billing/BillingSection.vue'
 import CaretakersSection from '@/components/property/CaretakersSection.vue'
 import PhotosSection from '@/components/property/PhotosSection.vue'
 import PropertyDetailsForm from '@/components/property/PropertyDetailsForm.vue'
@@ -98,6 +100,7 @@ const tabs = computed(() => [
   { id: 'overview', label: 'Overview' },
   { id: 'units', label: 'Rooms' },
   { id: 'tenants', label: 'Tenants' },
+  ...(can('record_payments') ? [{ id: 'billing', label: 'Bills & payments' }] : []),
   { id: 'utilities', label: 'Utilities' },
   { id: 'settings', label: 'Settings' },
   { id: 'photos', label: 'Photos' },

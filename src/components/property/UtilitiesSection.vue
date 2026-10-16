@@ -19,6 +19,7 @@
             {{ peso(account.upcoming_amount.amount_centavos) }} from {{ manilaDate(account.upcoming_amount.effective_from).format('MMM D, YYYY') }}
           </p>
         </ion-label>
+        <ion-button v-if="canEnterBills && isMetered(account)" slot="end" size="small" @click="entering = account">Enter bill</ion-button>
         <template v-if="canEdit">
           <ion-button v-if="account.has_fixed_amount" slot="end" size="small" fill="outline" @click="changeAmount(account)">Price</ion-button>
           <ion-button slot="end" fill="clear" color="danger" aria-label="Remove" @click="remove(account)">
@@ -27,6 +28,27 @@
         </template>
       </ion-item>
     </ion-list>
+
+    <template v-if="canEnterBills && utilityBills.length">
+      <h3>Bills entered</h3>
+      <ion-list lines="full">
+        <ion-item v-for="u in utilityBills" :key="u.id">
+          <ion-label class="ion-text-wrap">
+            <h2>{{ u.account.name }} · {{ peso(u.total_centavos) }}</h2>
+            <p>
+              {{ manilaDate(u.coverage_from_on).format('MMM D') }} – {{ manilaDate(u.coverage_to_on).format('MMM D, YYYY') }} ·
+              {{ u.shares.filter((s) => !s.waived).length }} room(s) billed
+              <template v-if="u.shares.some((s) => s.waived)"> · waived: {{ u.shares.filter((s) => s.waived).map((s) => s.room_label).join(', ') }}</template>
+            </p>
+            <p v-if="u.correction_reason">Corrected: {{ u.correction_reason }}</p>
+            <a v-if="u.photo_url" :href="u.photo_url" target="_blank" rel="noopener" class="link">See photo</a>
+          </ion-label>
+          <ion-button slot="end" size="small" fill="outline" @click="correctTotal(u)">Correct total</ion-button>
+        </ion-item>
+      </ion-list>
+    </template>
+
+    <utility-bill-modal :account="entering" :property-id="property.id" @close="entering = null" @done="entered" />
 
     <ion-card v-if="canEdit">
       <ion-card-content>
@@ -82,7 +104,10 @@ import {
   IonSelectOption,
 } from '@ionic/vue'
 import { trashOutline } from 'ionicons/icons'
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import UtilityBillModal from '@/components/billing/UtilityBillModal.vue'
+import { billingService } from '@/services/billing'
+import type { UtilityBill } from '@/types/billing'
 import { manila, manilaDate } from '@/lib/dayjs'
 import { peso, toCentavos, toPesoInput } from '@/lib/money'
 import { errorMessage, fieldErrors } from '@/services/api'
@@ -98,6 +123,50 @@ const emit = defineEmits<{ changed: [] }>()
 const toast = useToast()
 const prompt = usePrompt()
 const canEdit = computed(() => props.property.abilities.includes('manage_prices'))
+const canEnterBills = computed(() => props.property.abilities.includes('manage_utility_bills'))
+const isMetered = (a: UtilityAccount) => a.method === 'actual_bill' && a.billed_by === 'owner'
+const entering = ref<UtilityAccount | null>(null)
+const utilityBills = ref<UtilityBill[]>([])
+
+async function loadUtilityBills() {
+  if (!canEnterBills.value) return
+  try {
+    utilityBills.value = await billingService.utilityBills(props.property.id)
+  } catch (e) {
+    toast.error(errorMessage(e))
+  }
+}
+
+onMounted(loadUtilityBills)
+
+function entered(message: string) {
+  entering.value = null
+  toast.success(message)
+  loadUtilityBills()
+}
+
+async function correctTotal(u: UtilityBill) {
+  const alert = await alertController.create({
+    header: `Correct the ${u.account.name} total`,
+    message: 'The split stays the same. Each room leader gets a correction on their bill and is told why.',
+    inputs: [
+      { name: 'total', type: 'text', value: toPesoInput(u.total_centavos), attributes: { inputmode: 'decimal' } },
+      { name: 'reason', type: 'textarea', placeholder: 'Reason (shown to the room leaders)' },
+    ],
+    buttons: [{ text: 'Cancel', role: 'cancel' }, { text: 'Save', role: 'confirm' }],
+  })
+  await alert.present()
+  const { role, data } = await alert.onDidDismiss()
+  if (role !== 'confirm') return
+  const total = toCentavos(data?.values?.total)
+  const reason = (data?.values?.reason ?? '').trim()
+  if (total === null) return toast.error('Enter the total in pesos.')
+  if (!reason) return toast.error('Give a reason.')
+  await run(async () => {
+    await billingService.correctUtilityBill(u.id, total, reason)
+    await loadUtilityBills()
+  }, 'Total corrected.')
+}
 const busy = ref(false)
 const form = reactive({ type: 'electricity', name: '', method: 'actual_bill', amount: '', billed_by: 'owner' })
 const fixed = computed(() => ['fixed_per_bedspace', 'fixed_per_property', 'opt_in'].includes(form.method))
@@ -158,6 +227,10 @@ async function remove(account: UtilityAccount) {
 <style scoped>
 .presets {
   margin: 8px 0;
+}
+.link {
+  color: var(--ion-color-primary);
+  font-size: 0.85rem;
 }
 .upcoming {
   color: var(--ion-color-primary);

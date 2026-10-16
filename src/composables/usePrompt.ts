@@ -16,11 +16,11 @@ export function usePrompt() {
   }
 
   /** Returns the typed reason, or null if cancelled. */
-  async function reason(header: string, message: string, action: string): Promise<string | null> {
+  async function reason(header: string, message: string, action: string, placeholder = 'Reason (shown to the owner)'): Promise<string | null> {
     const alert = await alertController.create({
       header,
       message,
-      inputs: [{ name: 'reason', type: 'textarea', placeholder: 'Reason (shown to the owner)' }],
+      inputs: [{ name: 'reason', type: 'textarea', placeholder }],
       buttons: [
         { text: 'Cancel', role: 'cancel' },
         { text: action, role: 'confirm' },

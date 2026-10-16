@@ -36,6 +36,7 @@
                 From {{ manilaDate(stay.scheduled_discount.effective_from).format('MMM D, YYYY') }} your agreed rate changes.
               </p>
               <p class="muted small">Utilities are billed after each month, for what you used.</p>
+              <ion-button size="small" fill="outline" router-link="/boarder/bills">My bills and payments</ion-button>
             </ion-card-content>
           </ion-card>
 

@@ -79,6 +79,11 @@ export const AuditEvent = {
   UtilityBillCorrected: 'billing.utility_bill_corrected',
   ChargeAdded: 'billing.charge_added',
   BillAdjusted: 'billing.bill_adjusted',
+  PaymentRecorded: 'billing.payment_recorded',
+  PaymentReported: 'billing.payment_reported',
+  PaymentConfirmed: 'billing.payment_confirmed',
+  PaymentRejected: 'billing.payment_rejected',
+  PaymentReversed: 'billing.payment_reversed',
   EmailChanged: 'account.email_changed',
   PasswordChanged: 'account.password_changed',
   PasswordSet: 'account.password_set',
@@ -145,6 +150,11 @@ export const AuditEventLabels: Record<AuditEvent, string> = {
   'billing.utility_bill_corrected': 'Corrected a utility bill',
   'billing.charge_added': 'Added a one-time charge',
   'billing.bill_adjusted': 'Corrected a bill',
+  'billing.payment_recorded': 'Recorded a payment',
+  'billing.payment_reported': 'Reported a payment',
+  'billing.payment_confirmed': 'Confirmed a reported payment',
+  'billing.payment_rejected': 'Rejected a reported payment',
+  'billing.payment_reversed': 'Reversed a payment',
   'account.email_changed': 'Changed email',
   'account.password_changed': 'Changed password',
   'account.password_set': 'Set a password',
@@ -342,6 +352,10 @@ export const NotificationEvent = {
   DiscountChanged: 'discount_changed',
   BillIssued: 'bill_issued',
   BillAdjusted: 'bill_adjusted',
+  PaymentReported: 'payment_reported',
+  PaymentConfirmed: 'payment_confirmed',
+  PaymentRejected: 'payment_rejected',
+  PaymentReversed: 'payment_reversed',
 } as const
 export type NotificationEvent = (typeof NotificationEvent)[keyof typeof NotificationEvent]
 export const NotificationEventLabels: Record<NotificationEvent, string> = {
@@ -373,6 +387,10 @@ export const NotificationEventLabels: Record<NotificationEvent, string> = {
   'discount_changed': 'Agreed rate changed',
   'bill_issued': 'New bill',
   'bill_adjusted': 'Bill corrected',
+  'payment_reported': 'Payment reported',
+  'payment_confirmed': 'Payment received',
+  'payment_rejected': 'Payment not confirmed',
+  'payment_reversed': 'Payment reversed',
 }
 
 export const OwnerDocumentKind = {

@@ -21,6 +21,14 @@
           </ion-card-content>
         </ion-card>
 
+        <!-- Money owed (only once there is something to pay) -->
+        <ion-card v-if="owed > 0" button router-link="/boarder/bills">
+          <ion-card-content>
+            <strong>You owe {{ peso(owed) }}</strong>
+            <p>See your bills, how to pay, or tell the owner you paid.</p>
+          </ion-card-content>
+        </ion-card>
+
         <!-- Active reservation -->
         <ion-card v-else-if="reservation" color="success" button router-link="/boarder/bookings">
           <ion-card-header>
@@ -69,6 +77,8 @@ import {
 } from '@ionic/vue'
 import { computed, ref } from 'vue'
 import { manilaDate } from '@/lib/dayjs'
+import { peso } from '@/lib/money'
+import { billingService } from '@/services/billing'
 import { bookingService } from '@/services/bookings'
 import { tenancyService } from '@/services/tenancies'
 import { useAuthStore } from '@/stores/auth'
@@ -80,6 +90,7 @@ const firstName = computed(() => auth.user?.name.split(' ')[0] ?? '')
 const reservation = ref<BookingApplication | null>(null)
 const pending = ref(0)
 const stay = ref<Tenancy | null>(null)
+const owed = ref(0)
 
 onIonViewWillEnter(async () => {
   try {
@@ -93,6 +104,12 @@ onIonViewWillEnter(async () => {
     stay.value = (await tenancyService.mine())[0] ?? null
   } catch {
     // Same: the card is a convenience.
+  }
+  try {
+    const { meta } = await billingService.myBills({ status: 'unpaid' })
+    owed.value = meta.places.reduce((sum, p) => sum + p.owed_centavos, 0)
+  } catch {
+    // Same.
   }
 })
 </script>

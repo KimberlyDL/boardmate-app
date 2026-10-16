@@ -8,6 +8,7 @@ import {
   notificationsOutline,
   peopleOutline,
   personCircleOutline,
+  receiptOutline,
   schoolOutline,
   shieldCheckmarkOutline,
   storefrontOutline,
@@ -101,6 +102,7 @@ const routes: Array<RouteRecordRaw> = [
   roleArea('/boarder', UserRole.Boarder, [
     { tab: 'home', href: '/boarder/home', label: 'Home', icon: homeOutline, component: () => import('@/views/boarder/BoarderHomePage.vue') },
     { tab: 'bookings', href: '/boarder/bookings', label: 'Bookings', icon: bookmarkOutline, component: () => import('@/views/boarder/MyBookingsPage.vue') },
+    { tab: 'bills', href: '/boarder/bills', label: 'Bills', icon: receiptOutline, component: () => import('@/views/boarder/MyBillsPage.vue') },
   ]),
   roleArea('/owner', UserRole.Owner, [
     { tab: 'home', href: '/owner/home', label: 'Home', icon: storefrontOutline, component: () => import('@/views/owner/OwnerHomePage.vue') },
