@@ -84,6 +84,9 @@ export const AuditEvent = {
   PaymentConfirmed: 'billing.payment_confirmed',
   PaymentRejected: 'billing.payment_rejected',
   PaymentReversed: 'billing.payment_reversed',
+  BillMarkedLate: 'billing.bill_marked_late',
+  BillReviewStarted: 'billing.bill_review_started',
+  BillReviewEnded: 'billing.bill_review_ended',
   EmailChanged: 'account.email_changed',
   PasswordChanged: 'account.password_changed',
   PasswordSet: 'account.password_set',
@@ -155,6 +158,9 @@ export const AuditEventLabels: Record<AuditEvent, string> = {
   'billing.payment_confirmed': 'Confirmed a reported payment',
   'billing.payment_rejected': 'Rejected a reported payment',
   'billing.payment_reversed': 'Reversed a payment',
+  'billing.bill_marked_late': 'Marked a bill late',
+  'billing.bill_review_started': 'Put a bill under review',
+  'billing.bill_review_ended': 'Ended a bill\'s review',
   'account.email_changed': 'Changed email',
   'account.password_changed': 'Changed password',
   'account.password_set': 'Set a password',
@@ -356,6 +362,9 @@ export const NotificationEvent = {
   PaymentConfirmed: 'payment_confirmed',
   PaymentRejected: 'payment_rejected',
   PaymentReversed: 'payment_reversed',
+  PaymentDue: 'payment_due',
+  PaymentOverdue: 'payment_overdue',
+  BillMarkedLate: 'bill_marked_late',
 } as const
 export type NotificationEvent = (typeof NotificationEvent)[keyof typeof NotificationEvent]
 export const NotificationEventLabels: Record<NotificationEvent, string> = {
@@ -391,6 +400,9 @@ export const NotificationEventLabels: Record<NotificationEvent, string> = {
   'payment_confirmed': 'Payment received',
   'payment_rejected': 'Payment not confirmed',
   'payment_reversed': 'Payment reversed',
+  'payment_due': 'Payment due',
+  'payment_overdue': 'Payment overdue',
+  'bill_marked_late': 'Bill marked late',
 }
 
 export const OwnerDocumentKind = {
@@ -503,6 +515,22 @@ export const PropertyTypeLabels: Record<PropertyType, string> = {
   'studio': 'Studio',
   'house': 'House',
   'condo': 'Condo unit',
+}
+
+export const ReminderKind = {
+  DueSoon: 'due_soon',
+  DueToday: 'due_today',
+  Overdue: 'overdue',
+  MarkedLate: 'marked_late',
+  Manual: 'manual',
+} as const
+export type ReminderKind = (typeof ReminderKind)[keyof typeof ReminderKind]
+export const ReminderKindLabels: Record<ReminderKind, string> = {
+  'due_soon': 'Due soon',
+  'due_today': 'Due today',
+  'overdue': 'Overdue',
+  'marked_late': 'Marked late',
+  'manual': 'Reminder from staff',
 }
 
 export const RentalMode = {

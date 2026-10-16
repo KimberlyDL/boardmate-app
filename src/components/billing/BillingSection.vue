@@ -16,12 +16,16 @@
 
     <ion-segment :value="view" :scrollable="true" @ion-change="switchView(String($event.detail.value))">
       <ion-segment-button value="pending"><ion-label>To confirm<template v-if="pendingCount"> ({{ pendingCount }})</template></ion-label></ion-segment-button>
+      <ion-segment-button v-if="canViewArrears" value="overdue"><ion-label>Overdue</ion-label></ion-segment-button>
       <ion-segment-button value="unpaid"><ion-label>Unpaid</ion-label></ion-segment-button>
       <ion-segment-button value="paid"><ion-label>Paid</ion-label></ion-segment-button>
       <ion-segment-button value="payments"><ion-label>Payments</ion-label></ion-segment-button>
     </ion-segment>
 
-    <p v-if="loading" class="muted">Loading…</p>
+    <!-- Who is behind (C7): its own list and actions -->
+    <overdue-list v-if="view === 'overdue'" ref="overdueList" :property="property" @record="recordFor" />
+
+    <p v-else-if="loading" class="muted">Loading…</p>
 
     <!-- Bills -->
     <template v-else-if="view === 'unpaid' || view === 'paid'">
@@ -37,6 +41,8 @@
             <template v-if="b.status !== 'paid'"> · <strong>{{ peso(b.balance_centavos) }} left</strong></template>
           </p>
           <ion-badge :color="billStatus(b).color">{{ billStatus(b).label }}</ion-badge>
+          <ion-badge v-if="b.is_late" color="danger" class="gap-left">Late</ion-badge>
+          <ion-badge v-if="b.under_review" color="tertiary" class="gap-left">Under review</ion-badge>
         </ion-card-content>
       </ion-card>
     </template>
@@ -71,18 +77,33 @@
             <ion-button size="small" :disabled="busy" @click="confirm(p)">Confirm</ion-button>
             <ion-button size="small" fill="outline" color="danger" :disabled="busy" @click="reject(p)">Reject</ion-button>
           </div>
-          <div v-else-if="p.status === 'confirmed' && canEditBills" class="actions">
-            <ion-button size="small" fill="clear" color="danger" :disabled="busy" @click="reverse(p)">Reverse</ion-button>
+          <div v-else-if="p.receipt_number" class="actions">
+            <ion-button size="small" fill="outline" @click="receipt(p)">Receipt</ion-button>
+            <ion-button v-if="p.status === 'confirmed' && canEditBills" size="small" fill="clear" color="danger" :disabled="busy" @click="reverse(p)">Reverse</ion-button>
           </div>
         </ion-card-content>
       </ion-card>
     </template>
 
-    <ion-button v-if="page < lastPage" expand="block" fill="clear" @click="load(false)">Show more</ion-button>
+    <ion-button v-if="view !== 'overdue' && page < lastPage" expand="block" fill="clear" @click="load(false)">Show more</ion-button>
 
-    <record-payment-modal :open="recording" :property-id="property.id" :payers="payers" @close="recording = false" @done="done" />
+    <record-payment-modal
+      :open="recording"
+      :property-id="property.id"
+      :payers="payers"
+      :preset-payer-id="recordPayerId"
+      @close="closeRecording"
+      @done="done"
+    />
     <charge-modal :open="charging" :property-id="property.id" :payers="payers" @close="charging = false" @done="done" />
-    <bill-modal :bill="openBill" :can-correct="canEditBills" @close="openBill = null" @changed="corrected" />
+    <bill-modal
+      :bill="openBill"
+      :can-correct="canEditBills"
+      :can-review="canEditBills"
+      :can-mark-late="can('mark_late')"
+      @close="openBill = null"
+      @changed="corrected"
+    />
   </div>
 </template>
 
@@ -91,9 +112,11 @@ import { IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSub
 import { computed, onMounted, ref } from 'vue'
 import BillModal from '@/components/billing/BillModal.vue'
 import ChargeModal from '@/components/billing/ChargeModal.vue'
+import OverdueList from '@/components/billing/OverdueList.vue'
 import RecordPaymentModal from '@/components/billing/RecordPaymentModal.vue'
 import { billStatus, paymentColor, toPayers, type Payer } from '@/lib/billing'
 import { manilaDate } from '@/lib/dayjs'
+import { openDocument } from '@/lib/documents'
 import { peso } from '@/lib/money'
 import { firstError } from '@/services/api'
 import { billingService } from '@/services/billing'
@@ -124,10 +147,36 @@ const unpaidTotal = ref(0)
 const unpaidCount = ref(0)
 const pendingCount = ref(0)
 const recording = ref(false)
+const recordPayerId = ref<number | null>(null)
 const charging = ref(false)
 const openBill = ref<Bill | null>(null)
+const canViewArrears = computed(() => can('view_arrears'))
+const overdueList = ref<InstanceType<typeof OverdueList> | null>(null)
+
+/** "Record payment" on the overdue list: the sheet opens for that payer. */
+function recordFor(payerId: number) {
+  recordPayerId.value = payerId
+  recording.value = true
+}
+
+function closeRecording() {
+  recording.value = false
+  recordPayerId.value = null
+}
+
+async function receipt(p: Payment) {
+  try {
+    await openDocument(() => billingService.receiptLink(p.id))
+  } catch (e) {
+    toast.error(firstError(e))
+  }
+}
 
 async function load(reset = true) {
+  if (view.value === 'overdue') {
+    await overdueList.value?.load()
+    return
+  }
   if (reset) loading.value = true
   const next = reset ? 1 : page.value + 1
   try {
@@ -193,7 +242,7 @@ function switchView(next: string) {
 }
 
 function done(message: string) {
-  recording.value = false
+  closeRecording()
   charging.value = false
   toast.success(message)
   load()
@@ -255,6 +304,9 @@ async function reverse(p: Payment) {
 }
 .small {
   font-size: 0.85rem;
+}
+.gap-left {
+  margin-left: 4px;
 }
 .proof {
   margin-left: 8px;

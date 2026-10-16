@@ -15,6 +15,23 @@
           Issued {{ manilaDate(bill.issued_on).format('MMM D, YYYY') }} · due <strong>{{ manilaDate(bill.due_on).format('MMM D, YYYY') }}</strong>
         </p>
         <ion-badge :color="billStatus(bill).color">{{ billStatus(bill).label }}</ion-badge>
+        <ion-badge v-if="bill.is_late" color="danger" class="gap-left">Late · {{ bill.late_notice_number }}</ion-badge>
+
+        <!-- Follow-up (C7) -->
+        <div v-if="bill.under_review" class="review">
+          <strong>Under review</strong> since {{ manila(bill.under_review.since).format('MMM D') }}<template v-if="bill.under_review.by"> ({{ bill.under_review.by }})</template>:
+          {{ bill.under_review.reason }}. No reminders or late marking until the review ends.
+        </div>
+        <div class="actions">
+          <ion-button v-if="bill.is_late" size="small" fill="outline" @click="notice">Late notice (PDF)</ion-button>
+          <ion-button v-if="canMarkLate && bill.is_overdue && !bill.is_late && !bill.under_review" size="small" fill="outline" color="danger" :disabled="busy" @click="markLate">
+            Mark late now
+          </ion-button>
+          <template v-if="canReview && bill.status !== 'paid'">
+            <ion-button v-if="!bill.under_review" size="small" fill="clear" :disabled="busy" @click="startReview">Put under review</ion-button>
+            <ion-button v-else size="small" fill="clear" :disabled="busy" @click="endReview">End review</ion-button>
+          </template>
+        </div>
 
         <ion-list lines="full" class="gap">
           <ion-item v-for="l in bill.lines" :key="l.id">
@@ -78,17 +95,61 @@ import {
 } from '@ionic/vue'
 import { ref, watch } from 'vue'
 import { billStatus } from '@/lib/billing'
-import { manilaDate } from '@/lib/dayjs'
+import { manila, manilaDate } from '@/lib/dayjs'
+import { openDocument } from '@/lib/documents'
 import { peso, toCentavos } from '@/lib/money'
 import { firstError } from '@/services/api'
 import { billingService } from '@/services/billing'
+import { usePrompt } from '@/composables/usePrompt'
 import { useToast } from '@/composables/useToast'
 import type { Bill } from '@/types/billing'
 
-const props = defineProps<{ bill: Bill | null; canCorrect: boolean }>()
+const props = withDefaults(defineProps<{ bill: Bill | null; canCorrect: boolean; canReview?: boolean; canMarkLate?: boolean }>(), {
+  canReview: false,
+  canMarkLate: false,
+})
 const emit = defineEmits<{ close: []; changed: [bill: Bill, message: string] }>()
 
 const toast = useToast()
+const prompt = usePrompt()
+
+/** Run a follow-up action on the bill and hand the updated bill to the parent. */
+async function act(action: () => Promise<{ bill: Bill; message: string }>) {
+  busy.value = true
+  try {
+    const { bill, message } = await action()
+    emit('changed', bill, message)
+  } catch (e) {
+    toast.error(firstError(e))
+  } finally {
+    busy.value = false
+  }
+}
+
+async function markLate() {
+  if (!props.bill) return
+  const ok = await prompt.confirm('Mark this bill late now?', `${props.bill.payer.name} gets a numbered late notice. No fee is added.`, 'Mark late')
+  if (ok) await act(() => billingService.markLate(props.bill!.id))
+}
+
+async function startReview() {
+  if (!props.bill) return
+  const why = await prompt.reason('Put this bill under review?', 'Reminders and late marking stop until you end the review.', 'Start review', 'Reason, e.g. says she paid by GCash')
+  if (why) await act(() => billingService.startReview(props.bill!.id, why))
+}
+
+async function endReview() {
+  if (props.bill) await act(() => billingService.endReview(props.bill!.id))
+}
+
+async function notice() {
+  if (!props.bill) return
+  try {
+    await openDocument(() => billingService.noticeLink(props.bill!.id))
+  } catch (e) {
+    toast.error(firstError(e))
+  }
+}
 const direction = ref<'add' | 'take_off'>('take_off')
 const amount = ref('')
 const lineId = ref<number | null>(null)
@@ -141,5 +202,20 @@ async function correct() {
 }
 .small {
   font-size: 0.85rem;
+}
+.gap-left {
+  margin-left: 4px;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.review {
+  background: var(--ion-color-light);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 8px;
 }
 </style>

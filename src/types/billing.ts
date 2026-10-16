@@ -34,7 +34,41 @@ export interface Bill {
   balance_centavos: number
   status: BillStatus
   is_overdue: boolean
+  /** Marked late after the grace days, with a numbered notice (NTC-…). */
+  is_late: boolean
+  late_notice_number: string | null
+  /** No reminders or late marking while the owner checks it. */
+  under_review: { since: string; reason: string | null; by?: string | null } | null
   lines: BillLine[]
+}
+
+export interface CollectionNote {
+  id: number
+  note: string
+  promised_on: string | null
+  by: string | null
+  at: string | null
+}
+
+/** One payer on the overdue list (C7). */
+export interface OverdueRow {
+  payer: { id: number; name: string | null; phone: string | null }
+  room_label: string | null
+  overdue_centavos: number
+  owed_centavos: number
+  overdue_bills: number
+  oldest_due_on: string
+  days_overdue: number
+  is_late: boolean
+  under_review_bills: number
+  last_reminded_on: string | null
+  latest_note: CollectionNote | null
+}
+
+/** A short-lived link to a PDF that opens without signing in. */
+export interface DocumentLink {
+  url: string
+  expires_in_minutes: number
 }
 
 export interface BillsMeta {

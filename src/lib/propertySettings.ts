@@ -78,14 +78,16 @@ export const SETTING_SECTIONS: SettingSection[] = [
     id: 'payments',
     title: 'Payments and reminders',
     fields: [
-      { key: 'grace_days', label: 'Grace days after the due date', type: 'int', unit: 'days', key_setting: true, pending: BILLING },
+      {
+        key: 'grace_days', label: 'Grace days after the due date', type: 'int', unit: 'days', key_setting: true,
+        help: 'No penalty during these days. A bill still unpaid the day after is marked late (if turned on below).',
+      },
       { key: 'remind_before_due', label: 'Remind before the due date', type: 'bool' },
       { key: 'remind_before_days', label: 'Days before', type: 'int', unit: 'days', showIf: (v) => !!v.remind_before_due },
       { key: 'remind_on_due', label: 'Remind on the due date', type: 'bool' },
       { key: 'remind_overdue', label: 'Remind while overdue', type: 'bool' },
       { key: 'overdue_reminder_days', label: 'On overdue days', type: 'day-list', help: 'e.g. 1, 3', showIf: (v) => !!v.remind_overdue },
-      { key: 'mark_late_enabled', label: 'Mark as late after the grace days', type: 'bool' },
-      { key: 'mark_late_day', label: 'Mark late on day', type: 'int', showIf: (v) => !!v.mark_late_enabled },
+      { key: 'mark_late_enabled', label: 'Mark as late the day after the grace days, with a notice', type: 'bool' },
       {
         key: 'correction_credit_handling', label: 'Credit from a corrected bill', type: 'select',
         options: [

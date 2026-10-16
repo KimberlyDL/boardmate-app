@@ -37,6 +37,7 @@
               </p>
             </template>
             <p v-else class="muted small">Ask the owner how to pay, or pay in cash and get a receipt.</p>
+            <ion-button size="small" fill="outline" @click="statement(p)">Statement (PDF)</ion-button>
           </ion-card-content>
         </ion-card>
 
@@ -58,6 +59,8 @@
                 <template v-if="b.status !== 'paid'"> · <strong>{{ peso(b.balance_centavos) }} to pay</strong></template>
               </p>
               <ion-badge :color="billStatus(b).color">{{ billStatus(b).label }}</ion-badge>
+              <ion-badge v-if="b.is_late" color="danger" class="gap-left">Late</ion-badge>
+              <ion-badge v-if="b.under_review" color="tertiary" class="gap-left">Being checked</ion-badge>
             </ion-card-content>
           </ion-card>
         </template>
@@ -76,6 +79,7 @@
               <p v-if="p.reject_reason">Not confirmed: {{ p.reject_reason }}</p>
               <p v-if="p.reversal">Reversed: {{ p.reversal.reason }}</p>
               <ion-badge :color="paymentColor[p.status]">{{ p.status_label }}</ion-badge>
+              <ion-button v-if="p.receipt_number" size="small" fill="outline" class="gap-left" @click="receipt(p)">Receipt (PDF)</ion-button>
             </ion-card-content>
           </ion-card>
         </template>
@@ -116,6 +120,7 @@ import BillModal from '@/components/billing/BillModal.vue'
 import ReportPaymentModal from '@/components/billing/ReportPaymentModal.vue'
 import { billStatus, paymentColor } from '@/lib/billing'
 import { manilaDate } from '@/lib/dayjs'
+import { openDocument } from '@/lib/documents'
 import { peso } from '@/lib/money'
 import { firstError } from '@/services/api'
 import { billingService } from '@/services/billing'
@@ -178,6 +183,22 @@ async function refresh(e: RefresherCustomEvent) {
   e.target.complete()
 }
 
+async function statement(p: MyPlace) {
+  try {
+    await openDocument(() => billingService.myStatementLink(p.property_id))
+  } catch (e) {
+    toast.error(firstError(e))
+  }
+}
+
+async function receipt(p: Payment) {
+  try {
+    await openDocument(() => billingService.receiptLink(p.id))
+  } catch (e) {
+    toast.error(firstError(e))
+  }
+}
+
 function reported(message: string) {
   reporting.value = false
   toast.success(message)
@@ -192,5 +213,8 @@ function reported(message: string) {
 }
 .small {
   font-size: 0.85rem;
+}
+.gap-left {
+  margin-left: 4px;
 }
 </style>

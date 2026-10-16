@@ -14,7 +14,7 @@ import type { Property } from '@/types/property'
 vi.mock('@/services/billing', () => ({
   billingService: {
     bills: vi.fn(), payments: vi.fn(), balance: vi.fn(), record: vi.fn(), confirm: vi.fn(), reject: vi.fn(), reverse: vi.fn(),
-    myBills: vi.fn(), myPayments: vi.fn(), report: vi.fn(),
+    myBills: vi.fn(), myPayments: vi.fn(), report: vi.fn(), myStatementLink: vi.fn(), receiptLink: vi.fn(),
   },
 }))
 vi.mock('@/services/tenancies', () => ({ tenancyService: { list: vi.fn() } }))
@@ -280,5 +280,38 @@ describe('ReportPaymentModal', () => {
 
     expect(billingService.report).toHaveBeenCalledWith(3, expect.objectContaining({ amount_centavos: 30000, method: 'e_wallet', reference: 'GC-777' }))
     expect(wrapper.emitted('done')?.[0]).toEqual(['Payment reported. The owner will confirm it.'])
+  })
+})
+
+describe('MyBillsPage follow-up (C7) and documents (A9)', () => {
+  test('marks late and checked bills, and opens the statement and a receipt as PDFs', async () => {
+    const tab = { location: { href: '' }, close: vi.fn() }
+    const open = vi.spyOn(window, 'open').mockReturnValue(tab as unknown as Window)
+    vi.mocked(billingService.myBills).mockResolvedValue({
+      items: [
+        { ...october, property_name: 'Santos House', is_late: true, late_notice_number: 'NTC-2026-000001', under_review: null },
+        { ...october, id: 22, number: 'BILL-2026-000013', property_name: 'Santos House', is_late: false, under_review: { since: '2026-10-28T10:00:00+08:00', reason: 'Checking', by: null } },
+      ],
+      meta: { current_page: 1, last_page: 1, total: 2, places: [santos] },
+    })
+    vi.mocked(billingService.myStatementLink).mockResolvedValue({ url: 'https://api.test/documents/statements/3/5?signature=x', expires_in_minutes: 30 })
+    vi.mocked(billingService.myPayments).mockResolvedValue({ items: [{ ...confirmed, property_name: 'Santos House' }], meta: { current_page: 1, last_page: 1, total: 1 } })
+    vi.mocked(billingService.receiptLink).mockResolvedValue({ url: 'https://api.test/documents/receipts/41?signature=y', expires_in_minutes: 30 })
+
+    mount(MyBillsPage, { global: { plugins: [IonicVue] }, attachTo: document.body })
+    await flushPromises()
+    expect(text()).toContain('Late')
+    expect(text()).toContain('Being checked')
+
+    await press('Statement (PDF)')
+    expect(billingService.myStatementLink).toHaveBeenCalledWith(3)
+    expect(open).toHaveBeenCalledWith('', '_blank')
+    expect(tab.location.href).toBe('https://api.test/documents/statements/3/5?signature=x')
+
+    await showTab('payments')
+    await press('Receipt (PDF)')
+    expect(billingService.receiptLink).toHaveBeenCalledWith(41)
+    expect(tab.location.href).toBe('https://api.test/documents/receipts/41?signature=y')
+    open.mockRestore()
   })
 })

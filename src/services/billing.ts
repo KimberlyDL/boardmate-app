@@ -4,7 +4,10 @@ import type { PageMeta } from '@/types/roles'
 import type {
   Bill,
   BillsMeta,
+  CollectionNote,
+  DocumentLink,
   MyBillsMeta,
+  OverdueRow,
   PayerBalance,
   Payment,
   PaymentInput,
@@ -74,6 +77,64 @@ export const billingService = {
   async reverse(paymentId: number, reason: string) {
     const { data } = await api.post<ApiEnvelope<Payment>>(`/payments/${paymentId}/reverse`, { reason })
     return { payment: data.data, message: data.message ?? '' }
+  },
+
+  // Overdue list and follow-up (C7)
+  async overdue(propertyId: number) {
+    const { data } = await api.get<ApiEnvelope<OverdueRow[], { payers: number; overdue_total_centavos: number }>>(`/properties/${propertyId}/collections`)
+    return { items: data.data, meta: data.meta! }
+  },
+
+  async notes(propertyId: number, payerId: number): Promise<CollectionNote[]> {
+    const { data } = await api.get<ApiEnvelope<CollectionNote[]>>(`/properties/${propertyId}/collections/${payerId}/notes`)
+    return data.data
+  },
+
+  async addNote(propertyId: number, payerId: number, note: string, promisedOn?: string | null): Promise<CollectionNote> {
+    const { data } = await api.post<ApiEnvelope<CollectionNote>>(`/properties/${propertyId}/collections/${payerId}/notes`, { note, promised_on: promisedOn || null })
+    return data.data
+  },
+
+  /** A reminder now for what is due; once a day per payer. */
+  async remind(propertyId: number, payerId: number): Promise<string> {
+    const { data } = await api.post<ApiEnvelope<null>>(`/properties/${propertyId}/collections/${payerId}/remind`)
+    return data.message ?? ''
+  },
+
+  async markLate(billId: number) {
+    const { data } = await api.post<ApiEnvelope<Bill>>(`/bills/${billId}/mark-late`)
+    return { bill: data.data, message: data.message ?? '' }
+  },
+
+  async startReview(billId: number, reason: string) {
+    const { data } = await api.put<ApiEnvelope<Bill>>(`/bills/${billId}/review`, { reason })
+    return { bill: data.data, message: data.message ?? '' }
+  },
+
+  async endReview(billId: number) {
+    const { data } = await api.delete<ApiEnvelope<Bill>>(`/bills/${billId}/review`)
+    return { bill: data.data, message: data.message ?? '' }
+  },
+
+  // PDF documents (A9): each call returns a short-lived link
+  async receiptLink(paymentId: number): Promise<DocumentLink> {
+    const { data } = await api.get<ApiEnvelope<DocumentLink>>(`/payments/${paymentId}/receipt-link`)
+    return data.data
+  },
+
+  async noticeLink(billId: number): Promise<DocumentLink> {
+    const { data } = await api.get<ApiEnvelope<DocumentLink>>(`/bills/${billId}/notice-link`)
+    return data.data
+  },
+
+  async statementLink(propertyId: number, payerId: number, period: { from?: string; to?: string } = {}): Promise<DocumentLink> {
+    const { data } = await api.get<ApiEnvelope<DocumentLink>>(`/properties/${propertyId}/payers/${payerId}/statement-link`, { params: period })
+    return data.data
+  },
+
+  async myStatementLink(propertyId: number, period: { from?: string; to?: string } = {}): Promise<DocumentLink> {
+    const { data } = await api.get<ApiEnvelope<DocumentLink>>('/me/statement-link', { params: { property_id: propertyId, ...period } })
+    return data.data
   },
 
   // The signed-in boarder
