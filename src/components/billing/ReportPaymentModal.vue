@@ -22,7 +22,7 @@
           <ion-input v-model="paidOn" type="date" :max="today" label="Paid on" label-placement="stacked" fill="outline" />
         </div>
         <ion-select v-model="method" label="How you paid" label-placement="stacked" fill="outline" interface="popover" class="gap">
-          <ion-select-option v-for="(label, value) in PaymentMethodLabels" :key="value" :value="value">{{ label }}</ion-select-option>
+          <ion-select-option v-for="(label, value) in manualPaymentMethods" :key="value" :value="value">{{ label }}</ion-select-option>
         </ion-select>
         <ion-input v-model="reference" label="Reference no." label-placement="stacked" fill="outline" class="gap" :maxlength="100" placeholder="From the GCash, Maya or bank receipt" />
 
@@ -46,7 +46,8 @@ import { toCentavos, toPesoInput } from '@/lib/money'
 import { firstError } from '@/services/api'
 import { billingService } from '@/services/billing'
 import { useToast } from '@/composables/useToast'
-import { PaymentMethodLabels, type PaymentMethod } from '@/types/enums'
+import { manualPaymentMethods } from '@/lib/billing'
+import type { PaymentMethod } from '@/types/enums'
 import type { MyPlace } from '@/types/billing'
 
 const props = defineProps<{ open: boolean; places: MyPlace[] }>()

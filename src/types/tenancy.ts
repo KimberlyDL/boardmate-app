@@ -1,4 +1,4 @@
-import type { DiscountKind, PaymentMethod, TenancyPaymentKind, TenancyStatus } from './enums'
+import type { DiscountKind, NoticeStatus, PaymentMethod, TenancyPaymentKind, TenancyStatus } from './enums'
 
 /** The current leader of a room (C2). */
 export interface RoomLeader {
@@ -75,8 +75,19 @@ export interface Tenancy {
   emergency_contact: EmergencyContact
   house_rules_accepted_at: string | null
   created_at: string
+  /** C1: the approved last day of stay (the unit is free the day after). */
+  end_on: string | null
+  /** Past the end date and no move-out recorded. */
+  is_overstaying: boolean
+  moved_out_on: string | null
+  /** A notice from the boarder waiting for approval. */
+  pending_notice?: { id: number; end_on: string; is_short_notice: boolean; filed_at: string | null } | null
   /** Tenant view only */
   is_leader?: boolean
+  /** Tenant view only: the place's notice rules (short notice is only flagged). */
+  notice_rules?: { suggested_days: number | null; minimum_days: number | null }
+  /** Tenant view only: the deposit was settled after move-out. */
+  is_settled?: boolean
   /** Staff view only */
   payments?: TenancyPaymentRow[]
   deposit_paid_centavos?: number
@@ -134,4 +145,78 @@ export interface NewOccupantInput {
   emergency_contact_name: string
   emergency_contact_relationship?: string
   emergency_contact_phone: string
+}
+
+/** An end date asked for or set (C1). */
+export interface TenancyNotice {
+  id: number
+  end_on: string
+  status: NoticeStatus
+  status_label: string
+  is_short_notice: boolean
+  reason: string | null
+  filed_by: string | null
+  filed_at: string | null
+  decided_by: string | null
+  decided_at: string | null
+  decline_reason: string | null
+  /** Only on the "waiting for approval" list. */
+  tenancy?: { id: number; tenant: { id: number; name: string; phone: string | null }; room_label: string; unit_label: string }
+}
+
+/** After a staff action on the end date or move-out. */
+export interface TenancyState {
+  id: number
+  status: TenancyStatus
+  status_label: string
+  end_on: string | null
+  unit_status: string
+  moved_out_on?: string
+  final_bill?: { id: number; number: string; total_centavos: number } | null
+}
+
+/** Before settling (C8): what the deposit would do now. */
+export interface SettlementWorksheet {
+  settled: false
+  deposit_held_centavos: number
+  owed_centavos: number
+  credit_centavos: number
+  suggested_apply_centavos: number
+  suggested_refund_centavos: number
+  still_owed_centavos: number
+  rent_now_centavos: number | null
+  deposit_gap_centavos: number
+  unpaid_bills: { id: number; number: string; kind_label: string; due_on: string; balance_centavos: number }[]
+}
+
+/** After settling (C8). */
+export interface SettlementResult {
+  settled: true
+  id: number
+  deposit_held_centavos: number
+  deductions: { bill_number: string; description: string; amount_centavos: number; reason: string }[]
+  deductions_centavos: number
+  applied_centavos: number
+  kept_centavos: number
+  kept_reason: string | null
+  refund_centavos: number
+  credit_returned_centavos: number
+  still_owed_centavos: number
+  refund_method: PaymentMethod | null
+  refund_method_label: string | null
+  refund_reference: string | null
+  refunded_on: string | null
+  note: string | null
+  settled_by: string | null
+  settled_at: string | null
+}
+
+export interface SettleInput {
+  deductions: { description: string; amount_centavos: number; reason: string }[]
+  keep_centavos?: number
+  keep_reason?: string
+  refund_method?: PaymentMethod
+  refund_reference?: string
+  refunded_on?: string
+  note?: string
 }

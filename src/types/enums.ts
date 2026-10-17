@@ -87,6 +87,14 @@ export const AuditEvent = {
   BillMarkedLate: 'billing.bill_marked_late',
   BillReviewStarted: 'billing.bill_review_started',
   BillReviewEnded: 'billing.bill_review_ended',
+  NoticeFiled: 'tenancy.notice_filed',
+  NoticeWithdrawn: 'tenancy.notice_withdrawn',
+  NoticeApproved: 'tenancy.notice_approved',
+  NoticeDeclined: 'tenancy.notice_declined',
+  EndDateSet: 'tenancy.end_date_set',
+  EndDateCancelled: 'tenancy.end_date_cancelled',
+  TenancyEnded: 'tenancy.moved_out',
+  DepositSettled: 'tenancy.deposit_settled',
   EmailChanged: 'account.email_changed',
   PasswordChanged: 'account.password_changed',
   PasswordSet: 'account.password_set',
@@ -161,6 +169,14 @@ export const AuditEventLabels: Record<AuditEvent, string> = {
   'billing.bill_marked_late': 'Marked a bill late',
   'billing.bill_review_started': 'Put a bill under review',
   'billing.bill_review_ended': 'Ended a bill\'s review',
+  'tenancy.notice_filed': 'Gave notice',
+  'tenancy.notice_withdrawn': 'Withdrew a notice',
+  'tenancy.notice_approved': 'Approved a notice',
+  'tenancy.notice_declined': 'Declined a notice',
+  'tenancy.end_date_set': 'Set a last day of stay',
+  'tenancy.end_date_cancelled': 'Cancelled a last day of stay',
+  'tenancy.moved_out': 'Recorded a move-out',
+  'tenancy.deposit_settled': 'Settled a deposit',
   'account.email_changed': 'Changed email',
   'account.password_changed': 'Changed password',
   'account.password_set': 'Set a password',
@@ -171,12 +187,14 @@ export const BillKind = {
   Periodic: 'periodic',
   Utility: 'utility',
   Charge: 'charge',
+  Final: 'final',
 } as const
 export type BillKind = (typeof BillKind)[keyof typeof BillKind]
 export const BillKindLabels: Record<BillKind, string> = {
   'periodic': 'Monthly bill',
   'utility': 'Utility bill',
   'charge': 'Charge',
+  'final': 'Final bill',
 }
 
 export const BillLineKind = {
@@ -329,6 +347,22 @@ export const LateFeeTypeLabels: Record<LateFeeType, string> = {
   'percentage': 'Percentage of the charge',
 }
 
+export const NoticeStatus = {
+  Pending: 'pending',
+  Approved: 'approved',
+  Declined: 'declined',
+  Withdrawn: 'withdrawn',
+  Replaced: 'replaced',
+} as const
+export type NoticeStatus = (typeof NoticeStatus)[keyof typeof NoticeStatus]
+export const NoticeStatusLabels: Record<NoticeStatus, string> = {
+  'pending': 'Waiting for approval',
+  'approved': 'Approved',
+  'declined': 'Declined',
+  'withdrawn': 'Withdrawn',
+  'replaced': 'Replaced',
+}
+
 export const NotificationEvent = {
   VerifyEmail: 'verify_email',
   PasswordReset: 'password_reset',
@@ -365,6 +399,11 @@ export const NotificationEvent = {
   PaymentDue: 'payment_due',
   PaymentOverdue: 'payment_overdue',
   BillMarkedLate: 'bill_marked_late',
+  NoticeFiled: 'notice_filed',
+  EndDateChanged: 'end_date_changed',
+  MovedOut: 'moved_out',
+  TenancyOverstaying: 'tenancy_overstaying',
+  DepositSettled: 'deposit_settled',
 } as const
 export type NotificationEvent = (typeof NotificationEvent)[keyof typeof NotificationEvent]
 export const NotificationEventLabels: Record<NotificationEvent, string> = {
@@ -403,6 +442,11 @@ export const NotificationEventLabels: Record<NotificationEvent, string> = {
   'payment_due': 'Payment due',
   'payment_overdue': 'Payment overdue',
   'bill_marked_late': 'Bill marked late',
+  'notice_filed': 'Move-out notice',
+  'end_date_changed': 'Last day of stay',
+  'moved_out': 'Moved out',
+  'tenancy_overstaying': 'Stayed past the last day',
+  'deposit_settled': 'Deposit settled',
 }
 
 export const OwnerDocumentKind = {
@@ -449,12 +493,14 @@ export const PaymentMethod = {
   Cash: 'cash',
   BankTransfer: 'bank_transfer',
   EWallet: 'e_wallet',
+  Deposit: 'deposit',
 } as const
 export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
 export const PaymentMethodLabels: Record<PaymentMethod, string> = {
   'cash': 'Cash',
   'bank_transfer': 'Bank transfer',
   'e_wallet': 'E-wallet (GCash, Maya)',
+  'deposit': 'Deposit applied',
 }
 
 export const PaymentStatus = {
@@ -595,10 +641,16 @@ export const TenancyPaymentKindLabels: Record<TenancyPaymentKind, string> = {
 
 export const TenancyStatus = {
   Active: 'active',
+  NoticeGiven: 'notice_given',
+  Ended: 'ended',
+  Settled: 'settled',
 } as const
 export type TenancyStatus = (typeof TenancyStatus)[keyof typeof TenancyStatus]
 export const TenancyStatusLabels: Record<TenancyStatus, string> = {
   'active': 'Active',
+  'notice_given': 'Leaving',
+  'ended': 'Moved out',
+  'settled': 'Settled',
 }
 
 export const UnitKind = {

@@ -40,6 +40,30 @@
             </ion-card-content>
           </ion-card>
 
+          <!-- Leaving (C1) -->
+          <ion-card class="leaving">
+            <ion-card-content>
+              <template v-if="stay.status === 'notice_given'">
+                <strong>Your last day: {{ manilaDate(stay.end_on!).format('MMM D, YYYY') }}.</strong>
+                <p v-if="stay.is_overstaying" class="warn">That day has passed. Talk to the owner to record your move-out or change the date.</p>
+                <p v-else>The owner records your move-out, then settles your deposit. To change the date, talk to the owner.</p>
+              </template>
+              <template v-else-if="stay.pending_notice">
+                <strong>Notice sent: last day {{ manilaDate(stay.pending_notice.end_on).format('MMM D, YYYY') }}.</strong>
+                <p>Waiting for the owner to approve it.</p>
+                <ion-button size="small" fill="outline" color="medium" :disabled="busy" @click="withdraw">Withdraw notice</ion-button>
+              </template>
+              <template v-else>
+                <strong>Planning to leave?</strong>
+                <p>
+                  Tell the owner your last day.
+                  <template v-if="stay.notice_rules?.suggested_days">They ask for {{ stay.notice_rules.suggested_days }} days' notice.</template>
+                </p>
+                <ion-button size="small" fill="outline" :disabled="busy" @click="giveNotice">Give notice</ion-button>
+              </template>
+            </ion-card-content>
+          </ion-card>
+
           <ion-card v-if="stay.is_leader">
             <ion-card-content>
               <strong>You are the leader of this room.</strong>
@@ -56,6 +80,24 @@
             </ion-label>
             <ion-button slot="end" size="small" fill="outline" @click="editContact">Edit</ion-button>
           </ion-item>
+        </template>
+
+        <!-- Past stays and their deposit (C8) -->
+        <template v-if="past.length">
+          <h3>Past stays</h3>
+          <ion-card v-for="p in past" :key="p.id">
+            <ion-card-header>
+              <ion-card-subtitle>Room {{ p.room.label }} · {{ manilaDate(p.moved_in_on).format('MMM D, YYYY') }} – {{ manilaDate(p.moved_out_on!).format('MMM D, YYYY') }}</ion-card-subtitle>
+              <ion-card-title>{{ p.property.name }}</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <template v-if="p.is_settled">
+                <p>Your deposit is settled.</p>
+                <ion-button size="small" fill="outline" @click="summary(p)">Settlement summary (PDF)</ion-button>
+              </template>
+              <p v-else class="muted">Moved out. The owner will settle your deposit soon.</p>
+            </ion-card-content>
+          </ion-card>
         </template>
       </div>
 
@@ -95,7 +137,8 @@ import {
 } from '@ionic/vue'
 import { ref } from 'vue'
 import RoomPeopleModal from '@/components/tenancy/RoomPeopleModal.vue'
-import { manilaDate } from '@/lib/dayjs'
+import { manila, manilaDate } from '@/lib/dayjs'
+import { openDocument } from '@/lib/documents'
 import { peso } from '@/lib/money'
 import { firstError } from '@/services/api'
 import { tenancyService } from '@/services/tenancies'
@@ -105,12 +148,16 @@ import type { Tenancy } from '@/types/tenancy'
 /** The boarder's current stay: where, what they pay and when, and their emergency contact. Leaders also manage who stays. */
 const toast = useToast()
 const stay = ref<Tenancy | null>(null)
+const past = ref<Tenancy[]>([])
 const loading = ref(true)
+const busy = ref(false)
 const people = ref(false)
 
 async function load() {
   try {
-    stay.value = (await tenancyService.mine())[0] ?? null
+    const [current, before] = await Promise.all([tenancyService.mine(), tenancyService.mine(true)])
+    stay.value = current[0] ?? null
+    past.value = before
   } catch (e) {
     toast.error(firstError(e))
   } finally {
@@ -123,6 +170,52 @@ onIonViewWillEnter(load)
 async function refresh(event: RefresherCustomEvent) {
   await load()
   event.target.complete()
+}
+
+/** Ask for the last day of stay and send the notice. */
+async function giveNotice() {
+  if (!stay.value) return
+  const rules = stay.value.notice_rules
+  const suggested = manila().add(rules?.suggested_days ?? 0, 'day').format('YYYY-MM-DD')
+  const alert = await alertController.create({
+    header: 'Give notice',
+    message: `Your last day of stay. The owner approves it.${rules?.minimum_days ? ` Less than ${rules.minimum_days} days is short notice (no fee, but the owner is told).` : ''}`,
+    inputs: [{ name: 'end_on', type: 'date', value: suggested, min: manila().format('YYYY-MM-DD') }],
+    buttons: [{ text: 'Cancel', role: 'cancel' }, { text: 'Send notice', role: 'confirm' }],
+  })
+  await alert.present()
+  const { role, data } = await alert.onDidDismiss()
+  if (role !== 'confirm' || !data?.values?.end_on) return
+  busy.value = true
+  try {
+    toast.success((await tenancyService.giveNotice(stay.value.id, data.values.end_on)).message)
+    await load()
+  } catch (e) {
+    toast.error(firstError(e))
+  } finally {
+    busy.value = false
+  }
+}
+
+async function withdraw() {
+  if (!stay.value) return
+  busy.value = true
+  try {
+    toast.success(await tenancyService.withdrawNotice(stay.value.id))
+    await load()
+  } catch (e) {
+    toast.error(firstError(e))
+  } finally {
+    busy.value = false
+  }
+}
+
+async function summary(p: Tenancy) {
+  try {
+    await openDocument(() => tenancyService.settlementSummaryLink(p.id))
+  } catch (e) {
+    toast.error(firstError(e))
+  }
 }
 
 async function editContact() {
@@ -159,5 +252,11 @@ async function editContact() {
 <style scoped>
 .small {
   font-size: 0.85rem;
+}
+.leaving {
+  border-left: 4px solid var(--ion-color-medium);
+}
+.warn {
+  color: var(--ion-color-danger);
 }
 </style>

@@ -34,6 +34,49 @@
             </ion-card-content>
           </ion-card>
 
+          <!-- End of stay (C1) and deposit (C8) -->
+          <h3>End of stay</h3>
+          <div class="stay">
+            <template v-if="tenancy.status === 'active'">
+              <p v-if="tenancy.pending_notice">
+                Gave notice: last day <strong>{{ manilaDate(tenancy.pending_notice.end_on).format('MMM D, YYYY') }}</strong>, waiting for approval.
+                <ion-badge v-if="tenancy.pending_notice.is_short_notice" color="warning">Short notice</ion-badge>
+              </p>
+              <p v-else class="muted">Month to month, no end date.</p>
+              <div v-if="canApproveMoveOut" class="actions">
+                <template v-if="tenancy.pending_notice">
+                  <ion-button size="small" :disabled="busy" @click="approveNotice">Approve notice</ion-button>
+                  <ion-button size="small" fill="outline" color="danger" :disabled="busy" @click="declineNotice">Decline</ion-button>
+                </template>
+                <ion-button size="small" fill="outline" :disabled="busy" @click="setEndDate">Set an end date</ion-button>
+                <ion-button size="small" fill="clear" :disabled="busy" @click="moveOut">Left without notice</ion-button>
+              </div>
+            </template>
+
+            <template v-else-if="tenancy.status === 'notice_given'">
+              <p>
+                Leaving: last day <strong>{{ manilaDate(tenancy.end_on!).format('MMM D, YYYY') }}</strong>.
+                <ion-badge v-if="tenancy.is_overstaying" color="danger">Past the last day</ion-badge>
+              </p>
+              <div v-if="canApproveMoveOut" class="actions">
+                <ion-button size="small" :disabled="busy" @click="moveOut">Record move-out</ion-button>
+                <ion-button size="small" fill="outline" :disabled="busy" @click="setEndDate">Change end date</ion-button>
+                <ion-button size="small" fill="clear" color="danger" :disabled="busy" @click="cancelEndDate">Cancel end date</ion-button>
+              </div>
+            </template>
+
+            <template v-else>
+              <p>Moved out <strong>{{ manilaDate(tenancy.moved_out_on!).format('MMM D, YYYY') }}</strong>.</p>
+              <div class="actions">
+                <ion-button v-if="tenancy.status === 'ended' && canSettle" size="small" @click="settling = true">Settle the deposit</ion-button>
+                <ion-button v-if="tenancy.status === 'settled'" size="small" fill="outline" @click="settling = true">Settlement</ion-button>
+              </div>
+              <p v-if="tenancy.status === 'ended' && !canSettle" class="muted small">The owner or a Manager settles the deposit.</p>
+            </template>
+          </div>
+
+          <settlement-modal :open="settling" :tenancy="tenancy" :can-settle="canSettle" @close="settling = false" @settled="settled" />
+
           <!-- Received at move-in -->
           <h3>Received at move-in</h3>
           <p v-if="!tenancy.payments?.length" class="muted">Nothing was recorded.</p>
@@ -123,15 +166,110 @@ import { peso } from '@/lib/money'
 import { discountOf } from '@/lib/moveIn'
 import { firstError } from '@/services/api'
 import { tenancyService } from '@/services/tenancies'
+import SettlementModal from '@/components/tenancy/SettlementModal.vue'
+import { usePrompt } from '@/composables/usePrompt'
 import { useToast } from '@/composables/useToast'
 import type { DiscountKind } from '@/types/enums'
 import type { DiscountRow, Tenancy } from '@/types/tenancy'
 
 /** One tenant's stay for the owner or a caretaker: what was received at move-in, the emergency contact and the agreed rate. */
-const props = defineProps<{ tenancyId: number | null; canManage: boolean }>()
+const props = withDefaults(defineProps<{ tenancyId: number | null; canManage: boolean; canApproveMoveOut?: boolean; canSettle?: boolean }>(), {
+  canApproveMoveOut: false,
+  canSettle: false,
+})
 const emit = defineEmits<{ close: []; changed: [] }>()
 
 const toast = useToast()
+const prompt = usePrompt()
+const settling = ref(false)
+
+/** Ask for a date (and a reason) in one dialog; null when cancelled or incomplete. */
+async function askDate(header: string, message: string, value: string, opts: { min?: string; max?: string; reasonRequired: boolean; reasonHint: string }) {
+  const alert = await alertController.create({
+    header,
+    message,
+    inputs: [
+      { name: 'date', type: 'date', value, min: opts.min, max: opts.max },
+      { name: 'reason', type: 'textarea', placeholder: opts.reasonHint },
+    ],
+    buttons: [{ text: 'Cancel', role: 'cancel' }, { text: 'Save', role: 'confirm' }],
+  })
+  await alert.present()
+  const { role, data } = await alert.onDidDismiss()
+  if (role !== 'confirm') return null
+  const date = data?.values?.date as string
+  const reason = ((data?.values?.reason as string) ?? '').trim()
+  if (!date) {
+    toast.error('Pick a date.')
+    return null
+  }
+  if (opts.reasonRequired && !reason) {
+    toast.error('Give a reason. The boarder sees it.')
+    return null
+  }
+  return { date, reason }
+}
+
+const thirtyDaysBack = () => manila().subtract(30, 'day').format('YYYY-MM-DD')
+
+async function stayAction(action: () => Promise<{ message: string }>) {
+  busy.value = true
+  try {
+    toast.success((await action()).message)
+    await load()
+    emit('changed')
+  } catch (e) {
+    toast.error(firstError(e))
+  } finally {
+    busy.value = false
+  }
+}
+
+async function approveNotice() {
+  const t = tenancy.value!
+  const ok = await prompt.confirm('Approve this notice?', `Last day: ${manilaDate(t.pending_notice!.end_on).format('MMM D, YYYY')}. No rent period starts after it.`, 'Approve')
+  if (ok) await stayAction(() => tenancyService.approveNotice(t.id))
+}
+
+async function declineNotice() {
+  const reason = await prompt.reason('Decline this notice?', 'They stay on, month to month.', 'Decline', 'Reason (shown to the boarder)')
+  if (reason) await stayAction(async () => ({ message: await tenancyService.declineNotice(tenancy.value!.id, reason) }))
+}
+
+async function setEndDate() {
+  const t = tenancy.value!
+  const asked = await askDate(
+    t.end_on ? 'Change the last day' : 'Set the last day',
+    'The last day of stay; the room is free the day after. Up to 30 days back for someone who already left.',
+    t.end_on ?? t.pending_notice?.end_on ?? today.value,
+    { min: thirtyDaysBack(), reasonRequired: true, reasonHint: 'Reason (shown to the boarder)' },
+  )
+  if (asked) await stayAction(() => tenancyService.setEndDate(t.id, asked.date, asked.reason))
+}
+
+async function cancelEndDate() {
+  const reason = await prompt.reason('Cancel the last day?', 'They stay on, month to month.', 'Cancel end date', 'Reason (shown to the boarder)')
+  if (reason) await stayAction(() => tenancyService.cancelEndDate(tenancy.value!.id, reason))
+}
+
+async function moveOut() {
+  const t = tenancy.value!
+  const noNotice = t.status === 'active'
+  const asked = await askDate(
+    noNotice ? 'Left without notice' : 'Record the move-out',
+    'The day they actually left (today or up to 30 days back). The room becomes available, and the last month\'s fixed utilities go on a final bill.',
+    t.end_on && t.end_on <= today.value ? t.end_on : today.value,
+    { min: thirtyDaysBack(), max: today.value, reasonRequired: noNotice, reasonHint: noNotice ? 'Reason, e.g. left without notice' : 'Note (optional)' },
+  )
+  if (asked) await stayAction(() => tenancyService.recordMoveOut(t.id, asked.date, asked.reason || undefined))
+}
+
+function settled(message: string) {
+  settling.value = false
+  toast.success(message)
+  load()
+  emit('changed')
+}
 const loading = ref(false)
 const busy = ref(false)
 const tenancy = ref<Tenancy | null>(null)
@@ -255,5 +393,16 @@ async function endDiscount() {
 }
 .override {
   color: var(--ion-color-warning-shade);
+}
+.stay {
+  background: var(--ion-color-light);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
 }
 </style>

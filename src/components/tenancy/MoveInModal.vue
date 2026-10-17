@@ -89,7 +89,7 @@
               @ion-input="row.touch()"
             />
             <ion-select v-model="row.form.method" label="How" label-placement="stacked" fill="outline" interface="popover">
-              <ion-select-option v-for="(label, value) in PaymentMethodLabels" :key="value" :value="value">{{ label }}</ion-select-option>
+              <ion-select-option v-for="(label, value) in manualPaymentMethods" :key="value" :value="value">{{ label }}</ion-select-option>
             </ion-select>
           </div>
           <ion-input v-if="row.form.method !== 'cash'" v-model="row.form.reference" label="Reference number" label-placement="stacked" fill="outline" />
@@ -166,7 +166,7 @@ import { buildMoveIn, discountOf, emptyMoveIn, emptyOccupant, needsOverride, sho
 import { errorMessage, firstError } from '@/services/api'
 import { tenancyService } from '@/services/tenancies'
 import { useToast } from '@/composables/useToast'
-import { PaymentMethodLabels } from '@/types/enums'
+import { manualPaymentMethods } from '@/lib/billing'
 import type { BookingApplication } from '@/types/booking'
 import type { MoveInQuote, Tenancy } from '@/types/tenancy'
 

@@ -1,5 +1,10 @@
 import type { Bill } from '@/types/billing'
-import type { PaymentStatus } from '@/types/enums'
+import { PaymentMethodLabels, type PaymentMethod, type PaymentStatus } from '@/types/enums'
+
+/** Methods a person records or reports by hand; "deposit" is only used at settlement. */
+export const manualPaymentMethods = Object.fromEntries(
+  Object.entries(PaymentMethodLabels).filter(([value]) => value !== 'deposit'),
+) as Partial<Record<PaymentMethod, string>>
 import type { Tenancy } from '@/types/tenancy'
 
 /** Someone who can pay at a property: a current tenant (room leaders included). */

@@ -62,7 +62,7 @@ describe('TenantsSection', () => {
     mount(TenantsSection, { props: { property: property(['view', 'manage_tenancies'], ['available']) }, global: { plugins: [IonicVue] }, attachTo: document.body })
     await flushPromises()
 
-    expect(tenancyService.list).toHaveBeenCalledWith(3, undefined, 1)
+    expect(tenancyService.list).toHaveBeenCalledWith(3, undefined, 1, 'current')
     expect(text()).toContain('Room 203 · Whole house')
     expect(text()).toContain('Kim Santos')
     expect(text()).toContain('next rent Nov 25')
@@ -103,7 +103,7 @@ describe('MyStayPage', () => {
   })
 
   test('shows the stay, what they pay and when, and the leader role with who stays', async () => {
-    vi.mocked(tenancyService.mine).mockResolvedValue([{ ...kim, is_leader: true }])
+    vi.mocked(tenancyService.mine).mockImplementation(async (past = false) => (past ? [] : [{ ...kim, is_leader: true }]))
     mountStay()
     await flushPromises()
 
@@ -121,7 +121,7 @@ describe('MyStayPage', () => {
   })
 
   test('a member who is not the leader sees no leader card', async () => {
-    vi.mocked(tenancyService.mine).mockResolvedValue([{ ...kim, is_leader: false }])
+    vi.mocked(tenancyService.mine).mockImplementation(async (past = false) => (past ? [] : [{ ...kim, is_leader: false }]))
     mountStay()
     await flushPromises()
 
@@ -129,7 +129,7 @@ describe('MyStayPage', () => {
   })
 
   test('a leader of a bedspace room has no list of occupants to manage', async () => {
-    vi.mocked(tenancyService.mine).mockResolvedValue([{ ...kim, is_leader: true, room: { ...kim.room, rental_mode: 'bedspaces', let_whole: false } }])
+    vi.mocked(tenancyService.mine).mockImplementation(async (past = false) => (past ? [] : [{ ...kim, is_leader: true, room: { ...kim.room, rental_mode: 'bedspaces', let_whole: false } }]))
     mountStay()
     await flushPromises()
 
