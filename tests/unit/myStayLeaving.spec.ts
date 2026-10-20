@@ -5,6 +5,10 @@ import MyStayPage from '@/views/boarder/MyStayPage.vue'
 import { tenancyService } from '@/services/tenancies'
 import type { Tenancy } from '@/types/tenancy'
 
+vi.mock('@/services/groups', () => ({ groupService: { mine: vi.fn(async () => []) } }))
+vi.mock('@/services/houseRules', () => ({
+  houseRuleService: { forProperty: vi.fn(async () => ({ current: null, draft: null, automatic: [], versions: [] })), forStay: vi.fn(async () => ({ current: null, needs_acceptance: false, acceptances: [] })) },
+}))
 vi.mock('@/services/tenancies', () => ({
   tenancyService: { mine: vi.fn(), giveNotice: vi.fn(), withdrawNotice: vi.fn(), settlementSummaryLink: vi.fn() },
 }))

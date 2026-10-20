@@ -88,6 +88,8 @@ export interface Tenancy {
   notice_rules?: { suggested_days: number | null; minimum_days: number | null }
   /** Tenant view only: the deposit was settled after move-out. */
   is_settled?: boolean
+  /** D2: the place's curfew (HH:MM or null) and whether I muted the reminder */
+  curfew?: { time: string | null; reminder_minutes: number; reminders_muted: boolean }
   /** Staff view only */
   payments?: TenancyPaymentRow[]
   deposit_paid_centavos?: number
@@ -128,6 +130,8 @@ export interface MoveInRequest {
   first_rent?: MoveInPayment
   override_reason?: string
   leader_consent?: boolean
+  /** D3: staff confirm the tenant accepted the house rules in force in person */
+  house_rules_accepted_in_person?: boolean
   make_leader?: boolean
   occupants?: PlannedOccupant[]
 }

@@ -90,11 +90,17 @@ const routes: Array<RouteRecordRaw> = [
   // Any signed-in user (pushed over the tabs)
   { path: '/profile', name: 'profile', component: () => import('@/views/account/ProfilePage.vue'), meta: { requiresAuth: true } },
   { path: '/stay', name: 'stay', component: () => import('@/views/boarder/MyStayPage.vue'), meta: { requiresAuth: true, role: UserRole.Boarder } },
+  { path: '/stay/house-rules', name: 'stay-house-rules', component: () => import('@/views/boarder/HouseRulesPage.vue'), meta: { requiresAuth: true, role: UserRole.Boarder } },
+  { path: '/stay/visits', name: 'stay-visits', component: () => import('@/views/boarder/VisitsPage.vue'), meta: { requiresAuth: true, role: UserRole.Boarder } },
+  { path: '/stay/maintenance', name: 'stay-maintenance', component: () => import('@/views/boarder/MyRequestsPage.vue'), meta: { requiresAuth: true, role: UserRole.Boarder } },
+  { path: '/groups', name: 'groups', component: () => import('@/views/groups/GroupsPage.vue'), meta: { requiresAuth: true } },
+  { path: '/groups/:id(\\d+)', name: 'group', component: () => import('@/views/groups/GroupPage.vue'), meta: { requiresAuth: true } },
   { path: '/apply-owner', name: 'apply-owner', component: () => import('@/views/owner/ApplyOwnerPage.vue'), meta: { requiresAuth: true } },
   { path: '/owner/business', name: 'owner-business', component: () => import('@/views/owner/OwnerBusinessPage.vue'), meta: { requiresAuth: true, role: UserRole.Owner } },
   { path: '/owner/properties/new', name: 'property-new', component: () => import('@/views/owner/PropertyWizardPage.vue'), meta: { requiresAuth: true, role: UserRole.Owner } },
   // Owners and assigned caretakers; the API decides what each may see and do.
   { path: '/properties/:id(\\d+)', name: 'property', component: () => import('@/views/properties/PropertyPage.vue'), meta: { requiresAuth: true } },
+  { path: '/reports', name: 'reports', component: () => import('@/views/account/ReportsPage.vue'), meta: { requiresAuth: true } },
   { path: '/owner/activity', name: 'owner-activity', component: () => import('@/views/account/ActivityLogPage.vue'), props: { scope: 'owner' }, meta: { requiresAuth: true, role: UserRole.Owner } },
   { path: '/admin/activity', name: 'admin-activity', component: () => import('@/views/account/ActivityLogPage.vue'), props: { scope: 'admin' }, meta: { requiresAuth: true, role: UserRole.PlatformAdmin } },
 

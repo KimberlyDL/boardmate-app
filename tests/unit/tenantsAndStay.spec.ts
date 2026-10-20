@@ -7,6 +7,10 @@ import { tenancyService } from '@/services/tenancies'
 import type { Property } from '@/types/property'
 import type { Tenancy } from '@/types/tenancy'
 
+vi.mock('@/services/groups', () => ({ groupService: { mine: vi.fn(async () => []) } }))
+vi.mock('@/services/houseRules', () => ({
+  houseRuleService: { forProperty: vi.fn(async () => ({ current: null, draft: null, automatic: [], versions: [] })), forStay: vi.fn(async () => ({ current: null, needs_acceptance: false, acceptances: [] })) },
+}))
 vi.mock('@/services/tenancies', () => ({ tenancyService: { list: vi.fn(), mine: vi.fn(), get: vi.fn(), discounts: vi.fn(), preview: vi.fn() } }))
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }))
 vi.mock('@/composables/useToast', () => ({ useToast: () => toast }))

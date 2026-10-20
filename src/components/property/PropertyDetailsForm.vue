@@ -59,6 +59,19 @@
         :readonly="readonly"
         placeholder="e.g. Female students only"
       />
+      <ion-textarea
+        v-model="model.emergency_numbers"
+        label="Emergency numbers for boarders (optional)"
+        label-placement="stacked"
+        fill="outline"
+        :readonly="readonly"
+        :rows="3"
+        :auto-grow="true"
+        :maxlength="500"
+        placeholder="e.g. Barangay hall 8123 4567 · Police 117 · Fire 160 · Owner 0917 000 0000"
+        helper-text="Shown on your boarders' home screen."
+        class="ion-margin-top"
+      />
     </template>
 
     <template v-if="part !== 'details'">

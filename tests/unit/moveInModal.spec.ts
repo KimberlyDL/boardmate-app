@@ -2,10 +2,14 @@ import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { IonicVue } from '@ionic/vue'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import MoveInModal from '@/components/tenancy/MoveInModal.vue'
+import { houseRuleService } from '@/services/houseRules'
 import { tenancyService } from '@/services/tenancies'
 import type { BookingApplication } from '@/types/booking'
 import type { MoveInQuote } from '@/types/tenancy'
 
+vi.mock('@/services/houseRules', () => ({
+  houseRuleService: { forProperty: vi.fn(async () => ({ current: null, draft: null, automatic: [], versions: [] })), forStay: vi.fn(async () => ({ current: null, needs_acceptance: false, acceptances: [] })) },
+}))
 vi.mock('@/services/tenancies', () => ({ tenancyService: { preview: vi.fn(), moveIn: vi.fn(), moveInWalkIn: vi.fn() } }))
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }))
 vi.mock('@/composables/useToast', () => ({ useToast: () => toast }))
@@ -167,5 +171,48 @@ describe('MoveInModal (from a reservation)', () => {
       first_rent: { amount_centavos: 100000 },
       override_reason: 'Trusted, pays Friday',
     })
+  })
+})
+
+describe('MoveInModal house rules (D3)', () => {
+  const rulesV = (version: number) => ({ current: { id: 1, version, is_draft: false, note: null, published_at: '2026-10-01T00:00:00+08:00', rules: [] }, draft: null, versions: [] })
+
+  async function ready(wrapper: VueWrapper) {
+    await open(wrapper)
+    await type('Name', 'Marta Santos')
+    await type('Phone', '0917 555 0000')
+    await tick('agreed to be the room')
+  }
+
+  test('rules that changed after applying must be confirmed in person', async () => {
+    vi.mocked(houseRuleService.forProperty).mockResolvedValueOnce(rulesV(2))
+    const wrapper = mount(MoveInModal, {
+      props: { open: false, property: { id: 3, name: 'Santos House' }, application: { ...reservation, house_rules_version: 1 } },
+      global: { plugins: [IonicVue] },
+      attachTo: document.body,
+    })
+    await ready(wrapper)
+
+    await press('Move in')
+    expect(toast.error).toHaveBeenCalledWith('Confirm that the tenant read and accepted the house rules.')
+    expect(tenancyService.moveIn).not.toHaveBeenCalled()
+
+    await tick('accepted the house rules (version 2) in person')
+    await press('Move in')
+    expect(vi.mocked(tenancyService.moveIn).mock.calls[0][1]).toMatchObject({ house_rules_accepted_in_person: true })
+  })
+
+  test('rules accepted in the app when applying need nothing more', async () => {
+    vi.mocked(houseRuleService.forProperty).mockResolvedValueOnce(rulesV(2))
+    const wrapper = mount(MoveInModal, {
+      props: { open: false, property: { id: 3, name: 'Santos House' }, application: { ...reservation, house_rules_version: 2 } },
+      global: { plugins: [IonicVue] },
+      attachTo: document.body,
+    })
+    await ready(wrapper)
+
+    expect(page().textContent).toContain('Kim Santos accepted the house rules (version 2) when applying.')
+    await press('Move in')
+    expect(vi.mocked(tenancyService.moveIn).mock.calls[0][1]).not.toHaveProperty('house_rules_accepted_in_person')
   })
 })

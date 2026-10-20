@@ -57,6 +57,7 @@ export const AuditEvent = {
   UtilityAccountUpdated: 'utility.updated',
   UtilityAccountRemoved: 'utility.removed',
   SettingsChanged: 'property.settings_changed',
+  HouseRulesPublished: 'property.house_rules_published',
   PhotosChanged: 'property.photos_changed',
   CaretakerAssigned: 'caretaker.assigned',
   CaretakerUnassigned: 'caretaker.unassigned',
@@ -139,6 +140,7 @@ export const AuditEventLabels: Record<AuditEvent, string> = {
   'utility.updated': 'Changed a utility',
   'utility.removed': 'Removed a utility',
   'property.settings_changed': 'Changed property settings',
+  'property.house_rules_published': 'Published new house rules',
   'property.photos_changed': 'Changed listing photos',
   'caretaker.assigned': 'Assigned a caretaker to a property',
   'caretaker.unassigned': 'Removed a caretaker from a property',
@@ -312,6 +314,8 @@ export const FilePurpose = {
   OwnerDocument: 'owner_document',
   PaymentProof: 'payment_proof',
   UtilityBillPhoto: 'utility_bill_photo',
+  GroupProof: 'group_proof',
+  MaintenancePhoto: 'maintenance_photo',
 } as const
 export type FilePurpose = (typeof FilePurpose)[keyof typeof FilePurpose]
 export const FilePurposeLabels: Record<FilePurpose, string> = {
@@ -321,6 +325,8 @@ export const FilePurposeLabels: Record<FilePurpose, string> = {
   'owner_document': 'Owner document',
   'payment_proof': 'Proof of payment',
   'utility_bill_photo': 'Utility bill photo',
+  'group_proof': 'Shared expense proof',
+  'maintenance_photo': 'Maintenance photo',
 }
 
 export const FinalUtilityHandling = {
@@ -335,6 +341,74 @@ export const FinalUtilityHandlingLabels: Record<FinalUtilityHandling, string> = 
   'estimate_and_close': 'Estimate and close',
 }
 
+export const GroupExpenseKind = {
+  OwnerBill: 'owner_bill',
+  MemberExpense: 'member_expense',
+  Adjustment: 'adjustment',
+} as const
+export type GroupExpenseKind = (typeof GroupExpenseKind)[keyof typeof GroupExpenseKind]
+export const GroupExpenseKindLabels: Record<GroupExpenseKind, string> = {
+  'owner_bill': 'Owner bill',
+  'member_expense': 'Shared expense',
+  'adjustment': 'Correction',
+}
+
+export const GroupRole = {
+  Admin: 'admin',
+  Moderator: 'moderator',
+  Member: 'member',
+} as const
+export type GroupRole = (typeof GroupRole)[keyof typeof GroupRole]
+export const GroupRoleLabels: Record<GroupRole, string> = {
+  'admin': 'Leader',
+  'moderator': 'Moderator',
+  'member': 'Member',
+}
+
+export const HouseRuleAcceptanceMethod = {
+  App: 'app',
+  InPerson: 'in_person',
+} as const
+export type HouseRuleAcceptanceMethod = (typeof HouseRuleAcceptanceMethod)[keyof typeof HouseRuleAcceptanceMethod]
+export const HouseRuleAcceptanceMethodLabels: Record<HouseRuleAcceptanceMethod, string> = {
+  'app': 'In the app',
+  'in_person': 'In person',
+}
+
+export const HouseRuleCategory = {
+  Payments: 'payments',
+  QuietHours: 'quiet_hours',
+  Curfew: 'curfew',
+  Visitors: 'visitors',
+  Cleanliness: 'cleanliness',
+  Safety: 'safety',
+  Other: 'other',
+} as const
+export type HouseRuleCategory = (typeof HouseRuleCategory)[keyof typeof HouseRuleCategory]
+export const HouseRuleCategoryLabels: Record<HouseRuleCategory, string> = {
+  'payments': 'Payments',
+  'quiet_hours': 'Quiet hours',
+  'curfew': 'Curfew',
+  'visitors': 'Visitors',
+  'cleanliness': 'Cleanliness',
+  'safety': 'Safety',
+  'other': 'Other',
+}
+
+export const LateEntryStatus = {
+  Pending: 'pending',
+  Approved: 'approved',
+  Declined: 'declined',
+  Cancelled: 'cancelled',
+} as const
+export type LateEntryStatus = (typeof LateEntryStatus)[keyof typeof LateEntryStatus]
+export const LateEntryStatusLabels: Record<LateEntryStatus, string> = {
+  'pending': 'Waiting',
+  'approved': 'Approved',
+  'declined': 'Declined',
+  'cancelled': 'Cancelled',
+}
+
 export const LateFeeType = {
   Off: 'off',
   Fixed: 'fixed',
@@ -345,6 +419,54 @@ export const LateFeeTypeLabels: Record<LateFeeType, string> = {
   'off': 'Off',
   'fixed': 'Fixed amount',
   'percentage': 'Percentage of the charge',
+}
+
+export const MaintenanceCategory = {
+  Plumbing: 'plumbing',
+  Electrical: 'electrical',
+  Appliance: 'appliance',
+  Furniture: 'furniture',
+  Internet: 'internet',
+  Cleaning: 'cleaning',
+  Pest: 'pest',
+  Other: 'other',
+} as const
+export type MaintenanceCategory = (typeof MaintenanceCategory)[keyof typeof MaintenanceCategory]
+export const MaintenanceCategoryLabels: Record<MaintenanceCategory, string> = {
+  'plumbing': 'Plumbing',
+  'electrical': 'Electrical',
+  'appliance': 'Appliance',
+  'furniture': 'Furniture',
+  'internet': 'Internet',
+  'cleaning': 'Cleaning',
+  'pest': 'Pests',
+  'other': 'Other',
+}
+
+export const MaintenanceStatus = {
+  Submitted: 'submitted',
+  InProgress: 'in_progress',
+  Resolved: 'resolved',
+  Closed: 'closed',
+  Cancelled: 'cancelled',
+} as const
+export type MaintenanceStatus = (typeof MaintenanceStatus)[keyof typeof MaintenanceStatus]
+export const MaintenanceStatusLabels: Record<MaintenanceStatus, string> = {
+  'submitted': 'Submitted',
+  'in_progress': 'In progress',
+  'resolved': 'Resolved',
+  'closed': 'Closed',
+  'cancelled': 'Cancelled',
+}
+
+export const MaintenanceUrgency = {
+  Normal: 'normal',
+  Urgent: 'urgent',
+} as const
+export type MaintenanceUrgency = (typeof MaintenanceUrgency)[keyof typeof MaintenanceUrgency]
+export const MaintenanceUrgencyLabels: Record<MaintenanceUrgency, string> = {
+  'normal': 'Normal',
+  'urgent': 'Urgent',
 }
 
 export const NoticeStatus = {
@@ -404,6 +526,20 @@ export const NotificationEvent = {
   MovedOut: 'moved_out',
   TenancyOverstaying: 'tenancy_overstaying',
   DepositSettled: 'deposit_settled',
+  GroupLinePosted: 'group_line_posted',
+  GroupRepayment: 'group_repayment',
+  HouseRulesUpdated: 'house_rules_updated',
+  MaintenanceReported: 'maintenance_reported',
+  MaintenanceUrgent: 'maintenance_urgent',
+  MaintenanceUpdated: 'maintenance_updated',
+  MaintenanceForStaff: 'maintenance_for_staff',
+  CurfewReminder: 'curfew_reminder',
+  LateEntryRequested: 'late_entry_requested',
+  LateEntryDecided: 'late_entry_decided',
+  OvernightRequested: 'overnight_requested',
+  VisitorDecided: 'visitor_decided',
+  OvernightOverLimit: 'overnight_over_limit',
+  CurfewViolationLogged: 'curfew_violation_logged',
 } as const
 export type NotificationEvent = (typeof NotificationEvent)[keyof typeof NotificationEvent]
 export const NotificationEventLabels: Record<NotificationEvent, string> = {
@@ -447,6 +583,20 @@ export const NotificationEventLabels: Record<NotificationEvent, string> = {
   'moved_out': 'Moved out',
   'tenancy_overstaying': 'Stayed past the last day',
   'deposit_settled': 'Deposit settled',
+  'group_line_posted': 'New shared bill in your room',
+  'group_repayment': 'Paying back in your room',
+  'house_rules_updated': 'New house rules',
+  'maintenance_reported': 'New repair request',
+  'maintenance_urgent': 'Urgent repair request',
+  'maintenance_updated': 'Update on my repair request',
+  'maintenance_for_staff': 'Repair request needs you',
+  'curfew_reminder': 'Curfew reminder',
+  'late_entry_requested': 'Late-entry request',
+  'late_entry_decided': 'Late-entry decision',
+  'overnight_requested': 'Overnight visitor to approve',
+  'visitor_decided': 'Overnight visitor decision',
+  'overnight_over_limit': 'Over the overnight limit',
+  'curfew_violation_logged': 'Late arrival recorded',
 }
 
 export const OwnerDocumentKind = {
@@ -525,6 +675,8 @@ export const PropertyAbility = {
   MarkLate: 'mark_late',
   ApproveMoveOut: 'approve_move_out',
   ViewArrears: 'view_arrears',
+  HandleMaintenance: 'handle_maintenance',
+  HandleHouseOperations: 'handle_house_operations',
   EditDetails: 'edit_details',
   ManagePrices: 'manage_prices',
   ManageRules: 'manage_rules',
@@ -537,6 +689,7 @@ export const PropertyAbility = {
   RefundDeposits: 'refund_deposits',
   PublishListing: 'publish_listing',
   ViewCollections: 'view_collections',
+  ManageMaintenance: 'manage_maintenance',
   ManageCaretakers: 'manage_caretakers',
   EditOwnerPaymentDetails: 'edit_owner_payment_details',
   DeleteProperty: 'delete_property',
@@ -587,6 +740,28 @@ export type RentalMode = (typeof RentalMode)[keyof typeof RentalMode]
 export const RentalModeLabels: Record<RentalMode, string> = {
   'whole': 'Whole room',
   'bedspaces': 'By bedspace',
+}
+
+export const RepaymentMethod = {
+  Cash: 'cash',
+  Online: 'online',
+} as const
+export type RepaymentMethod = (typeof RepaymentMethod)[keyof typeof RepaymentMethod]
+export const RepaymentMethodLabels: Record<RepaymentMethod, string> = {
+  'cash': 'Cash',
+  'online': 'Online (GCash, Maya, bank)',
+}
+
+export const RepaymentStatus = {
+  Pending: 'pending',
+  Confirmed: 'confirmed',
+  Rejected: 'rejected',
+} as const
+export type RepaymentStatus = (typeof RepaymentStatus)[keyof typeof RepaymentStatus]
+export const RepaymentStatusLabels: Record<RepaymentStatus, string> = {
+  'pending': 'Waiting for confirmation',
+  'confirmed': 'Confirmed',
+  'rejected': 'Not confirmed',
 }
 
 export const ShortNoticeConsequence = {
@@ -731,6 +906,26 @@ export const UtilityTypeLabels: Record<UtilityType, string> = {
   'water': 'Water',
   'internet': 'Internet',
   'other': 'Other',
+}
+
+export const VisitorStatus = {
+  Pending: 'pending',
+  Registered: 'registered',
+  Approved: 'approved',
+  Declined: 'declined',
+  CheckedIn: 'checked_in',
+  CheckedOut: 'checked_out',
+  Cancelled: 'cancelled',
+} as const
+export type VisitorStatus = (typeof VisitorStatus)[keyof typeof VisitorStatus]
+export const VisitorStatusLabels: Record<VisitorStatus, string> = {
+  'pending': 'Waiting for approval',
+  'registered': 'Registered',
+  'approved': 'Approved',
+  'declined': 'Declined',
+  'checked_in': 'Checked in',
+  'checked_out': 'Checked out',
+  'cancelled': 'Cancelled',
 }
 
 export const WhoCanStay = {

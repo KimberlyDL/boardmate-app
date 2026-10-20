@@ -90,6 +90,19 @@
         <span v-if="idFile" class="muted small"> {{ idFile.name }}</span>
         <ion-note v-if="errors.id_document" color="danger" class="block">{{ errors.id_document[0] }}</ion-note>
 
+        <template v-if="houseRules">
+          <p class="label">House rules</p>
+          <ion-card class="rules">
+            <ion-card-content><house-rules-list :rules="houseRules.rules" /></ion-card-content>
+          </ion-card>
+          <ion-item lines="none">
+            <ion-checkbox :checked="acceptsRules" label-placement="end" justify="start" @ion-change="acceptsRules = $event.detail.checked">
+              <span class="ion-text-wrap">I have read the house rules and accept them</span>
+            </ion-checkbox>
+          </ion-item>
+          <ion-note v-if="errors.house_rules_version" color="danger" class="block">{{ errors.house_rules_version[0] }}</ion-note>
+        </template>
+
         <ion-button expand="block" type="submit" class="form-actions" :disabled="busy">
           <ion-spinner v-if="busy" name="crescent" />
           <span v-else>Send application</span>
@@ -104,6 +117,9 @@ import {
   IonBackButton,
   IonButton,
   IonButtons,
+  IonCard,
+  IonCardContent,
+  IonCheckbox,
   IonContent,
   IonHeader,
   IonInput,
@@ -122,6 +138,7 @@ import {
 } from '@ionic/vue'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import HouseRulesList from '@/components/houseRules/HouseRulesList.vue'
 import { manila } from '@/lib/dayjs'
 import { peso } from '@/lib/money'
 import { errorCode, errorMessage, fieldErrors } from '@/services/api'
@@ -129,7 +146,7 @@ import { bookingService } from '@/services/bookings'
 import { listingService } from '@/services/listings'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
-import type { PublicRoom } from '@/types/booking'
+import type { ListingDetail, PublicRoom } from '@/types/booking'
 
 const route = useRoute()
 const router = useRouter()
@@ -158,12 +175,15 @@ const idFile = ref<File | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 const errors = ref<Record<string, string[]>>({})
 const busy = ref(false)
+const houseRules = ref<ListingDetail['house_rules']>(null)
+const acceptsRules = ref(false)
 
 onMounted(async () => {
   try {
     const { listing } = await listingService.get(id)
     listingName.value = listing.name
     rooms.value = listing.rooms
+    houseRules.value = listing.house_rules
     if (!rooms.value.some((r) => r.id === form.room_id && r.status === 'available')) {
       form.room_id = rooms.value.length === 1 ? rooms.value[0].id : null
     }
@@ -177,10 +197,19 @@ function pickFile(e: Event) {
 }
 
 async function submit() {
+  if (houseRules.value && !acceptsRules.value) {
+    errors.value = { house_rules_version: ['Read and accept the house rules first.'] }
+    return
+  }
   busy.value = true
   errors.value = {}
   try {
-    const { message } = await bookingService.apply(id, { ...form, whole: rentAs.value === 'whole', id_document: idFile.value })
+    const { message } = await bookingService.apply(id, {
+      ...form,
+      whole: rentAs.value === 'whole',
+      id_document: idFile.value,
+      house_rules_version: houseRules.value?.version ?? null,
+    })
     toast.success(message)
     await router.replace('/boarder/bookings')
   } catch (e) {

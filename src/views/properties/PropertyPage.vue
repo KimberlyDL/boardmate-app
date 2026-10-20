@@ -27,6 +27,7 @@
         <p v-if="roleNote" class="role-note">{{ roleNote }}</p>
 
         <template v-if="tab === 'overview'">
+          <property-dashboard-view :property-id="property.id" @open="tab = $event" />
           <publish-card :property="property" @updated="property = $event" />
           <property-details-form v-model="details" :readonly="!canEditDetails" :errors="errors" />
           <ion-button v-if="canEditDetails" expand="block" class="form-actions" :disabled="busy" @click="saveDetails">Save details</ion-button>
@@ -37,6 +38,9 @@
         <billing-section v-else-if="tab === 'billing'" :property="property" />
         <utilities-section v-else-if="tab === 'utilities'" :property="property" @changed="reload" />
         <settings-section v-else-if="tab === 'settings'" :property="property" />
+        <house-rules-section v-else-if="tab === 'rules'" :property="property" />
+        <maintenance-section v-else-if="tab === 'maintenance'" :property="property" />
+        <house-ops-section v-else-if="tab === 'houseops'" :property="property" />
         <photos-section v-else-if="tab === 'photos'" :property="property" @updated="property = $event" />
         <caretakers-section v-else-if="tab === 'caretakers'" :property="property" @changed="reload" />
       </div>
@@ -63,7 +67,11 @@ import { trashOutline } from 'ionicons/icons'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BillingSection from '@/components/billing/BillingSection.vue'
+import PropertyDashboardView from '@/components/dashboard/PropertyDashboardView.vue'
 import CaretakersSection from '@/components/property/CaretakersSection.vue'
+import HouseOpsSection from '@/components/property/HouseOpsSection.vue'
+import HouseRulesSection from '@/components/property/HouseRulesSection.vue'
+import MaintenanceSection from '@/components/property/MaintenanceSection.vue'
 import PhotosSection from '@/components/property/PhotosSection.vue'
 import PropertyDetailsForm from '@/components/property/PropertyDetailsForm.vue'
 import PublishCard from '@/components/property/PublishCard.vue'
@@ -100,9 +108,12 @@ const tabs = computed(() => [
   { id: 'overview', label: 'Overview' },
   { id: 'units', label: 'Rooms' },
   { id: 'tenants', label: 'Tenants' },
+  ...(can('handle_maintenance') ? [{ id: 'maintenance', label: 'Repairs' }] : []),
+  ...(can('handle_house_operations') ? [{ id: 'houseops', label: 'Curfew & visitors' }] : []),
   ...(can('record_payments') ? [{ id: 'billing', label: 'Bills & payments' }] : []),
   { id: 'utilities', label: 'Utilities' },
   { id: 'settings', label: 'Settings' },
+  { id: 'rules', label: 'House rules' },
   { id: 'photos', label: 'Photos' },
   ...(can('manage_caretakers') ? [{ id: 'caretakers', label: 'Caretakers' }] : []),
 ])
@@ -119,6 +130,7 @@ function syncDetails(p: Property) {
     type: p.type,
     description: p.description,
     who_can_apply: p.who_can_apply,
+    emergency_numbers: p.emergency_numbers,
     street: p.street,
     barangay: p.barangay,
     city: p.city,

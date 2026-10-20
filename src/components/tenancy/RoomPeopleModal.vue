@@ -25,6 +25,7 @@
             </ion-button>
           </ion-item>
           <p v-if="whole && staff" class="muted small">In a room rented whole, the person who rents it is the leader.</p>
+          <ion-button v-if="staff" size="small" fill="outline" :disabled="busy" @click="openGroup">Room group</ion-button>
 
           <!-- Bedspace room: the people who live here -->
           <template v-if="!whole && staff">
@@ -114,8 +115,10 @@ import {
   IonToolbar,
 } from '@ionic/vue'
 import { computed, reactive, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { manila, manilaDate } from '@/lib/dayjs'
 import { firstError } from '@/services/api'
+import { groupService } from '@/services/groups'
 import { tenancyService } from '@/services/tenancies'
 import { usePrompt } from '@/composables/usePrompt'
 import { useToast } from '@/composables/useToast'
@@ -132,6 +135,7 @@ const emit = defineEmits<{ close: []; changed: [] }>()
 
 const toast = useToast()
 const prompt = usePrompt()
+const router = useRouter()
 const loading = ref(false)
 const busy = ref(false)
 const leader = ref<RoomLeader | null>(null)
@@ -203,6 +207,21 @@ async function chooseLeader() {
   if (!chosen) return
   if (!(await prompt.confirm('Did they agree?', `${chosen.tenant.name} agreed to be the leader of room ${props.room.label}: billed for its shared bills. Your approval is recorded.`, 'Yes, appoint'))) return
   await run(() => tenancyService.setLeader(props.room!.id, chosen.tenant.id), `${chosen.tenant.name} is the leader.`)
+}
+
+/** Staff: open the room's group (D5), creating it if needed. */
+async function openGroup() {
+  if (!props.room) return
+  busy.value = true
+  try {
+    const group = await groupService.forRoom(props.room.id)
+    emit('close')
+    await router.push(`/groups/${group.id}`)
+  } catch (e) {
+    toast.error(firstError(e))
+  } finally {
+    busy.value = false
+  }
 }
 
 function startAdding() {

@@ -132,6 +132,8 @@ export interface PropertySummary {
 export interface Property extends PropertySummary {
   description: string | null
   who_can_apply: string | null
+  /** A10: numbers boarders should have at hand, shown on their home */
+  emergency_numbers: string | null
   street: string | null
   barangay: string | null
   province: string | null

@@ -37,6 +37,31 @@
               </p>
               <p class="muted small">Utilities are billed after each month, for what you used.</p>
               <ion-button size="small" fill="outline" router-link="/boarder/bills">My bills and payments</ion-button>
+              <ion-button v-if="groupId" size="small" fill="outline" :router-link="`/groups/${groupId}`">Room group (shared costs)</ion-button>
+              <ion-button v-if="rules?.current" size="small" fill="outline" router-link="/stay/house-rules">House rules</ion-button>
+              <ion-button size="small" fill="outline" router-link="/stay/maintenance">Repairs</ion-button>
+              <ion-button size="small" fill="outline" router-link="/stay/visits">Visitors</ion-button>
+            </ion-card-content>
+          </ion-card>
+
+          <!-- Curfew (D2): the time, the reminder switch, and late entry -->
+          <ion-card v-if="stay.curfew?.time">
+            <ion-card-content>
+              <strong>Curfew: {{ clockTime(stay.curfew.time) }}</strong>
+              <ion-item lines="none" class="tight">
+                <ion-toggle :checked="!stay.curfew.reminders_muted" :disabled="busy" @ion-change="setReminders($event.detail.checked)">
+                  <span class="ion-text-wrap">Remind me {{ stay.curfew.reminder_minutes }} minutes before</span>
+                </ion-toggle>
+              </ion-item>
+              <ion-button size="small" fill="outline" router-link="/stay/visits?tab=late">Coming back late?</ion-button>
+            </ion-card-content>
+          </ion-card>
+
+          <!-- New house rules to accept (D3) -->
+          <ion-card v-if="rules?.needs_acceptance" class="rules-ask" button router-link="/stay/house-rules">
+            <ion-card-content>
+              <strong>New house rules (version {{ rules.current?.version }})</strong>
+              <p>Please read and accept them.</p>
             </ion-card-content>
           </ion-card>
 
@@ -132,17 +157,22 @@ import {
   IonRefresher,
   IonRefresherContent,
   IonTitle,
+  IonToggle,
   IonToolbar,
   onIonViewWillEnter,
 } from '@ionic/vue'
 import { ref } from 'vue'
 import RoomPeopleModal from '@/components/tenancy/RoomPeopleModal.vue'
-import { manila, manilaDate } from '@/lib/dayjs'
+import { clockTime, manila, manilaDate } from '@/lib/dayjs'
 import { openDocument } from '@/lib/documents'
 import { peso } from '@/lib/money'
 import { firstError } from '@/services/api'
+import { groupService } from '@/services/groups'
+import { houseOpsService } from '@/services/houseOps'
+import { houseRuleService } from '@/services/houseRules'
 import { tenancyService } from '@/services/tenancies'
 import { useToast } from '@/composables/useToast'
+import type { StayHouseRules } from '@/types/houseRules'
 import type { Tenancy } from '@/types/tenancy'
 
 /** The boarder's current stay: where, what they pay and when, and their emergency contact. Leaders also manage who stays. */
@@ -152,12 +182,16 @@ const past = ref<Tenancy[]>([])
 const loading = ref(true)
 const busy = ref(false)
 const people = ref(false)
+const groupId = ref<number | null>(null)
+const rules = ref<StayHouseRules | null>(null)
 
 async function load() {
   try {
-    const [current, before] = await Promise.all([tenancyService.mine(), tenancyService.mine(true)])
+    const [current, before, groups] = await Promise.all([tenancyService.mine(), tenancyService.mine(true), groupService.mine().catch(() => [])])
     stay.value = current[0] ?? null
     past.value = before
+    groupId.value = groups.find((g) => g.is_current)?.id ?? null
+    rules.value = stay.value ? await houseRuleService.forStay(stay.value.id).catch(() => null) : null
   } catch (e) {
     toast.error(firstError(e))
   } finally {
@@ -190,6 +224,20 @@ async function giveNotice() {
   try {
     toast.success((await tenancyService.giveNotice(stay.value.id, data.values.end_on)).message)
     await load()
+  } catch (e) {
+    toast.error(firstError(e))
+  } finally {
+    busy.value = false
+  }
+}
+
+/** Turn the curfew reminder on or off for this stay. */
+async function setReminders(on: boolean) {
+  if (!stay.value?.curfew) return
+  busy.value = true
+  try {
+    toast.success(await houseOpsService.muteReminders(stay.value.id, !on))
+    stay.value.curfew.reminders_muted = !on
   } catch (e) {
     toast.error(firstError(e))
   } finally {
@@ -252,6 +300,12 @@ async function editContact() {
 <style scoped>
 .small {
   font-size: 0.85rem;
+}
+.tight {
+  --padding-start: 0;
+}
+.rules-ask {
+  border-left: 4px solid var(--ion-color-warning);
 }
 .leaving {
   border-left: 4px solid var(--ion-color-medium);

@@ -18,6 +18,7 @@ export interface PropertyDetailsInput {
   type?: string
   description?: string | null
   who_can_apply?: string | null
+  emergency_numbers?: string | null
   street?: string | null
   barangay?: string | null
   city?: string | null

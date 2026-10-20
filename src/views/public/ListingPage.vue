@@ -82,6 +82,12 @@
             </ion-item>
           </ion-list>
 
+          <template v-if="listing.house_rules">
+            <h3>House rules</h3>
+            <house-rules-list :rules="listing.house_rules.rules" />
+            <p class="muted small">You accept these when you apply.</p>
+          </template>
+
           <h3>Location</h3>
           <p>{{ listing.street ? `${listing.street}, ${area}` : area }}</p>
           <p v-if="!listing.street" class="muted small">The exact address is shared once your booking is approved.</p>
@@ -114,6 +120,7 @@ import {
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import ListingMap from '@/components/ListingMap.vue'
+import HouseRulesList from '@/components/houseRules/HouseRulesList.vue'
 import ListingRooms from '@/components/rooms/ListingRooms.vue'
 import { clockTime, manilaDate } from '@/lib/dayjs'
 import { peso } from '@/lib/money'

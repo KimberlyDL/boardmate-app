@@ -134,6 +134,14 @@
           </ion-checkbox>
         </ion-item>
 
+        <!-- House rules (D3): needed in person unless accepted in the app when applying -->
+        <ion-item v-if="needsRulesInPerson" lines="none" class="gap">
+          <ion-checkbox :checked="rulesInPerson" label-placement="end" @ion-change="rulesInPerson = $event.detail.checked">
+            <span class="ion-text-wrap">{{ tenantName }} read and accepted the house rules (version {{ rulesVersion }}) in person</span>
+          </ion-checkbox>
+        </ion-item>
+        <p v-else-if="rulesVersion" class="muted small gap">{{ tenantName }} accepted the house rules (version {{ rulesVersion }}) when applying.</p>
+
         <ion-button expand="block" class="form-actions" :disabled="busy" @click="submit">Move in</ion-button>
       </div>
     </ion-content>
@@ -164,6 +172,7 @@ import { manila, manilaDate } from '@/lib/dayjs'
 import { peso, toPesoInput } from '@/lib/money'
 import { buildMoveIn, discountOf, emptyMoveIn, emptyOccupant, needsOverride, shortfalls } from '@/lib/moveIn'
 import { errorMessage, firstError } from '@/services/api'
+import { houseRuleService } from '@/services/houseRules'
 import { tenancyService } from '@/services/tenancies'
 import { useToast } from '@/composables/useToast'
 import { manualPaymentMethods } from '@/lib/billing'
@@ -203,6 +212,10 @@ const quote = ref<MoveInQuote | null>(null)
 const quoteError = ref('')
 const busy = ref(false)
 const typed = reactive({ deposit: false, firstRent: false })
+const rulesVersion = ref<number | null>(null)
+const rulesInPerson = ref(false)
+/** The rules in force were not accepted in the app (a walk-in, or they changed after applying). */
+const needsRulesInPerson = computed(() => rulesVersion.value !== null && props.application?.house_rules_version !== rulesVersion.value)
 
 const unit = computed(() => props.units?.find((u) => u.id === unitId.value) ?? null)
 const whole = computed(() => (props.application ? props.application.property.rental_mode === 'whole' : unit.value?.kind === 'whole'))
@@ -233,6 +246,12 @@ watch(
     quote.value = null
     quoteError.value = ''
     email.value = ''
+    rulesInPerson.value = false
+    rulesVersion.value = null
+    houseRuleService
+      .forProperty(props.property.id)
+      .then((r) => (rulesVersion.value = r.current?.version ?? null))
+      .catch(() => (rulesVersion.value = null))
     unitId.value = props.application?.unit?.id ?? props.units?.[0]?.id ?? null
     if (props.application) {
       form.makeLeader = props.application.leader_on_move_in
@@ -285,10 +304,12 @@ async function submit() {
   if (!form.emergency.name.trim() || !form.emergency.phone.trim()) return toast.error('Add an emergency contact for the tenant.')
   if (override.value && form.overrideReason.trim().length < 3) return toast.error('Give a reason for moving in without the full deposit and first rent.')
   if (leads.value && !form.leaderConsent) return toast.error('Confirm that the tenant agreed to be the room\'s leader.')
+  if (needsRulesInPerson.value && !rulesInPerson.value) return toast.error('Confirm that the tenant read and accepted the house rules.')
 
   busy.value = true
   try {
     const body = buildMoveIn(form, { whole: !!whole.value })
+    if (needsRulesInPerson.value) body.house_rules_accepted_in_person = true
     const result = props.application
       ? await tenancyService.moveIn(props.application.id, body)
       : await tenancyService.moveInWalkIn(props.property.id, { ...body, unit_id: unitId.value, email: email.value.trim() })

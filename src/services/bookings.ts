@@ -13,6 +13,8 @@ export interface ApplyInput {
   whole?: boolean
   message?: string
   id_document?: File | null
+  /** D3: the house-rules version read and accepted (required when the place has rules) */
+  house_rules_version?: number | null
 }
 
 /** Booking (F2): the boarder's applications and the owner/Manager review. */
@@ -25,6 +27,7 @@ export const bookingService = {
     if (input.whole) form.append('whole', '1')
     if (input.message) form.append('message', input.message)
     if (input.id_document) form.append('id_document', input.id_document)
+    if (input.house_rules_version) form.append('house_rules_version', String(input.house_rules_version))
     const { data } = await api.post<ApiEnvelope<BookingApplication>>(`/listings/${propertyId}/applications`, form)
     return { application: data.data, message: data.message ?? '' }
   },

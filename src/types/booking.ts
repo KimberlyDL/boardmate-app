@@ -1,4 +1,4 @@
-import type { ApplicationStatus } from './enums'
+import type { ApplicationStatus, HouseRuleCategory } from './enums'
 import type { PlannedOccupant } from './tenancy'
 
 export interface ListingSummary {
@@ -77,7 +77,8 @@ export interface ListingDetail extends ListingSummary {
   }[]
   deposit: { rule: string | null; label: string | null; fixed_centavos: number | null }
   curfew_time: string | null
-  house_rules_summary: string | null
+  /** D3: the rules in force, or null if the place has none yet. */
+  house_rules: { version: number; published_at: string | null; rules: { category: HouseRuleCategory; category_label: string; body: string; is_auto?: boolean }[] } | null
 }
 
 export interface BookingApplication {
@@ -109,6 +110,8 @@ export interface BookingApplication {
   can_cancel: boolean
   /** The applicant will lead their room when they move in */
   leader_on_move_in: boolean
+  /** D3: the house-rules version accepted when applying (null: none, or the place had no rules) */
+  house_rules_version: number | null
   // Reviewer view only
   applicant?: { id: number; name: string; email: string; phone: string; photo_url: string | null }
   id_document_url?: string | null
