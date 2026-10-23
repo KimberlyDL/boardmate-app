@@ -5,6 +5,9 @@
       {{ property.counts.available }} of {{ property.counts.units }} available
       <span v-if="property.counts.not_ready"> · {{ property.counts.not_ready }} not ready</span>
     </p>
+    <ion-button v-if="property.rooms.length" size="small" fill="outline" class="preview-btn" @click="previewOpen = true">
+      See it as boarders do
+    </ion-button>
 
     <ion-segment v-model="layout" class="layout">
       <ion-segment-button value="floors"><ion-label>Floors</ion-label></ion-segment-button>
@@ -129,6 +132,23 @@
       @changed="emit('changed')"
     />
 
+    <!-- Preview of what boarders see (view only) -->
+    <ion-modal :is-open="previewOpen" class="rooms-preview-modal" @did-dismiss="previewOpen = false">
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>What boarders see</ion-title>
+          <ion-buttons slot="end"><ion-button @click="previewOpen = false">Close</ion-button></ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <p class="muted small preview-note">
+          A preview of the Rooms section of your listing. To change a room, close this and use the room's menu.
+          <template v-if="!property.published_at"> Boarders can't see it until the listing is published.</template>
+        </p>
+        <listing-rooms v-if="previewOpen" :rooms="previewRooms" />
+      </ion-content>
+    </ion-modal>
+
     <!-- Rent history -->
     <ion-modal :is-open="!!history" @did-dismiss="history = null">
       <ion-header>
@@ -192,6 +212,8 @@ import { peso, toCentavos, toPesoInput } from '@/lib/money'
 import { errorMessage, fieldErrors } from '@/services/api'
 import RoomPeopleModal from '@/components/tenancy/RoomPeopleModal.vue'
 import RoomsStack, { type StackTile } from '@/components/rooms/RoomsStack.vue'
+import ListingRooms from '@/components/rooms/ListingRooms.vue'
+import { toPublicRoom } from '@/lib/floors'
 import { propertyService } from '@/services/properties'
 import { usePrompt } from '@/composables/usePrompt'
 import { useToast } from '@/composables/useToast'
@@ -213,6 +235,9 @@ const hasPeople = (room: Room) => room.units.some((u) => u.status !== 'available
 const busy = ref(false)
 const history = ref<PriceRule[] | null>(null)
 const layout = ref<'floors' | 'list'>('floors')
+/** Preview of what boarders see */
+const previewOpen = ref(false)
+const previewRooms = computed(() => props.property.rooms.map(toPublicRoom))
 
 /** Who is in each unit: the tenant, or the boarder holding a reservation. */
 function people(room: Room): string[] {
@@ -531,6 +556,20 @@ async function switchMode(room: Room) {
 <style scoped>
 .layout {
   margin: 4px 0 8px;
+}
+.preview-btn {
+  margin: 0 0 6px;
+}
+.preview-note {
+  margin-top: 0;
+}
+/* Bigger preview on tablets and computers */
+@media (min-width: 768px) {
+  :global(ion-modal.rooms-preview-modal) {
+    --width: min(1100px, 92vw);
+    --height: min(920px, 92vh);
+    --border-radius: 16px;
+  }
 }
 .small {
   font-size: 0.8rem;
