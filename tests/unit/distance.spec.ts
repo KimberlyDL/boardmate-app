@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { formatDistance } from '@/lib/distance'
+import { boxAround, formatDistance, withinRadius } from '@/lib/distance'
 
 describe('formatDistance', () => {
   test('metres below 1 km, rounded to 10 m', () => {
@@ -16,5 +16,23 @@ describe('formatDistance', () => {
 
   test('nothing when there is no distance', () => {
     expect(formatDistance(null)).toBe('')
+  })
+})
+
+describe('radius search', () => {
+  test('the box around a point holds the circle: 3 km is about 0.027° of latitude in Calapan', () => {
+    const [s, w, n, e] = boxAround(13.388, 121.1627, 3000)
+
+    expect(n - 13.388).toBeCloseTo(0.02695, 4)
+    expect(13.388 - s).toBeCloseTo(0.02695, 4)
+    // A degree of longitude is shorter away from the equator, so the box is a little wider in degrees.
+    expect(e - 121.1627).toBeGreaterThan(n - 13.388)
+    expect(e - 121.1627).toBeCloseTo(121.1627 - w, 6)
+  })
+
+  test('drops the places in the corners beyond the radius', () => {
+    const places = [{ distance_m: 500 }, { distance_m: 3000 }, { distance_m: 3900 }, { distance_m: null }]
+
+    expect(withinRadius(places, 3000)).toEqual([{ distance_m: 500 }, { distance_m: 3000 }, { distance_m: null }])
   })
 })
