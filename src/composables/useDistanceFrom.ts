@@ -23,10 +23,17 @@ async function load() {
     campuses.value = []
   }
   let saved: DistancePoint | null = null
+  let raw: string | null = null
   try {
-    saved = JSON.parse((await Preferences.get({ key: KEY })).value ?? 'null')
+    raw = (await Preferences.get({ key: KEY })).value
+    saved = JSON.parse(raw ?? 'null')
   } catch {
     saved = null
+  }
+  // The person turned distance off ("Anywhere"): keep it off, no default campus.
+  if (raw === 'null') {
+    point.value = null
+    return
   }
   if (saved?.kind === 'campus') {
     // A campus the admin renamed, moved or removed: use the list as it is now.
@@ -63,7 +70,7 @@ export function useDistanceFrom() {
   loaded ??= load()
   const label = computed(() => {
     const p = point.value
-    if (!p) return 'Not set'
+    if (!p) return 'Anywhere'
     if (p.kind === 'campus') return p.name
     return p.kind === 'me' ? 'My location' : 'Chosen point'
   })
@@ -75,6 +82,8 @@ export function useDistanceFrom() {
     near: computed(() => (point.value ? { lat: point.value.lat, lng: point.value.lng } : null)),
     chooseCampus: (c: Campus) => choose(fromCampus(c)),
     choosePoint: (lat: number, lng: number) => choose({ kind: 'point', lat, lng }),
+    /** Stop measuring distance (remembered, so the default campus does not come back). */
+    clear: () => choose(null),
     /** Uses the phone's location; false when it is not available. */
     async chooseMyLocation(): Promise<boolean> {
       const here = await locate()

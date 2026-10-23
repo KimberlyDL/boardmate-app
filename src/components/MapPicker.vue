@@ -23,6 +23,7 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useToast } from '@/composables/useToast'
+import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/lib/site'
 
 export interface LatLng {
   lat: number
@@ -39,8 +40,6 @@ const locating = ref(false)
 let map: L.Map | null = null
 let marker: L.Marker | null = null
 
-// Manila, when nothing is pinned yet.
-const DEFAULT_CENTER: L.LatLngExpression = [14.5995, 120.9842]
 
 const icon = L.icon({
   iconUrl: markerIcon,
@@ -93,7 +92,7 @@ function useMyLocation() {
 
 onMounted(() => {
   if (!mapEl.value) return
-  map = L.map(mapEl.value).setView(props.modelValue ?? DEFAULT_CENTER, props.modelValue ? 16 : 12)
+  map = L.map(mapEl.value).setView(props.modelValue ?? DEFAULT_MAP_CENTER, props.modelValue ? 16 : DEFAULT_MAP_ZOOM)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; OpenStreetMap contributors',
