@@ -3,25 +3,29 @@
     <ion-header>
       <ion-toolbar>
         <ion-title>Accounts</ion-title>
+        <ion-buttons slot="end"><NotificationBell /></ion-buttons>
       </ion-toolbar>
       <ion-toolbar>
         <ion-searchbar :debounce="400" placeholder="Name or email" @ion-input="onSearch($event.detail.value ?? '')" />
       </ion-toolbar>
     </ion-header>
 
-    <ion-content>
+    <ion-content class="ion-padding">
       <div class="narrow">
-        <p v-if="!loading && !users.length" class="ion-padding muted center">No accounts found.</p>
+        <DlCard v-if="!loading && !users.length">
+          <DlEmptyState note="no matches" :icon="Users">No accounts found.</DlEmptyState>
+        </DlCard>
 
-        <ion-list>
+        <ion-list v-else>
           <ion-item v-for="u in users" :key="u.id">
+            <DlAvatar slot="start" :name="u.name" :size="40" />
             <ion-label class="ion-text-wrap">
               <h2>{{ u.name }}</h2>
               <p>{{ u.email }}</p>
-              <p>
-                <ion-chip v-for="r in u.roles" :key="r" class="chip">{{ UserRoleLabels[r] }}</ion-chip>
-                <ion-chip v-if="u.suspended_at" color="danger" class="chip">Suspended</ion-chip>
-                <ion-chip v-if="!u.email_verified_at" color="warning" class="chip">Email not confirmed</ion-chip>
+              <p class="tags">
+                <DlStatusTag v-for="r in u.roles" :key="r" tone="neutral">{{ UserRoleLabels[r] }}</DlStatusTag>
+                <DlStatusTag v-if="u.suspended_at" tone="danger">Suspended</DlStatusTag>
+                <DlStatusTag v-if="!u.email_verified_at" tone="warning">Email not confirmed</DlStatusTag>
               </p>
             </ion-label>
             <template v-if="!u.roles.includes(UserRole.PlatformAdmin)">
@@ -43,7 +47,7 @@
 import {
   type InfiniteScrollCustomEvent,
   IonButton,
-  IonChip,
+  IonButtons,
   IonContent,
   IonHeader,
   IonInfiniteScroll,
@@ -57,7 +61,10 @@ import {
   IonToolbar,
   onIonViewWillEnter,
 } from '@ionic/vue'
+import { Users } from 'lucide-vue-next'
+import { DlAvatar, DlCard, DlEmptyState, DlStatusTag } from '@/components/dl'
 import { ref } from 'vue'
+import NotificationBell from '@/components/NotificationBell.vue'
 import { adminService } from '@/services/admin'
 import { errorMessage } from '@/services/api'
 import { usePrompt } from '@/composables/usePrompt'
@@ -118,6 +125,12 @@ async function toggle(user: AdminUser, suspend: boolean) {
 </script>
 
 <style scoped>
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px !important;
+}
 .chip {
   height: 22px;
   font-size: 0.75rem;

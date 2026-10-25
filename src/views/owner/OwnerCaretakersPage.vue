@@ -3,13 +3,12 @@
     <ion-header>
       <ion-toolbar>
         <ion-title>Caretakers</ion-title>
+        <ion-buttons slot="end"><NotificationBell /></ion-buttons>
       </ion-toolbar>
     </ion-header>
 
     <ion-content class="ion-padding">
-      <ion-refresher slot="fixed" @ion-refresh="refresh">
-        <ion-refresher-content />
-      </ion-refresher>
+      <DlRefresher :refresh="load" />
 
       <div class="narrow">
         <!-- Invite -->
@@ -18,9 +17,9 @@
             <ion-card-title>Invite a caretaker</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <p v-if="!verified" class="muted" data-test="invite-locked">
+            <DlBanner v-if="!verified" tone="info" data-test="invite-locked">
               You can invite caretakers once your owner account is verified.
-            </p>
+            </DlBanner>
             <form v-else @submit.prevent="invite">
               <ion-input
                 v-model="inviteEmail"
@@ -58,10 +57,13 @@
         </ion-card>
 
         <!-- Current caretakers -->
-        <h3>Your caretakers</h3>
-        <p v-if="!loading && !caretakers.length" class="muted">No caretakers yet.</p>
+        <h2 class="dl-h2 section">Your caretakers</h2>
+        <DlCard v-if="!loading && !caretakers.length">
+          <DlEmptyState note="no helpers yet" :icon="Users">No caretakers yet. Invite someone to help collect payments and run the house.</DlEmptyState>
+        </DlCard>
         <ion-list v-if="caretakers.length">
           <ion-item v-for="c in caretakers" :key="c.id">
+            <DlAvatar slot="start" :name="c.person.name" :size="40" />
             <ion-label class="ion-text-wrap">
               <h2>{{ c.person.name }}</h2>
               <p>{{ c.person.email }}<span v-if="c.person.phone"> · {{ c.person.phone }}</span></p>
@@ -87,16 +89,17 @@
               </ion-select-option>
             </ion-select>
             <ion-button slot="end" fill="clear" color="danger" aria-label="Remove" @click="remove(c)">
-              <ion-icon slot="icon-only" :icon="trashOutline" />
+              <Trash2 slot="icon-only" :size="20" aria-hidden="true" />
             </ion-button>
           </ion-item>
         </ion-list>
 
         <!-- Invitations -->
         <template v-if="invitations.length">
-          <h3>Invitations</h3>
+          <h2 class="dl-h2 section">Invitations</h2>
           <ion-list>
             <ion-item v-for="inv in invitations" :key="inv.id">
+              <DlIconTile slot="start" :icon="Mail" />
               <ion-label class="ion-text-wrap">
                 <h2>{{ inv.email }}</h2>
                 <p>{{ inv.access_level_label }} · {{ inv.status_label }}</p>
@@ -127,8 +130,8 @@
 
 <script setup lang="ts">
 import {
-  type RefresherCustomEvent,
   IonButton,
+  IonButtons,
   IonCard,
   IonCardContent,
   IonCardHeader,
@@ -136,7 +139,6 @@ import {
   IonChip,
   IonContent,
   IonHeader,
-  IonIcon,
   IonInput,
   IonItem,
   IonLabel,
@@ -144,16 +146,16 @@ import {
   IonPage,
   IonRadio,
   IonRadioGroup,
-  IonRefresher,
-  IonRefresherContent,
   IonSelect,
   IonSelectOption,
   IonTitle,
   IonToolbar,
   onIonViewWillEnter,
 } from '@ionic/vue'
-import { trashOutline } from 'ionicons/icons'
+import { Mail, Trash2, Users } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
+import NotificationBell from '@/components/NotificationBell.vue'
+import { DlAvatar, DlBanner, DlCard, DlEmptyState, DlIconTile, DlRefresher } from '@/components/dl'
 import { manila } from '@/lib/dayjs'
 import { errorMessage, fieldErrors } from '@/services/api'
 import { ownerService } from '@/services/owner'
@@ -199,10 +201,6 @@ async function load() {
 
 onIonViewWillEnter(load)
 
-async function refresh(event: RefresherCustomEvent) {
-  await load()
-  event.target.complete()
-}
 
 async function invite() {
   busy.value = true
@@ -263,6 +261,9 @@ async function revoke(inv: CaretakerInvitation) {
 </script>
 
 <style scoped>
+.section {
+  margin: 24px 0 12px;
+}
 .levels {
   display: block;
   margin: 12px 0;

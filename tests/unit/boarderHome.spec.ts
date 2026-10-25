@@ -36,7 +36,7 @@ describe('BoarderHomePage', () => {
     mount(BoarderHomePage, { global: { plugins: [IonicVue] }, attachTo: document.body })
     await flushPromises()
 
-    const needs = [...document.querySelectorAll('.needs ion-item')].map((i) => i.textContent?.trim())
+    const needs = [...document.querySelectorAll('.needs .dl-list-row')].map((i) => i.textContent?.trim())
     expect(needs).toEqual(['₱500.00 overdue', 'New house rules to accept', 'Is it fixed? 1 repair to confirm', '1 request waiting for the owner', '1 repair in progress'])
     expect(text()).toContain('You owe ₱2,500.00')
     expect(text()).toContain('Last day Nov 30, 2026 (waiting for approval)')

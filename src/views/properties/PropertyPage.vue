@@ -6,7 +6,7 @@
         <ion-title>{{ property?.name ?? 'Property' }}</ion-title>
         <ion-buttons v-if="canDelete" slot="end">
           <ion-button color="danger" aria-label="Delete property" @click="remove">
-            <ion-icon slot="icon-only" :icon="trashOutline" />
+            <Trash2 slot="icon-only" :size="20" aria-hidden="true" />
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -20,11 +20,16 @@
     </ion-header>
 
     <ion-content class="ion-padding">
-      <p v-if="loading" class="muted">Loading…</p>
-      <p v-else-if="loadError" class="muted">{{ loadError }}</p>
+      <div v-if="loading" class="narrow skeletons">
+        <DlSkeleton :height="100" :radius="18" />
+        <DlSkeleton :height="200" :radius="18" />
+      </div>
+      <DlCard v-else-if="loadError" class="narrow">
+        <DlEmptyState note="can't open this one" :icon="Building2">{{ loadError }}</DlEmptyState>
+      </DlCard>
 
       <div v-else-if="property" class="narrow">
-        <p v-if="roleNote" class="role-note">{{ roleNote }}</p>
+        <DlBanner v-if="roleNote" tone="info" class="role-note">{{ roleNote }}</DlBanner>
 
         <template v-if="tab === 'overview'">
           <property-dashboard-view :property-id="property.id" @open="tab = $event" />
@@ -55,7 +60,6 @@ import {
   IonButtons,
   IonContent,
   IonHeader,
-  IonIcon,
   IonLabel,
   IonPage,
   IonSegment,
@@ -63,7 +67,8 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/vue'
-import { trashOutline } from 'ionicons/icons'
+import { Building2, Trash2 } from 'lucide-vue-next'
+import { DlBanner, DlCard, DlEmptyState, DlSkeleton } from '@/components/dl'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BillingSection from '@/components/billing/BillingSection.vue'
@@ -181,9 +186,12 @@ async function remove() {
 </script>
 
 <style scoped>
+.skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--card-gap);
+}
 .role-note {
-  background: var(--ion-color-light);
-  padding: 8px 12px;
-  border-radius: 8px;
+  margin-bottom: var(--card-gap);
 }
 </style>

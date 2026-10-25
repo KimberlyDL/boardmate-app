@@ -32,7 +32,7 @@
       <ion-segment-button value="ended"><ion-label>Moved out</ion-label></ion-segment-button>
     </ion-segment>
 
-    <p v-if="loading" class="muted">Loading…</p>
+    <DlSkeleton v-if="loading" :height="120" :radius="18" />
     <p v-else-if="!items.length" class="muted center">{{ view === 'current' ? 'Nobody has moved in yet.' : 'No deposits waiting to be settled.' }}</p>
 
     <ion-card v-for="t in items" :key="t.id" button @click="openId = t.id">
@@ -90,6 +90,7 @@ import { usePrompt } from '@/composables/usePrompt'
 import { useToast } from '@/composables/useToast'
 import type { Property } from '@/types/property'
 import type { Tenancy, TenancyNotice } from '@/types/tenancy'
+import DlSkeleton from '@/components/dl/DlSkeleton.vue'
 
 const props = defineProps<{ property: Property }>()
 const emit = defineEmits<{ changed: [] }>()

@@ -3,69 +3,48 @@
     <ion-header>
       <ion-toolbar>
         <ion-title>Account</ion-title>
+        <ion-buttons slot="end"><NotificationBell /></ion-buttons>
       </ion-toolbar>
     </ion-header>
 
     <ion-content class="ion-padding">
-      <div v-if="auth.user" class="narrow">
-        <ion-item lines="none" class="me">
-          <ion-avatar slot="start">
-            <img v-if="auth.user.photo_url" :src="auth.user.photo_url" alt="" />
-            <ion-icon v-else :icon="personCircleOutline" class="placeholder" />
-          </ion-avatar>
-          <ion-label>
-            <h2>{{ auth.user.name }}</h2>
-            <p>{{ auth.user.email }}</p>
-          </ion-label>
-        </ion-item>
+      <div v-if="auth.user" class="narrow page">
+        <!-- Me -->
+        <DlCard class="me" to="/profile">
+          <DlAvatar :name="auth.user.name" :src="auth.user.photo_url" :size="56" />
+          <span class="me-text">
+            <span class="dl-title">{{ auth.user.name }}</span>
+            <span class="dl-small">{{ auth.user.email }}</span>
+            <DlStatusTag v-if="auth.user.active_role" tone="brand">{{ UserRoleLabels[auth.user.active_role] }}</DlStatusTag>
+          </span>
+          <ChevronRight :size="18" class="chev" aria-hidden="true" />
+        </DlCard>
 
         <!-- Role switcher: one account can be e.g. an owner and a boarder -->
-        <template v-if="auth.user.roles.length > 1">
-          <h3>Use DormLink as</h3>
+        <DlSection v-if="auth.user.roles.length > 1" title="Use DormLink as">
           <ion-segment :value="auth.user.active_role ?? undefined" @ion-change="onSwitch($event.detail.value as UserRole)">
             <ion-segment-button v-for="role in auth.user.roles" :key="role" :value="role">
               <ion-label>{{ UserRoleLabels[role] }}</ion-label>
             </ion-segment-button>
           </ion-segment>
-        </template>
+        </DlSection>
 
-        <ion-list inset>
-          <ion-item button router-link="/profile" detail>
-            <ion-icon slot="start" :icon="personOutline" />
-            <ion-label>My profile</ion-label>
-          </ion-item>
-          <ion-item v-if="isOwner" button router-link="/owner/business" detail>
-            <ion-icon slot="start" :icon="walletOutline" />
-            <ion-label>Business and payment details</ion-label>
-          </ion-item>
-          <ion-item v-if="isOwner" button router-link="/owner/activity" detail>
-            <ion-icon slot="start" :icon="listOutline" />
-            <ion-label>
-              <h3>Activity log</h3>
-              <p>Who did what in your business</p>
-            </ion-label>
-          </ion-item>
-          <ion-item v-if="isAdmin" button router-link="/admin/activity" detail>
-            <ion-icon slot="start" :icon="listOutline" />
-            <ion-label>Admin activity</ion-label>
-          </ion-item>
-          <ion-item v-if="canApply" button router-link="/apply-owner" detail>
-            <ion-icon slot="start" :icon="homeOutline" />
-            <ion-label>
-              <h3>List your property</h3>
-              <p>Apply to be an owner on DormLink</p>
-            </ion-label>
-          </ion-item>
-          <ion-item button router-link="/privacy" detail>
-            <ion-icon slot="start" :icon="shieldCheckmarkOutline" />
-            <ion-label>Privacy notice</ion-label>
-          </ion-item>
-        </ion-list>
+        <DlCard padding="4px 16px">
+          <DlListRow :icon="UserRound" title="My profile" subtitle="Name, phone, photo, emergency contact" to="/profile" />
+          <DlListRow v-if="isOwner" :icon="Wallet" title="Business and payment details" to="/owner/business" divider />
+          <DlListRow v-if="isOwner" :icon="ListChecks" title="Activity log" subtitle="Who did what in your business" to="/owner/activity" divider />
+          <DlListRow v-if="isAdmin" :icon="ListChecks" title="Admin activity" to="/admin/activity" divider />
+          <DlListRow v-if="canApply" :icon="Building2" title="List your property" subtitle="Apply to be an owner on DormLink" to="/apply-owner" divider />
+          <DlListRow :icon="ShieldCheck" title="Privacy notice" to="/privacy" divider />
+        </DlCard>
 
-        <h3>Appearance</h3>
-        <theme-toggle />
+        <DlSection title="Appearance">
+          <theme-toggle />
+        </DlSection>
 
-        <ion-button expand="block" fill="clear" color="medium" class="form-actions" @click="logout">Log out</ion-button>
+        <ion-button expand="block" fill="outline" class="signout" @click="logout">
+          <LogOut slot="start" :size="18" aria-hidden="true" /> Sign out
+        </ion-button>
       </div>
     </ion-content>
   </ion-page>
@@ -73,22 +52,21 @@
 
 <script setup lang="ts">
 import {
-  IonAvatar,
   IonButton,
+  IonButtons,
   IonContent,
   IonHeader,
-  IonIcon,
-  IonItem,
   IonLabel,
-  IonList,
   IonPage,
   IonSegment,
   IonSegmentButton,
   IonTitle,
   IonToolbar,
 } from '@ionic/vue'
+import NotificationBell from '@/components/NotificationBell.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
-import { homeOutline, listOutline, personCircleOutline, personOutline, shieldCheckmarkOutline, walletOutline } from 'ionicons/icons'
+import { Building2, ChevronRight, ListChecks, LogOut, ShieldCheck, UserRound, Wallet } from 'lucide-vue-next'
+import { DlAvatar, DlCard, DlListRow, DlSection, DlStatusTag } from '@/components/dl'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { errorMessage } from '@/services/api'
@@ -124,16 +102,35 @@ async function logout() {
 </script>
 
 <style scoped>
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--card-gap);
+}
 .me {
-  --padding-start: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
-.placeholder {
-  width: 40px;
-  height: 40px;
-  color: var(--ion-color-medium);
+.me-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
 }
-h3 {
-  font-size: 0.95rem;
-  margin: 20px 0 8px;
+.me-text .dl-small {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chev {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+.signout {
+  margin: 8px 0 0;
 }
 </style>

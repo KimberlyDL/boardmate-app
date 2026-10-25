@@ -1,52 +1,48 @@
 <template>
-  <auth-layout title="Login" greeting="Hello!" subtitle="Welcome to DormLink" back-to="/">
-    <form @submit.prevent="submit">
-      <div v-if="unverified" class="notice">
-        <p>{{ unverified }}</p>
-        <ion-button size="small" fill="outline" color="dark" :disabled="resending" @click="resend">
-          Resend confirmation email
-        </ion-button>
-      </div>
-
+  <auth-layout title="Welcome" highlight="back" subtitle="Sign in to manage your stay or your properties." back-to="/">
+    <form class="form" @submit.prevent="submit">
       <auth-field
         v-model="email"
-        :icon="mailOutline"
         label="Email"
         type="email"
-        placeholder="Email"
+        inputmode="email"
+        placeholder="you@email.com"
         autocomplete="email"
         :error="errors.email?.[0]"
       />
       <auth-field
         v-model="password"
-        :icon="lockClosedOutline"
         label="Password"
         type="password"
-        placeholder="Password"
         autocomplete="current-password"
         :error="errors.password?.[0]"
       />
-      <p class="forgot"><router-link to="/forgot-password">Forgot password?</router-link></p>
+      <router-link to="/forgot-password" class="forgot">Forgot password?</router-link>
 
       <ion-button expand="block" type="submit" :disabled="busy">
         <ion-spinner v-if="busy" name="crescent" />
-        <span v-else>Log in</span>
+        <span v-else>Sign in</span>
       </ion-button>
-
-      <google-sign-in-button :redirect="redirect" />
-
-      <p class="center muted foot">Don't have an account? <router-link to="/register">Sign up</router-link></p>
     </form>
+
+    <DlBanner v-if="unverified" tone="warning" title="Verify your email first" :icon="Mail" :action-label="resending ? 'Sending…' : 'Resend link'" @action="resend">
+      {{ unverified }}
+    </DlBanner>
+
+    <google-sign-in-button :redirect="redirect" />
+
+    <template #footer>New here? <router-link to="/register">Create an account</router-link></template>
   </auth-layout>
 </template>
 
 <script setup lang="ts">
 import { IonButton, IonSpinner } from '@ionic/vue'
-import { lockClosedOutline, mailOutline } from 'ionicons/icons'
+import { Mail } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AuthField from '@/components/AuthField.vue'
 import AuthLayout from '@/components/AuthLayout.vue'
+import DlBanner from '@/components/dl/DlBanner.vue'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 import { errorCode, errorMessage, fieldErrors } from '@/services/api'
 import { authService } from '@/services/auth'
@@ -88,6 +84,7 @@ async function submit() {
 }
 
 async function resend() {
+  if (resending.value) return
   resending.value = true
   try {
     toast.success(await authService.resendConfirmation(email.value))
@@ -100,22 +97,17 @@ async function resend() {
 </script>
 
 <style scoped>
-.notice {
-  margin: 0 0 16px;
-  padding: 12px 16px;
-  border-radius: 18px;
-  background: var(--ion-color-warning);
-  color: var(--ion-color-warning-contrast);
-}
-.notice p {
-  margin: 0 0 8px;
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 .forgot {
-  margin: -4px 4px 16px;
-  text-align: right;
-  font-size: 0.9rem;
-}
-.foot {
-  margin-top: 22px;
+  align-self: flex-end;
+  margin-top: -6px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--brand-primary);
 }
 </style>

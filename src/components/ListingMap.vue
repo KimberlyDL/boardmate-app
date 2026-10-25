@@ -2,15 +2,15 @@
   <div class="listing-map" :class="{ picking }">
     <div ref="mapEl" class="map" />
     <ion-button v-if="moved && searchable && !picking" size="small" class="search-area" @click="searchHere">
-      <ion-icon slot="start" :icon="searchOutline" /> Search this area
+      <Search slot="start" :size="18" aria-hidden="true" /> Search this area
     </ion-button>
     <div v-if="picking" class="pick-hint">Tap the map to choose the point to measure from</div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonIcon } from '@ionic/vue'
-import { searchOutline } from 'ionicons/icons'
+import { IonButton } from '@ionic/vue'
+import { Search } from 'lucide-vue-next'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
@@ -86,7 +86,7 @@ function drawOrigin() {
   if (!map || !originLayer) return
   originLayer.clearLayers()
   if (!props.origin) return
-  L.circleMarker([props.origin.lat, props.origin.lng], { radius: 9, color: '#fff', weight: 3, fillColor: '#3880ff', fillOpacity: 1 })
+  L.circleMarker([props.origin.lat, props.origin.lng], { radius: 9, color: '#fff', weight: 3, fillColor: '#0079ba', fillOpacity: 1 })
     .bindTooltip(props.origin.label, { permanent: true, direction: 'top', offset: [0, -8], className: 'origin-label' })
     .addTo(originLayer)
 }
@@ -134,7 +134,7 @@ onBeforeUnmount(() => {
 }
 .map {
   height: v-bind('props.height ?? "60vh"');
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 .picking .map {
@@ -155,36 +155,44 @@ onBeforeUnmount(() => {
   z-index: 500;
   padding: 6px 12px;
   border-radius: 16px;
-  background: var(--ion-color-dark, #222);
-  color: var(--ion-color-dark-contrast, #fff);
+  background: var(--bg-ink);
+  color: var(--text-on-ink);
   font-size: 13px;
   white-space: nowrap;
 }
 </style>
 
 <style>
+/* Map pins: Pine price pills; full places in Stone; the selected one in ink. */
 .price-marker .pin {
   display: inline-block;
-  padding: 3px 8px;
-  border-radius: 12px;
-  color: #fff;
-  font-weight: 600;
-  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  color: var(--text-on-primary);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
   white-space: nowrap;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   transform: translate(-50%, -50%);
 }
 .price-marker .pin.free {
-  background: var(--ion-color-success, #2dd36f);
+  background: var(--brand-primary);
 }
 .price-marker .pin.full {
-  background: var(--ion-color-medium, #92949c);
+  background: var(--stone-400);
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-size: 12px;
 }
 .price-marker .pin.selected {
-  outline: 3px solid var(--ion-color-primary, #3880ff);
-  font-size: 13px;
+  padding: 8px 12px;
+  background: var(--bg-ink);
+  color: var(--text-on-ink);
+  outline: 3px solid #ffffff;
+  font-size: 14px;
 }
 .origin-label {
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-weight: 700;
 }
 </style>

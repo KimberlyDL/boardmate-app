@@ -25,7 +25,7 @@
     <!-- Who is behind (C7): its own list and actions -->
     <overdue-list v-if="view === 'overdue'" ref="overdueList" :property="property" @record="recordFor" />
 
-    <p v-else-if="loading" class="muted">Loading…</p>
+    <DlSkeleton v-else-if="loading" :height="120" :radius="18" />
 
     <!-- Bills -->
     <template v-else-if="view === 'unpaid' || view === 'paid'">
@@ -126,6 +126,7 @@ import { useToast } from '@/composables/useToast'
 import type { Bill, Payment } from '@/types/billing'
 import type { Property } from '@/types/property'
 import type { Tenancy } from '@/types/tenancy'
+import DlSkeleton from '@/components/dl/DlSkeleton.vue'
 
 const props = defineProps<{ property: Property }>()
 

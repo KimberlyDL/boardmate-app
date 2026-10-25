@@ -4,8 +4,9 @@
       <ion-toolbar>
         <ion-title>Campuses</ion-title>
         <ion-buttons slot="end">
-          <ion-button @click="edit(null)"><ion-icon slot="start" :icon="addOutline" /> Add</ion-button>
+          <ion-button @click="edit(null)"><Plus slot="start" :size="18" aria-hidden="true" /> Add</ion-button>
         </ion-buttons>
+        <ion-buttons slot="end"><NotificationBell /></ion-buttons>
       </ion-toolbar>
     </ion-header>
 
@@ -24,7 +25,7 @@
             </ion-label>
             <ion-badge v-if="c.is_default" slot="end" color="success">Default</ion-badge>
             <ion-buttons slot="end">
-              <ion-button aria-label="Campus actions" @click="actions(c)"><ion-icon slot="icon-only" :icon="ellipsisVertical" /></ion-button>
+              <ion-button aria-label="Campus actions" @click="actions(c)"><EllipsisVertical slot="icon-only" :size="20" aria-hidden="true" /></ion-button>
             </ion-buttons>
           </ion-item>
         </ion-list>
@@ -56,7 +57,6 @@ import {
   IonButtons,
   IonContent,
   IonHeader,
-  IonIcon,
   IonInput,
   IonItem,
   IonLabel,
@@ -67,9 +67,10 @@ import {
   IonToolbar,
   onIonViewWillEnter,
 } from '@ionic/vue'
-import { addOutline, ellipsisVertical } from 'ionicons/icons'
+import { EllipsisVertical, Plus } from 'lucide-vue-next'
 import { ref } from 'vue'
 import MapPicker, { type LatLng } from '@/components/MapPicker.vue'
+import NotificationBell from '@/components/NotificationBell.vue'
 import { adminService } from '@/services/admin'
 import { errorMessage, fieldErrors } from '@/services/api'
 import { usePrompt } from '@/composables/usePrompt'

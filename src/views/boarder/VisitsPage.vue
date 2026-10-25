@@ -15,21 +15,23 @@
     </ion-header>
 
     <ion-content class="ion-padding">
-      <ion-refresher slot="fixed" @ion-refresh="refresh">
-        <ion-refresher-content />
-      </ion-refresher>
+      <DlRefresher :refresh="load" />
 
       <div class="narrow">
-        <p v-if="loading" class="muted">Loading…</p>
-        <p v-else-if="!stay" class="muted center">You are not staying anywhere right now.</p>
+        <DlSkeleton v-if="loading" :height="160" :radius="18" />
+        <DlCard v-else-if="!stay">
+          <DlEmptyState note="not staying yet" :icon="House">You are not staying anywhere right now.</DlEmptyState>
+        </DlCard>
 
         <!-- Visitors (D4) -->
         <template v-else-if="tab === 'visitors'">
-          <ion-button expand="block" @click="registering = true">Register a visitor</ion-button>
-          <p v-if="nights" class="muted small">
+          <ion-button expand="block" class="gap" @click="registering = true"><UserPlus slot="start" :size="18" aria-hidden="true" /> Register a visitor</ion-button>
+          <DlBanner v-if="nights" tone="info" class="gap">
             Overnight: {{ nights.used }} of {{ nights.limit }} nights used this month<template v-if="nights.needs_approval">; each stay needs approval</template>.
-          </p>
-          <p v-if="!visitors.length" class="muted center">No visitors yet.</p>
+          </DlBanner>
+          <DlCard v-if="!visitors.length">
+            <DlEmptyState note="no visitors yet" :icon="Users">No visitors yet.</DlEmptyState>
+          </DlCard>
           <ion-list v-else lines="full">
             <ion-item v-for="v in visitors" :key="v.id">
               <ion-label class="ion-text-wrap">
@@ -53,9 +55,11 @@
 
         <!-- Late entry (D2) -->
         <template v-else-if="tab === 'late'">
-          <ion-button expand="block" @click="askingLate = true">Ask to come back late</ion-button>
-          <p class="muted small">The curfew is {{ clockTime(curfew!) }}. Ask up to 7 days ahead.</p>
-          <p v-if="!lateEntries.length" class="muted center">No requests yet.</p>
+          <ion-button expand="block" class="gap" @click="askingLate = true"><DoorOpen slot="start" :size="18" aria-hidden="true" /> Ask to come back late</ion-button>
+          <DlBanner tone="info" :icon="Moon" class="gap">The curfew is {{ clockTime(curfew!) }}. Ask up to 7 days ahead.</DlBanner>
+          <DlCard v-if="!lateEntries.length">
+            <DlEmptyState note="no requests yet" :icon="DoorOpen">No requests yet.</DlEmptyState>
+          </DlCard>
           <ion-list v-else lines="full">
             <ion-item v-for="r in lateEntries" :key="r.id">
               <ion-label class="ion-text-wrap">
@@ -71,8 +75,10 @@
 
         <!-- My curfew log (D2): a record only -->
         <template v-else-if="tab === 'log'">
-          <p class="muted small">Late arrivals without an approved request. This is a record only; no fee is added by the app.</p>
-          <p v-if="!violations.length" class="muted center">Nothing logged.</p>
+          <p class="dl-small gap">Late arrivals without an approved request. This is a record only; no fee is added by the app.</p>
+          <DlCard v-if="!violations.length">
+            <DlEmptyState note="nothing logged" :icon="Moon">Nothing logged.</DlEmptyState>
+          </DlCard>
           <ion-list v-else lines="full">
             <ion-item v-for="v in violations" :key="v.id">
               <ion-label class="ion-text-wrap">
@@ -94,7 +100,6 @@
 
 <script setup lang="ts">
 import {
-  type RefresherCustomEvent,
   IonBackButton,
   IonBadge,
   IonButton,
@@ -105,18 +110,18 @@ import {
   IonLabel,
   IonList,
   IonPage,
-  IonRefresher,
-  IonRefresherContent,
   IonSegment,
   IonSegmentButton,
   IonTitle,
   IonToolbar,
   onIonViewWillEnter,
 } from '@ionic/vue'
+import { DoorOpen, House, Moon, UserPlus, Users } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import LateEntrySheet from '@/components/houseOps/LateEntrySheet.vue'
 import VisitorSheet from '@/components/houseOps/VisitorSheet.vue'
+import { DlBanner, DlCard, DlEmptyState, DlRefresher, DlSkeleton } from '@/components/dl'
 import { clockTime, manilaDate } from '@/lib/dayjs'
 import { firstError } from '@/services/api'
 import { houseOpsService } from '@/services/houseOps'
@@ -170,10 +175,6 @@ async function load() {
 
 onIonViewWillEnter(load)
 
-async function refresh(event: RefresherCustomEvent) {
-  await load()
-  event.target.complete()
-}
 
 function visitorColor(status: VisitorStatus) {
   if (status === 'approved' || status === 'registered' || status === 'checked_in') return 'success'
@@ -218,6 +219,9 @@ async function cancelLate(r: LateEntry) {
 </script>
 
 <style scoped>
+.gap {
+  margin: 0 0 var(--card-gap);
+}
 .small {
   font-size: 0.85rem;
 }

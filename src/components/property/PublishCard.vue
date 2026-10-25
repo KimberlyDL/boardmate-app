@@ -10,7 +10,7 @@
         <p>Before boarders can find it:</p>
         <ul class="checklist">
           <li v-for="item in property.publish_checklist" :key="item.key" :class="{ ok: item.ok }">
-            <ion-icon :icon="item.ok ? checkmarkCircle : ellipseOutline" /> {{ item.label }}
+            <component :is="item.ok ? CircleCheck : Circle" :size="18" aria-hidden="true" /> {{ item.label }}
           </li>
         </ul>
       </template>
@@ -23,8 +23,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonIcon } from '@ionic/vue'
-import { checkmarkCircle, ellipseOutline } from 'ionicons/icons'
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle } from '@ionic/vue'
+import { Circle, CircleCheck } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { errorMessage } from '@/services/api'
 import { propertyService } from '@/services/properties'

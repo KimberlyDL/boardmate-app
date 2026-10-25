@@ -1,80 +1,85 @@
 <template>
   <div class="field">
-    <label class="pill" :class="{ invalid: !!error }">
-      <ion-icon :icon="icon" aria-hidden="true" />
+    <label :for="id" class="label">{{ label }}</label>
+    <div class="box" :class="{ invalid: !!error }">
       <ion-input
         v-bind="$attrs"
+        :id="id"
         :value="modelValue"
         :type="type"
         :aria-label="label"
         :aria-invalid="!!error"
+        :aria-describedby="error || helper ? `${id}-note` : undefined"
         @ion-input="emit('update:modelValue', String($event.detail.value ?? ''))"
       >
         <ion-input-password-toggle v-if="type === 'password'" slot="end" />
       </ion-input>
-    </label>
-    <small v-if="error" class="error" role="alert">{{ error }}</small>
-    <small v-else-if="helper" class="helper">{{ helper }}</small>
+    </div>
+    <small v-if="error" :id="`${id}-note`" class="note error" role="alert">{{ error }}</small>
+    <small v-else-if="helper" :id="`${id}-note`" class="note">{{ helper }}</small>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { TextFieldTypes } from '@ionic/core'
-import { IonIcon, IonInput, IonInputPasswordToggle } from '@ionic/vue'
+import { IonInput, IonInputPasswordToggle } from '@ionic/vue'
+import { useId } from 'vue'
 
-/** One pill-shaped field for the auth pages. Extra attributes (placeholder, autocomplete…) go to the input. */
+/**
+ * The design system's text field for the auth pages: label above, a 48px box with a
+ * hairline border, Pine border + halo on focus, red on error, helper text below.
+ * Extra attributes (placeholder, autocomplete…) go to the input.
+ */
 defineOptions({ inheritAttrs: false })
-withDefaults(defineProps<{ modelValue: string; icon: string; label: string; type?: TextFieldTypes; error?: string; helper?: string }>(), {
+withDefaults(defineProps<{ modelValue: string; label: string; type?: TextFieldTypes; error?: string; helper?: string }>(), {
   type: 'text',
   error: undefined,
   helper: undefined,
 })
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
+const id = `auth-${useId()}`
 </script>
 
 <style scoped>
 .field {
-  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
-.pill {
+.label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.box {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 50px;
-  padding: 0 12px 0 18px;
-  border-radius: 999px;
-  background: var(--bm-surface);
-  border: 2px solid transparent;
-  transition: border-color 0.15s;
+  min-height: 48px;
+  padding: 0 6px 0 14px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  box-shadow: inset 0 0 0 1px var(--border-default);
+  transition: box-shadow var(--motion-fast) var(--ease-out);
 }
-.pill:focus-within {
-  border-color: var(--ion-color-primary);
+.box:focus-within {
+  box-shadow: inset 0 0 0 1.5px var(--brand-primary), 0 0 0 3px var(--brand-primary-subtle);
 }
-.pill.invalid {
-  border-color: var(--ion-color-danger);
-}
-.pill > ion-icon {
-  flex: none;
-  font-size: 20px;
-  color: var(--ion-color-medium);
+.box.invalid {
+  box-shadow: inset 0 0 0 1.5px var(--danger-solid);
 }
 ion-input {
   --background: transparent;
   --padding-start: 0;
   --padding-end: 0;
+  --highlight-color-focused: transparent;
   min-height: 46px;
-  text-align: left;
+  font-size: 15px;
 }
-small {
-  display: block;
-  margin: 4px 18px 0;
-  text-align: left;
-  font-size: 0.8rem;
-}
-.helper {
-  color: var(--ion-color-medium);
+.note {
+  font-size: 12px;
+  color: var(--text-muted);
 }
 .error {
-  color: var(--ion-color-danger);
+  color: var(--danger-text);
 }
 </style>

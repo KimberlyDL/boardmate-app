@@ -1,4 +1,6 @@
 /// <reference types="vite/client" />
+/// <reference types="vite-plugin-pwa/vue" />
+/// <reference types="vite-plugin-pwa/info" />
 
 interface ImportMetaEnv {
   /** Laravel API base, e.g. http://localhost:8000/api (the client appends /v1). */

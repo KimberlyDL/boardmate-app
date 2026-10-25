@@ -9,10 +9,13 @@
 
     <ion-content class="ion-padding">
       <div class="narrow">
-        <p v-if="loading" class="muted">Loading…</p>
-        <p v-else-if="!groups.length" class="muted center">You are not in a room group yet. You join one when you move in.</p>
+        <DlSkeleton v-if="loading" :height="120" :radius="18" />
+        <DlCard v-else-if="!groups.length">
+          <DlEmptyState note="no group yet" :icon="Users">You are not in a room group yet. You join one when you move in.</DlEmptyState>
+        </DlCard>
         <ion-list v-else lines="full">
           <ion-item v-for="g in groups" :key="g.id" button :router-link="`/groups/${g.id}`">
+            <DlIconTile slot="start" :icon="Users" />
             <ion-label>
               <h2>Room {{ g.room_label }} · {{ g.property_name }}</h2>
               <p>{{ g.my_role_label }}<template v-if="!g.is_current"> · you left</template></p>
@@ -26,6 +29,8 @@
 
 <script setup lang="ts">
 import { IonBackButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonPage, IonTitle, IonToolbar, onIonViewWillEnter } from '@ionic/vue'
+import { Users } from 'lucide-vue-next'
+import { DlCard, DlEmptyState, DlIconTile, DlSkeleton } from '@/components/dl'
 import { ref } from 'vue'
 import { firstError } from '@/services/api'
 import { groupService } from '@/services/groups'

@@ -1,0 +1,413 @@
+/* Ionic components restyled to the DormLink design system: flat tonal surfaces
+   (no shadows, no card borders), Bricolage headings, Karla UI, mono status tags.
+   Pages keep their Ionic markup; this file only changes the look. */
+
+html,
+body {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ── Type inside pages ─────────────────────────────── */
+ion-content h1 { font-family: var(--font-display); font-size: 28px; line-height: 32px; font-weight: 700; letter-spacing: -0.02em; }
+ion-content h2 { font-family: var(--font-display); font-size: 20px; line-height: 26px; font-weight: 700; letter-spacing: -0.01em; }
+ion-content h3 { font-family: var(--font-display); font-size: 17px; line-height: 22px; font-weight: 700; }
+ion-content p { line-height: 1.5; }
+ion-content a { color: var(--brand-primary); font-weight: 700; text-decoration: none; }
+
+/* ── Canvas and header ─────────────────────────────── */
+ion-content {
+  --background: var(--gradient-canvas);
+  --color: var(--text-primary);
+}
+ion-header,
+ion-header.header-md {
+  box-shadow: none;
+}
+ion-header ion-toolbar {
+  --background: var(--canvas-top);
+  --border-width: 0;
+  --color: var(--text-primary);
+  --min-height: 56px;
+}
+ion-toolbar ion-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+ion-toolbar ion-segment {
+  margin: 0 var(--screen-pad);
+}
+ion-back-button {
+  --color: var(--text-primary);
+  --icon-font-size: 22px;
+}
+/* Ionic paints solid buttons in a toolbar from the toolbar's colors (inverted); keep the design-system fills. */
+ion-toolbar ion-button {
+  --ion-toolbar-background: initial;
+  --ion-toolbar-color: initial;
+}
+ion-toolbar ion-buttons ion-button {
+  --color: var(--brand-primary);
+  font-weight: 700;
+}
+
+/* ── Buttons ───────────────────────────────────────── */
+ion-button {
+  --border-radius: var(--radius-md);
+  --box-shadow: none;
+  --padding-start: 18px;
+  --padding-end: 18px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+ion-button:not(ion-buttons ion-button) { min-height: 44px; }
+ion-button.button-small { --padding-start: 14px; --padding-end: 14px; min-height: 34px; height: 34px; font-size: 13px; }
+ion-button.button-large { min-height: 52px; font-size: 16px; }
+ion-button.button-block:not(.button-small) { min-height: 52px; height: 52px; font-size: 16px; }
+ion-button.ion-activated:not(ion-buttons ion-button) { transform: scale(0.98); }
+/* Outline is low emphasis: a hairline, ink text (colored text only when a color is asked for). */
+ion-button.button-outline {
+  --border-width: 1px;
+  --border-color: var(--border-default);
+  --background: transparent;
+}
+ion-button.button-outline:not(.ion-color) { --color: var(--text-primary); }
+/* Design-system variants beyond Ionic's fills: class="dl-tonal" (secondary), "dl-accent" (promo, Butter). */
+ion-button.dl-tonal {
+  --background: var(--brand-primary-subtle);
+  --background-activated: var(--pine-100);
+  --background-hover: var(--pine-100);
+  --color: var(--brand-primary-hover);
+}
+ion-button.dl-accent {
+  --background: var(--brand-accent);
+  --background-activated: var(--brand-accent-hover);
+  --background-hover: var(--brand-accent-hover);
+  --color: var(--text-on-accent);
+}
+:root.ion-palette-dark ion-button.dl-tonal { --background-activated: var(--pine-800); --background-hover: var(--pine-800); }
+/* Butter fills always carry dark text. */
+ion-button.ion-color-secondary { --ion-color-contrast: var(--text-on-accent) !important; }
+ion-button.button-disabled { --background: var(--bg-muted); --color: var(--text-disabled); opacity: 1; }
+ion-button.button-disabled.button-clear,
+ion-button.button-disabled.button-outline { --background: transparent; }
+
+/* ── Cards: flat, tonal, radius-lg ─────────────────── */
+ion-card {
+  --background: var(--gradient-card);
+  --color: var(--text-primary);
+  margin: 0 0 var(--card-gap);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+ion-card.ion-activated { transform: scale(0.98); }
+ion-card-header { padding: var(--card-pad) var(--card-pad) 8px; }
+ion-card-content,
+.card-content-md,
+.card-content-ios { padding: var(--card-pad); font-size: 15px; line-height: 1.5; color: inherit; }
+ion-card-header + ion-card-content { padding-top: 0; }
+ion-card-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 22px;
+  font-weight: 700;
+  color: inherit;
+}
+ion-card-subtitle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+/* Colored cards use the card palette (tinted gradient + ink text), never a solid status fill.
+   Ionic paints colored cards' background and color directly, so those are set here too. */
+ion-card.ion-color { background: var(--gradient-card); color: var(--text-primary); }
+ion-card.ion-color-success,
+ion-card.ion-color-primary { background: var(--card-pine-gradient); color: var(--card-pine-ink); }
+ion-card.ion-color-warning,
+ion-card.ion-color-secondary { background: var(--card-butter-gradient); color: var(--card-butter-ink); }
+ion-card.ion-color-danger { background: var(--card-coral-gradient); color: var(--card-coral-ink); }
+ion-card.ion-color-tertiary { background: var(--card-sky-gradient); color: var(--card-sky-ink); }
+ion-card.ion-color-light,
+ion-card.ion-color-medium { background: var(--bg-muted); color: var(--text-primary); }
+ion-card.ion-color-dark { background: var(--bg-ink); color: var(--text-on-ink); }
+ion-card.ion-color ion-card-subtitle,
+ion-card.ion-color .muted { color: inherit; opacity: 0.85; }
+
+/* ── Lists: a surface card with hairline dividers ──── */
+:root ion-list:not(ion-popover ion-list):not(ion-select-popover ion-list) {
+  background: var(--gradient-card);
+  border-radius: var(--radius-lg);
+  padding: 4px 0;
+  margin: 0 0 var(--card-gap);
+  overflow: hidden;
+}
+:root ion-list.list-inset { margin: 0 0 var(--card-gap); }
+:root ion-card ion-list:not(ion-popover ion-list) { background: transparent; padding: 0; margin: 0; }
+ion-item {
+  --background: transparent;
+  --background-activated: var(--bg-muted);
+  --background-hover: var(--bg-muted);
+  --border-color: var(--border-default);
+  --padding-start: var(--card-pad);
+  --inner-padding-end: var(--card-pad);
+  --min-height: 52px;
+  --color: var(--text-primary);
+  --detail-icon-color: var(--text-muted);
+  --detail-icon-opacity: 1;
+  font-size: 15px;
+}
+:root ion-list ion-item:last-child { --border-width: 0; --inner-border-width: 0; }
+:root ion-item ion-label h2,
+:root ion-item ion-label h3 { font-family: var(--font-body); font-size: 15px; line-height: 20px; font-weight: 700; color: var(--text-primary); }
+:root ion-item ion-label p { font-size: 13px; line-height: 18px; color: var(--text-muted); }
+:root ion-list-header { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+ion-note { color: var(--text-muted); font-size: 13px; }
+
+/* ── Form fields ───────────────────────────────────── */
+ion-input,
+ion-textarea,
+ion-select {
+  --highlight-color-focused: var(--brand-primary);
+  --highlight-color-valid: var(--brand-primary);
+  --highlight-color-invalid: var(--danger-solid);
+  --placeholder-color: var(--text-muted);
+  --placeholder-opacity: 1;
+  font-size: 15px;
+}
+ion-input.input-fill-outline,
+ion-textarea.textarea-fill-outline,
+ion-select.select-fill-outline {
+  --background: var(--bg-surface);
+  --border-color: var(--border-default);
+  --border-radius: var(--radius-md);
+  --border-width: 1px;
+  min-height: 48px;
+}
+/* Ionic shrinks stacked labels to 75%: 17px renders at about 13px. */
+:root ion-input .label-text,
+:root ion-textarea .label-text,
+:root ion-select .label-text {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+:root ion-select::part(label) { font-size: 17px; font-weight: 700; color: var(--text-primary); }
+:root ion-input.has-focus .label-text,
+:root ion-textarea.has-focus .label-text,
+:root ion-select.select-expanded .label-text { color: var(--brand-primary); }
+:root ion-searchbar {
+  --background: var(--bg-surface);
+  --border-radius: 14px;
+  --box-shadow: inset 0 0 0 1px var(--border-default);
+  --placeholder-color: var(--text-muted);
+  --placeholder-opacity: 1;
+  --icon-color: var(--text-muted);
+  --color: var(--text-primary);
+}
+ion-toggle {
+  --track-background-checked: var(--brand-primary);
+  --handle-background-checked: #ffffff;
+}
+ion-checkbox {
+  --checkbox-background-checked: var(--brand-primary);
+  --border-color-checked: var(--brand-primary);
+  --checkmark-color: var(--text-on-primary);
+  --border-radius: 6px;
+}
+ion-radio { --color-checked: var(--brand-primary); }
+
+/* ── Segment: the design system's segmented control ── */
+ion-segment {
+  --background: var(--bg-muted);
+  border-radius: var(--radius-md);
+  padding: 4px;
+}
+ion-segment-button {
+  --background: transparent;
+  --background-checked: transparent;
+  --background-hover: transparent;
+  --indicator-color: transparent;
+  --indicator-box-shadow: none;
+  --border-radius: 9px;
+  --border-width: 0;
+  --color: var(--text-muted);
+  --color-checked: var(--text-primary);
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+  min-height: 36px;
+  min-width: auto;
+  border-radius: 9px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  letter-spacing: 0;
+  text-transform: none;
+  transition: background var(--motion-fast) var(--ease-out);
+}
+/* The selected option is a surface pill (the design system's segmented control). */
+ion-segment-button.segment-button-checked {
+  background: var(--bg-surface);
+  font-weight: 700;
+}
+
+/* ── Badges are status tags: mono, uppercase, subtle tint ── */
+ion-badge {
+  --background: var(--bg-muted);
+  --color: var(--text-secondary);
+  --padding-top: 4px;
+  --padding-bottom: 4px;
+  --padding-start: 8px;
+  --padding-end: 8px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+/* Ionic paints colored badges' background and color directly, so set those. */
+ion-badge.ion-color { background: var(--bg-muted); color: var(--text-secondary); }
+ion-badge.ion-color-success { background: var(--success-subtle); color: var(--success-text); }
+ion-badge.ion-color-warning { background: var(--warning-subtle); color: var(--warning-text); }
+ion-badge.ion-color-danger { background: var(--danger-subtle); color: var(--danger-text); }
+ion-badge.ion-color-primary { background: var(--brand-primary-subtle); color: var(--brand-primary-hover); }
+ion-badge.ion-color-tertiary { background: var(--info-subtle); color: var(--info-text); }
+ion-badge.ion-color-secondary { background: var(--brand-accent); color: var(--text-on-accent); }
+
+/* ── Chips: pills; amenity look by default, colored when asked ── */
+ion-chip {
+  --background: var(--bg-muted);
+  --color: var(--text-primary);
+  height: 34px;
+  margin: 0 6px 6px 0;
+  padding: 0 14px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+}
+ion-chip.chip-outline {
+  --background: var(--bg-surface);
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--border-default);
+}
+ion-chip.ion-color-success { background: var(--success-subtle); color: var(--success-text); }
+ion-chip.ion-color-warning { background: var(--warning-subtle); color: var(--warning-text); }
+ion-chip.ion-color-danger { background: var(--danger-subtle); color: var(--danger-text); }
+ion-chip.ion-color-primary { background: var(--brand-primary-subtle); color: var(--brand-primary-hover); }
+
+/* ── Bottom tab bar (the design system's BottomNav) ── */
+ion-tab-bar {
+  --background: var(--bg-surface);
+  --border: 0;
+  --color: var(--text-muted);
+  --color-selected: var(--brand-primary);
+  border-radius: 20px 20px 0 0;
+  padding: 6px 8px;
+  height: auto;
+  min-height: 64px;
+}
+ion-tab-button {
+  --color: var(--text-muted);
+  --color-selected: var(--brand-primary);
+  --ripple-color: transparent;
+  --background-focused: var(--bg-muted);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  min-height: 48px;
+}
+ion-tab-button.tab-selected { font-weight: 700; }
+ion-tab-button ion-icon,
+ion-tab-button .tab-icon { font-size: 24px; width: 24px; height: 24px; }
+ion-tab-button ion-label { margin-top: 4px; font-size: 11px; letter-spacing: 0; }
+ion-tab-button ion-badge {
+  --background: var(--danger-solid);
+  --color: #ffffff;
+  --padding-start: 4px;
+  --padding-end: 4px;
+  --padding-top: 2px;
+  --padding-bottom: 2px;
+  min-width: 16px;
+  font-size: 9px;
+  border-radius: 8px;
+}
+
+/* ── Overlays: sheets, dialogs, popovers, toasts ───── */
+ion-modal {
+  --backdrop-opacity: var(--ion-backdrop-opacity);
+}
+ion-modal.modal-sheet-modal,
+ion-modal[breakpoints] {
+  --border-radius: var(--radius-xl);
+}
+ion-modal ion-content { --background: var(--bg-canvas); }
+ion-modal ion-header ion-toolbar { --background: var(--bg-canvas); }
+ion-alert {
+  --background: var(--bg-surface);
+}
+:root ion-alert .alert-wrapper { border-radius: var(--radius-xl); box-shadow: none; }
+:root ion-alert .alert-title { font-family: var(--font-display); font-weight: 700; color: var(--text-primary); }
+:root ion-alert .alert-message { color: var(--text-secondary); }
+:root ion-alert .alert-button { color: var(--brand-primary); font-weight: 700; text-transform: none; }
+:root ion-alert .alert-button.danger { color: var(--danger-solid); }
+ion-popover {
+  --background: var(--bg-surface);
+  --box-shadow: 0 8px 24px oklch(0 0 0 / 0.12);
+  --border-radius: var(--radius-md);
+}
+ion-action-sheet {
+  --background: var(--bg-surface);
+  --color: var(--text-primary);
+  --button-color: var(--text-primary);
+}
+:root ion-action-sheet .action-sheet-container { padding: 8px; }
+:root ion-action-sheet .action-sheet-group { border-radius: var(--radius-xl); }
+ion-toast {
+  --background: var(--bg-ink);
+  --color: var(--text-on-ink);
+  --border-radius: 14px;
+  --box-shadow: none;
+  --button-color: var(--brand-accent);
+  --start: 16px;
+  --end: 16px;
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+/* Toasts are always an ink pill; the status shows in the icon's color. Ionic paints colored
+   toasts from --ion-color-base/contrast, so those are pointed at the ink tokens. */
+ion-toast.ion-color { --ion-color-base: var(--bg-ink) !important; --ion-color-contrast: var(--text-on-ink) !important; }
+ion-toast.ion-color-success::part(icon) { color: var(--success-solid); }
+ion-toast.ion-color-danger::part(icon) { color: var(--danger-solid); }
+ion-toast.ion-color-warning::part(icon) { color: var(--warning-solid); }
+ion-toast.ion-color-medium::part(icon) { color: var(--info-solid); }
+
+/* ── Loading feedback ──────────────────────────────── */
+ion-refresher-content {
+  --color: var(--text-muted);
+}
+ion-refresher ion-spinner,
+ion-infinite-scroll-content ion-spinner,
+ion-spinner { color: var(--brand-primary); }
+ion-progress-bar {
+  --background: var(--brand-primary-subtle);
+  --progress-background: var(--brand-primary);
+}
+ion-skeleton-text {
+  --background: var(--skeleton-neutral);
+  --background-rgb: 230, 231, 226;
+  border-radius: 6px;
+}
+:root.ion-palette-dark ion-skeleton-text { --background-rgb: 39, 41, 35; }

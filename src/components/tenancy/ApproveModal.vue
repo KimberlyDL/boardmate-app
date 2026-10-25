@@ -36,7 +36,7 @@
           <ion-item v-for="(person, i) in occupants" :key="i">
             <ion-input v-model="person.name" label="Name" label-placement="stacked" :maxlength="120" />
             <ion-button slot="end" fill="clear" color="medium" aria-label="Remove" @click="occupants.splice(i, 1)">
-              <ion-icon slot="icon-only" :icon="closeOutline" />
+              <X slot="icon-only" :size="20" aria-hidden="true" />
             </ion-button>
           </ion-item>
           <ion-button v-if="occupants.length + 1 < unit.capacity" fill="outline" size="small" class="add" @click="occupants.push({ name: '' })">
@@ -66,7 +66,6 @@ import {
   IonButtons,
   IonContent,
   IonHeader,
-  IonIcon,
   IonInput,
   IonItem,
   IonModal,
@@ -76,7 +75,7 @@ import {
   IonToggle,
   IonToolbar,
 } from '@ionic/vue'
-import { closeOutline } from 'ionicons/icons'
+import { X } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import { peso } from '@/lib/money'
 import { firstError } from '@/services/api'

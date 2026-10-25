@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios'
 import { tokenStorage } from './tokenStorage'
+import { requestFinished, requestStarted } from '@/lib/activity'
 import type { ApiErrorBody } from '@/types/api'
 
 /**
@@ -13,6 +14,7 @@ export const api = axios.create({
 })
 
 api.interceptors.request.use(async (config) => {
+  requestStarted()
   const token = await tokenStorage.get()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
@@ -29,8 +31,12 @@ export function setUnauthorizedHandler(handler: UnauthorizedHandler | null): voi
 }
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    requestFinished()
+    return response
+  },
   async (error: AxiosError) => {
+    requestFinished()
     if (error.response?.status === 401 && onUnauthorized) {
       await onUnauthorized()
     }

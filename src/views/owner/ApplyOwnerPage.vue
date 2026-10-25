@@ -60,24 +60,24 @@
 
         <ul class="required">
           <li v-for="kind in REQUIRED_KINDS" :key="kind" :class="{ done: hasKind(kind) }">
-            <ion-icon :icon="hasKind(kind) ? checkmarkCircle : ellipseOutline" />
+            <component :is="hasKind(kind) ? CircleCheck : Circle" :size="18" aria-hidden="true" />
             {{ OwnerDocumentKindLabels[kind] }}
           </li>
         </ul>
 
         <ion-list v-if="kept.length || added.length" lines="full" data-test="owner-documents">
           <ion-item v-for="doc in kept" :key="`kept-${doc.id}`">
-            <ion-icon slot="start" :icon="doc.mime_type === 'application/pdf' ? documentOutline : imageOutline" />
+            <component :is="doc.mime_type === 'application/pdf' ? FileText : ImageIcon" slot="start" :size="18" aria-hidden="true" />
             <ion-label class="ion-text-wrap">
               <h3>{{ doc.original_name }}</h3>
               <p>{{ doc.kind_label }} · sent earlier</p>
             </ion-label>
             <ion-button slot="end" fill="clear" color="danger" aria-label="Remove" @click="removeKept(doc.id)">
-              <ion-icon slot="icon-only" :icon="trashOutline" />
+              <Trash2 slot="icon-only" :size="20" aria-hidden="true" />
             </ion-button>
           </ion-item>
           <ion-item v-for="(doc, i) in added" :key="`new-${i}`">
-            <ion-icon slot="start" :icon="doc.file.type === 'application/pdf' ? documentOutline : imageOutline" />
+            <component :is="doc.file.type === 'application/pdf' ? FileText : ImageIcon" slot="start" :size="18" aria-hidden="true" />
             <ion-label class="ion-text-wrap">
               <h3>{{ doc.file.name }}</h3>
               <ion-note v-if="errors[`documents.${i}.file`]" color="danger">{{ errors[`documents.${i}.file`][0] }}</ion-note>
@@ -94,7 +94,7 @@
               </ion-select-option>
             </ion-select>
             <ion-button slot="end" fill="clear" color="danger" aria-label="Remove" @click="added.splice(i, 1)">
-              <ion-icon slot="icon-only" :icon="trashOutline" />
+              <Trash2 slot="icon-only" :size="20" aria-hidden="true" />
             </ion-button>
           </ion-item>
         </ion-list>
@@ -108,7 +108,7 @@
           @change="pickFiles"
         />
         <ion-button size="small" fill="outline" :disabled="total >= MAX_DOCUMENTS" @click="fileInput?.click()">
-          <ion-icon slot="start" :icon="attachOutline" />
+          <Paperclip slot="start" :size="18" aria-hidden="true" />
           Attach files
         </ion-button>
         <ion-note v-if="errors.documents" color="danger" class="block">{{ errors.documents[0] }}</ion-note>
@@ -129,7 +129,6 @@ import {
   IonButtons,
   IonContent,
   IonHeader,
-  IonIcon,
   IonInput,
   IonItem,
   IonLabel,
@@ -143,14 +142,7 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/vue'
-import {
-  attachOutline,
-  checkmarkCircle,
-  documentOutline,
-  ellipseOutline,
-  imageOutline,
-  trashOutline,
-} from 'ionicons/icons'
+import { Circle, CircleCheck, FileText, Image as ImageIcon, Paperclip, Trash2 } from 'lucide-vue-next'
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { errorMessage, fieldErrors } from '@/services/api'

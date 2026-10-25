@@ -1,6 +1,6 @@
 <template>
   <div>
-    <p v-if="loading" class="muted">Loading…</p>
+    <DlSkeleton v-if="loading" :height="120" :radius="18" />
 
     <template v-else-if="data">
       <!-- The rules in force -->
@@ -121,6 +121,7 @@ import { useToast } from '@/composables/useToast'
 import { HouseRuleCategoryLabels, type HouseRuleCategory } from '@/types/enums'
 import type { HouseRule, HouseRuleVersion, PropertyHouseRules } from '@/types/houseRules'
 import type { Property } from '@/types/property'
+import DlSkeleton from '@/components/dl/DlSkeleton.vue'
 
 /** A property's house rules (D3): what is in force, past versions, and (owner or Manager) the draft editor. */
 const props = defineProps<{ property: Property }>()

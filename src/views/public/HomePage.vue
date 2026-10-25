@@ -2,105 +2,122 @@
   <ion-page>
     <ion-content :scroll-y="false" :fullscreen="true">
       <div class="screen">
-        <!-- Top bar: theme toggle, logo, skip -->
+        <!-- Top bar: theme toggle, wordmark, skip -->
         <header class="bar">
-          <ion-button fill="clear" color="medium" :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'" @click="toggleTheme">
-            <ion-icon slot="icon-only" :icon="isDark ? sunnyOutline : moonOutline" />
-          </ion-button>
+          <DlIconButton
+            :icon="isDark ? Sun : Moon"
+            :label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+            variant="ghost"
+            @click="toggleTheme"
+          />
           <brand-logo v-if="!onAuth" />
           <span v-else />
-          <ion-button v-if="!onAuth" fill="clear" color="medium" class="skip" @click="goTo(lastIndex)">Skip</ion-button>
+          <ion-button v-if="!onAuth" fill="clear" class="skip" @click="goTo(lastIndex)">Skip</ion-button>
           <span v-else class="skip-spacer" />
         </header>
 
         <!-- Swipeable slides -->
         <div ref="track" class="track" @scroll.passive="onScroll">
           <section v-for="s in slides" :key="s.key" class="slide" :aria-label="s.heading">
-            <div class="art" aria-hidden="true">
+            <div class="art" :class="`tone-${s.tone}`" aria-hidden="true">
               <!-- 1: find -->
               <div v-if="s.key === 'find'" class="map">
-                <span class="pin p1"><ion-icon :icon="location" /><b>₱2,800</b></span>
-                <span class="pin p2"><ion-icon :icon="location" /><b>₱4,500</b></span>
-                <span class="pin p3"><ion-icon :icon="location" /><b>₱3,200</b></span>
-                <div class="mini m1">
-                  <ion-icon :icon="homeOutline" />
-                  <div><strong>Sunny Dorm</strong><small>Bedspace · Near campus</small></div>
-                </div>
-                <div class="mini m2">
-                  <ion-icon :icon="businessOutline" />
-                  <div><strong>Cozy Room</strong><small>Whole room · Wi-Fi</small></div>
+                <span class="road r1" />
+                <span class="road r2" />
+                <span class="pin p1"><MapPin :size="20" /></span>
+                <span class="pin p2 muted-pin"><MapPin :size="20" /></span>
+                <span class="pin p3 big"><MapPin :size="24" /></span>
+                <span class="pin p4 school"><GraduationCap :size="20" /></span>
+                <div class="float-card">
+                  <div class="row">
+                    <div class="stack">
+                      <span class="dl-title">Sunny Dorm</span>
+                      <span class="dl-small">0.6 km from campus · Bedspace</span>
+                    </div>
+                    <DlSticker size="sm" :rotate="-3">near campus!</DlSticker>
+                  </div>
+                  <div class="row baseline">
+                    <span class="price">₱2,800 <small>/mo</small></span>
+                    <DlStatusTag tone="success">1 of 4 beds free</DlStatusTag>
+                  </div>
                 </div>
               </div>
 
               <!-- 2: apply -->
-              <div v-else-if="s.key === 'apply'" class="mock">
-                <small class="label">Property</small>
-                <h4>Cozy Room</h4>
-                <p class="price">₱4,500 <span>/ month</span></p>
-                <ul class="checks">
-                  <li><ion-icon :icon="checkmarkCircle" /> Wi-Fi</li>
-                  <li><ion-icon :icon="checkmarkCircle" /> Near campus</li>
-                  <li><ion-icon :icon="checkmarkCircle" /> Furnished</li>
-                </ul>
-                <div class="fake-btn">Apply</div>
-                <span class="badge sent"><ion-icon :icon="checkmarkCircle" /> Application sent</span>
+              <div v-else-if="s.key === 'apply'" class="stack-art">
+                <div class="mock">
+                  <div class="row"><span class="dl-eyebrow">APPLICATION</span><DlStatusTag status="pending">Sent</DlStatusTag></div>
+                  <span class="dl-title">Cozy Room · a bedspace</span>
+                  <div class="row"><span class="dl-small">Move-in</span><span class="dl-data">01 NOV 2026</span></div>
+                  <div class="row"><span class="dl-small">Monthly rent</span><span class="dl-small strong">₱4,500</span></div>
+                  <p class="dl-small quote">Hi! I'm a 2nd-year student and can move in on the 1st.</p>
+                </div>
+                <span class="chip-note"><CircleCheck :size="16" /> The owner approves and assigns your bed</span>
               </div>
 
               <!-- 3: bills -->
-              <div v-else-if="s.key === 'bills'" class="mock">
-                <span class="badge bell"><ion-icon :icon="notificationsOutline" /> Rent due in 3 days</span>
-                <small class="label">October balance</small>
-                <dl class="lines">
-                  <div><dt>Rent</dt><dd>₱4,500</dd></div>
-                  <div><dt>Electricity</dt><dd>₱650</dd></div>
-                  <div><dt>Water</dt><dd>₱180</dd></div>
-                  <div class="total"><dt>Total</dt><dd>₱5,330</dd></div>
-                </dl>
-                <p class="due">Due October 25</p>
-                <div class="fake-btn">View bill</div>
+              <div v-else-if="s.key === 'bills'" class="stack-art">
+                <div class="mock ink">
+                  <div class="row"><span class="dl-eyebrow on-ink">NEXT BILL</span><DlStatusTag status="due">Due 25 Oct</DlStatusTag></div>
+                  <span class="amount">₱5,330.00</span>
+                  <div class="row"><span class="dl-small on-ink-strong">Rent</span><span class="dl-data">4,500.00</span></div>
+                  <div class="row"><span class="dl-small on-ink-strong">Electricity + water</span><span class="dl-data">830.00</span></div>
+                </div>
+                <div class="mock list">
+                  <div class="line"><Receipt :size="18" class="ok" /><span>September · OR-2026-000118</span><DlStatusTag status="paid" /></div>
+                  <div class="line divider"><Receipt :size="18" class="ok" /><span>August · OR-2026-000097</span><DlStatusTag status="paid" /></div>
+                </div>
               </div>
 
               <!-- 4: shared -->
-              <div v-else-if="s.key === 'shared'" class="mock">
-                <small class="label">Shared electricity</small>
-                <h4>₱1,800</h4>
-                <ul class="people">
-                  <li><span class="av">K</span> Kim <b>₱600</b><ion-icon :icon="checkmarkCircle" class="ok" /></li>
-                  <li><span class="av">E</span> Ericka <b>₱600</b><ion-icon :icon="checkmarkCircle" class="ok" /></li>
-                  <li><span class="av">M</span> Mark <b>₱600</b><ion-icon :icon="ellipseOutline" class="wait" /></li>
-                </ul>
-                <div class="fake-btn">Split bill</div>
+              <div v-else-if="s.key === 'shared'" class="stack-art">
+                <div class="mock">
+                  <div class="row baseline"><span class="dl-title">Electricity</span><span class="amount-sm">₱1,800.00</span></div>
+                  <span class="dl-data muted">SPLIT EQUAL · 3 PEOPLE</span>
+                  <div v-for="(p, i) in people" :key="p.name" class="line" :class="{ divider: i > 0 }">
+                    <DlAvatar :name="p.name" :size="32" />
+                    <span>{{ p.label }}</span>
+                    <span class="dl-data">600.00</span>
+                    <DlStatusTag :status="p.paid ? 'paid' : 'due'">{{ p.paid ? 'Paid' : 'Owes' }}</DlStatusTag>
+                  </div>
+                </div>
               </div>
 
               <!-- 5: stay -->
               <div v-else class="tiles">
                 <div v-for="t in stayTiles" :key="t.title" class="tile">
-                  <ion-icon :icon="t.icon" />
+                  <DlIconTile :icon="t.icon" :tone="t.tone" />
                   <strong>{{ t.title }}</strong>
                   <small>{{ t.text }}</small>
                 </div>
               </div>
             </div>
 
-            <h1>{{ s.heading }}</h1>
-            <p class="desc">{{ s.text }}</p>
-            <p class="tag">{{ s.tagline }}</p>
+            <div class="copy">
+              <h1>{{ s.lead }}<DlGradientText>{{ s.hl }}</DlGradientText></h1>
+              <p class="desc">{{ s.text }}</p>
+              <p class="tag">{{ s.tagline }}</p>
+            </div>
           </section>
 
-          <!-- 6: authentication -->
+          <!-- 6: get started (sign in, sign up, or browse) -->
           <section class="slide auth" aria-label="Get started">
-            <div class="art" aria-hidden="true">
-              <div class="hero-mark"><brand-logo /></div>
+            <span class="blob b1" aria-hidden="true" />
+            <span class="blob b2" aria-hidden="true" />
+            <div class="welcome">
+              <span class="mark" aria-hidden="true"><House :size="32" :stroke-width="1.75" /></span>
+              <p class="wordmark">DormLink</p>
+              <h1 class="ready">Ready to get started?</h1>
+              <p class="desc">Find a place, then everything after: bills, groups and requests.</p>
+              <span class="dl-note">hey, welcome!</span>
             </div>
-            <h1>Ready to get started?</h1>
-            <p class="desc">Create your free account, or pick up where you left off.</p>
 
             <div class="auth-actions">
-              <ion-button expand="block" size="large" router-link="/register">Create an account</ion-button>
-              <ion-button expand="block" size="large" fill="outline" router-link="/login">Sign in to your account</ion-button>
+              <ion-button expand="block" router-link="/register">Create an account</ion-button>
+              <ion-button expand="block" fill="outline" router-link="/login">Sign in to your account</ion-button>
               <google-sign-in-button />
               <ion-button expand="block" fill="clear" router-link="/find">
-                <ion-icon slot="start" :icon="searchOutline" />
+                <MapIcon slot="start" :size="18" class="btn-icon" />
                 Just browsing? Explore available places
               </ion-button>
             </div>
@@ -115,27 +132,32 @@
 
         <!-- Footer: dots + actions -->
         <footer v-if="!onAuth" class="foot">
-          <div class="dots" role="tablist" aria-label="Slides">
-            <button
-              v-for="(s, i) in slides"
-              :key="s.key"
-              type="button"
-              role="tab"
-              class="dot"
-              :class="{ on: i === index }"
-              :aria-selected="i === index"
-              :aria-label="`Slide ${i + 1}: ${s.heading}`"
-              @click="goTo(i)"
-            />
+          <div class="foot-row">
+            <div class="dots" role="tablist" aria-label="Slides">
+              <button
+                v-for="(s, i) in slides"
+                :key="s.key"
+                type="button"
+                role="tab"
+                class="dot"
+                :class="{ on: i === index }"
+                :aria-selected="i === index"
+                :aria-label="`Slide ${i + 1}: ${s.heading}`"
+                @click="goTo(i)"
+              >
+                <span class="pip" />
+              </button>
+            </div>
+            <ion-button class="next" @click="goTo(index + 1)">
+              {{ index === 0 || index === lastIndex - 1 ? 'Get started' : 'Next' }}
+              <ArrowRight slot="end" :size="20" class="btn-icon" />
+            </ion-button>
           </div>
-          <ion-button expand="block" size="large" @click="goTo(index + 1)">
-            {{ index === 0 || index === lastIndex - 1 ? 'Get started' : 'Next' }}
-          </ion-button>
           <p class="signin">Already have an account? <router-link to="/login">Sign in</router-link></p>
         </footer>
         <footer v-else class="foot back">
-          <ion-button fill="clear" color="medium" @click="goTo(0)">
-            <ion-icon slot="start" :icon="arrowBackOutline" />
+          <ion-button fill="clear" @click="goTo(0)">
+            <ArrowLeft slot="start" :size="18" class="btn-icon" />
             See what DormLink does
           </ion-button>
         </footer>
@@ -145,68 +167,89 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonContent, IonIcon, IonPage } from '@ionic/vue'
+import { Capacitor } from '@capacitor/core'
+import { Preferences } from '@capacitor/preferences'
+import { IonButton, IonContent, IonPage } from '@ionic/vue'
 import {
-  arrowBackOutline,
-  businessOutline,
-  checkmarkCircle,
-  clipboardOutline,
-  constructOutline,
-  ellipseOutline,
-  homeOutline,
-  location,
-  moonOutline,
-  notificationsOutline,
-  peopleOutline,
-  searchOutline,
-  sunnyOutline,
-} from 'ionicons/icons'
-import { computed, ref } from 'vue'
+  ArrowLeft,
+  ArrowRight,
+  CircleCheck,
+  ClipboardList,
+  DoorOpen,
+  GraduationCap,
+  House,
+  Map as MapIcon,
+  MapPin,
+  Moon,
+  Receipt,
+  Sun,
+  Users,
+  Wrench,
+} from 'lucide-vue-next'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import BrandLogo from '@/components/BrandLogo.vue'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
+import { DlAvatar, DlGradientText, DlIconButton, DlIconTile, DlStatusTag, DlSticker, type PaletteTone } from '@/components/dl'
 import { useTheme } from '@/composables/useTheme'
 
+/** Splits a heading so its last word carries the screen's one gradient phrase. */
+function slide(key: string, tone: PaletteTone, heading: string, text: string, tagline: string) {
+  const cut = heading.lastIndexOf(' ') + 1
+  return { key, tone, heading, lead: heading.slice(0, cut), hl: heading.slice(cut), text, tagline }
+}
+
 const slides = [
-  {
-    key: 'find',
-    heading: 'Find a place that fits.',
-    text: 'Browse available rooms, bedspaces, and rental properties in one place. Compare prices, inclusions, and house rules before you apply.',
-    tagline: 'Browse. Compare. Apply.',
-  },
-  {
-    key: 'apply',
-    heading: 'Apply when you find the right one.',
-    text: 'Send an application directly to a property with your contact details, planned move-in date, and a short message.',
-    tagline: 'From browsing to booking, without the hassle.',
-  },
-  {
-    key: 'bills',
-    heading: 'Know what you owe.',
-    text: 'Keep rent, utility bills, payments, receipts, and balances organized in one place. Get reminders before and after your due dates.',
-    tagline: 'Clear bills. Clear records. Less confusion.',
-  },
-  {
-    key: 'shared',
-    heading: 'Split shared expenses fairly.',
-    text: "Keep shared utilities and group expenses organized. See your share, record repayments, and keep everyone's balance clear.",
-    tagline: 'Everyone knows their share.',
-  },
-  {
-    key: 'stay',
-    heading: 'More than just a rental app.',
-    text: 'Keep everyday house matters organized, from maintenance requests and house rules to visitors, curfew, and shared responsibilities.',
-    tagline: 'Everything about your stay, in one place.',
-  },
+  slide(
+    'find',
+    'sky',
+    'Find a place that fits.',
+    'Browse available rooms, bedspaces, and rental properties in one place. Compare prices, inclusions, and house rules before you apply.',
+    'Browse. Compare. Apply.',
+  ),
+  slide(
+    'apply',
+    'pine',
+    'Apply when you find the right one.',
+    'Send an application directly to a property with your contact details, planned move-in date, and a short message.',
+    'From browsing to booking, without the hassle.',
+  ),
+  slide(
+    'bills',
+    'butter',
+    'Know what you owe.',
+    'Keep rent, utility bills, payments, receipts, and balances organized in one place. Get reminders before and after your due dates.',
+    'Clear bills. Clear records. Less confusion.',
+  ),
+  slide(
+    'shared',
+    'lilac',
+    'Split shared expenses fairly.',
+    "Keep shared utilities and group expenses organized. See your share, record repayments, and keep everyone's balance clear.",
+    'Everyone knows their share.',
+  ),
+  slide(
+    'stay',
+    'lagoon',
+    'More than just a rental app.',
+    'Keep everyday house matters organized, from maintenance requests and house rules to visitors, curfew, and shared responsibilities.',
+    'Everything about your stay, in one place.',
+  ),
 ]
 
-const stayTiles = [
-  { icon: constructOutline, title: 'Maintenance', text: 'Report problems' },
-  { icon: clipboardOutline, title: 'House rules', text: "Know what's expected" },
-  { icon: peopleOutline, title: 'Visitors', text: 'Keep visits organized' },
-  { icon: moonOutline, title: 'Late entry', text: 'Request access when needed' },
+const people = [
+  { name: 'Ericka Lim', label: 'Ericka · leader', paid: true },
+  { name: 'Kim Santos', label: 'Kim', paid: true },
+  { name: 'Mark Cruz', label: 'Mark', paid: false },
 ]
 
-/** The last "page" is the sign-in screen, after the content slides. */
+const stayTiles: { icon: typeof Wrench; tone: PaletteTone; title: string; text: string }[] = [
+  { icon: Wrench, tone: 'coral', title: 'Maintenance', text: 'Report problems' },
+  { icon: ClipboardList, tone: 'pine', title: 'House rules', text: "Know what's expected" },
+  { icon: Users, tone: 'sky', title: 'Visitors', text: 'Keep visits organized' },
+  { icon: DoorOpen, tone: 'lilac', title: 'Late entry', text: 'Request access when needed' },
+]
+
+/** The last "page" is the get-started screen, after the content slides. */
 const lastIndex = slides.length
 const track = ref<HTMLElement | null>(null)
 const index = ref(0)
@@ -220,13 +263,33 @@ function onScroll() {
   if (el && el.clientWidth) index.value = Math.round(el.scrollLeft / el.clientWidth)
 }
 
-function goTo(i: number) {
+function goTo(i: number, instant = false) {
   const el = track.value
   const target = Math.max(0, Math.min(lastIndex, i))
   index.value = target
-  const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  const reduce = instant || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
   el?.scrollTo?.({ left: target * el.clientWidth, behavior: reduce ? 'auto' : 'smooth' })
 }
+
+/**
+ * The installed app (home-screen PWA or native) shows the slides once: after someone has
+ * reached the get-started screen, it opens there. In a browser tab the slides always show.
+ */
+const SEEN_KEY = 'dormlink.onboarding_seen'
+const installed = () => Capacitor.isNativePlatform() || !!window.matchMedia?.('(display-mode: standalone)').matches
+
+watch(onAuth, (reached) => {
+  if (reached) Preferences.set({ key: SEEN_KEY, value: '1' }).catch(() => undefined)
+})
+
+onMounted(async () => {
+  if (!installed()) return
+  const seen = (await Preferences.get({ key: SEEN_KEY }).catch(() => ({ value: null }))).value
+  if (seen) {
+    await nextTick()
+    goTo(lastIndex, true)
+  }
+})
 </script>
 
 <style scoped>
@@ -244,13 +307,15 @@ function goTo(i: number) {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  padding: 6px 8px;
+  min-height: 56px;
+  padding: 4px 8px;
 }
 .bar > :first-child {
   justify-self: start;
 }
 .skip {
   justify-self: end;
+  --color: var(--text-secondary);
 }
 
 /* Slides */
@@ -267,332 +332,334 @@ function goTo(i: number) {
   display: none;
 }
 .slide {
+  position: relative;
   flex: 0 0 100%;
-  scroll-snap-align: center;
-  scroll-snap-stop: always;
-  overflow-y: auto;
-  padding: 8px 24px 16px;
-  text-align: center;
   display: flex;
   flex-direction: column;
+  gap: 24px;
+  padding: 8px 16px 12px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
 }
 .art {
+  position: relative;
   flex: 1 1 auto;
-  min-height: 250px;
-  display: grid;
-  place-items: center;
-  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  max-height: 380px;
+  padding: 20px;
+  border-radius: var(--radius-xl);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.tone-sky { background: var(--card-sky-gradient); }
+.tone-pine { background: var(--card-pine-gradient); }
+.tone-butter { background: var(--card-butter-gradient); }
+.tone-lilac { background: var(--card-lilac-gradient); }
+.tone-lagoon { background: var(--card-lagoon-gradient); }
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 4px;
 }
 h1 {
-  font-size: 1.85rem;
-  line-height: 1.15;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 32px;
+  line-height: 36px;
   font-weight: 800;
-  letter-spacing: -0.02em;
-  margin: 0 0 10px;
+  letter-spacing: -0.03em;
 }
 .desc {
-  margin: 0 0 10px;
-  line-height: 1.55;
-  color: var(--ion-color-step-600, var(--ion-color-medium));
+  margin: 0;
+  font-size: 15px;
+  line-height: 23px;
+  color: var(--text-secondary);
 }
 .tag {
   margin: 0;
+  font-size: 14px;
   font-weight: 700;
-  color: var(--ion-color-primary);
+  color: var(--brand-primary);
 }
+
+/* Shared bits of the illustrations (decorative, aria-hidden) */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.row.baseline { align-items: baseline; }
+.stack { display: flex; flex-direction: column; gap: 2px; }
+.strong { font-weight: 700; color: var(--text-primary); }
+.muted { color: var(--text-muted); }
+.mock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 320px;
+  padding: 16px;
+  box-sizing: border-box;
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+.mock.ink { background: var(--bg-ink); color: var(--text-on-ink); }
+.mock.list { gap: 0; padding: 4px 14px; }
+.on-ink { color: var(--text-on-ink-muted); }
+.on-ink-strong { color: var(--text-on-ink); }
+.stack-art {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+.line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.line > span:first-of-type { flex: 1; }
+.line.divider { border-top: 1px solid var(--border-default); }
+.ok { color: var(--success-solid); }
+.amount { font-family: var(--font-display); font-size: 32px; line-height: 36px; font-weight: 800; letter-spacing: -0.03em; }
+.amount-sm { font-family: var(--font-display); font-size: 20px; font-weight: 700; }
+.quote {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+}
+.chip-note {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-end;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-full);
+  background: var(--brand-primary);
+  color: var(--text-on-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* 1: map */
+.map {
+  position: absolute;
+  inset: 0;
+}
+.road {
+  position: absolute;
+  background: #ffffff;
+  opacity: 0.7;
+}
+:global(.ion-palette-dark) .road { opacity: 0.12; }
+.r1 { left: 0; right: 0; top: 130px; height: 14px; transform: rotate(-8deg); }
+.r2 { top: 0; bottom: 0; left: 62%; width: 12px; transform: rotate(12deg); }
+.pin {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--brand-primary);
+  color: var(--text-on-primary);
+}
+.pin.big { width: 48px; height: 48px; }
+.muted-pin { background: var(--stone-500); color: #ffffff; }
+.school { background: var(--card-sky-solid); color: #ffffff; }
+.p1 { left: 12%; top: 40px; }
+.p2 { left: 70%; top: 60px; }
+.p3 { left: 42%; top: 96px; }
+.p4 { left: 78%; top: 150px; }
+.float-card {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+.price {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--brand-primary);
+}
+.price small {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+/* 5: tiles */
+.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  max-width: 320px;
+}
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 14px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+.tile strong { margin-top: 8px; font-size: 15px; }
+.tile small { font-size: 12px; color: var(--text-muted); }
 
 /* Footer */
 .foot {
-  padding: 8px 24px 16px;
+  padding: 8px 16px 16px;
+}
+.foot-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 .dots {
   display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 14px;
+  align-items: center;
 }
 .dot {
-  width: 8px;
-  height: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 44px;
   padding: 0;
   border: 0;
-  border-radius: 8px;
-  background: var(--bm-border);
-  transition: width 0.25s, background 0.25s;
+  background: transparent;
+  cursor: pointer;
 }
-.dot.on {
+.dot.on { width: 32px; }
+.pip {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--stone-300);
+  transition: width var(--motion-base) var(--ease-out), background var(--motion-base) var(--ease-out);
+}
+:global(.ion-palette-dark) .pip { background: var(--stone-700); }
+.dot.on .pip {
   width: 24px;
-  background: var(--ion-color-primary);
+  background: var(--brand-primary);
 }
+.next {
+  min-width: 140px;
+  height: 52px;
+  font-size: 16px;
+}
+.btn-icon { margin: 0 2px; }
 .signin {
   margin: 10px 0 0;
   text-align: center;
-  color: var(--ion-color-medium);
+  font-size: 13px;
+  color: var(--text-muted);
 }
 .signin a {
   font-weight: 700;
+  color: var(--brand-primary);
+  text-decoration: none;
 }
 .foot.back {
   display: flex;
   justify-content: center;
 }
+.foot.back ion-button { --color: var(--text-secondary); }
 
-/* Auth screen */
+/* 6: get started */
 .auth {
+  justify-content: flex-end;
+  padding: 0 24px 8px;
+  overflow: hidden;
+}
+.blob {
+  position: absolute;
+  border-radius: var(--radius-full);
+  pointer-events: none;
+}
+.b1 { left: -110px; top: -150px; width: 420px; height: 420px; background: var(--card-pine-tint); }
+.b2 { right: -80px; top: 190px; width: 170px; height: 170px; background: var(--card-butter-tint); }
+.welcome {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mark {
+  display: flex;
+  align-items: center;
   justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-full);
+  background: var(--brand-primary);
+  color: var(--text-on-primary);
 }
-.auth .art {
-  min-height: 150px;
-  flex: 0 0 auto;
+.wordmark {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 48px;
+  line-height: 52px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
 }
-.hero-mark {
-  transform: scale(1.8);
+.ready {
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 .auth-actions {
-  margin-top: 8px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
-.auth-actions ion-button {
-  margin: 0 0 10px;
-}
+.auth-actions ion-button { margin: 0; }
 .legal {
+  position: relative;
   display: flex;
   justify-content: center;
   gap: 18px;
-  margin-top: 8px;
-  font-size: 0.9rem;
+  font-size: 13px;
 }
 .legal a {
-  color: var(--ion-color-medium);
+  color: var(--text-muted);
+  text-decoration: none;
 }
 
-/* Illustrations (decorative) */
-.map,
-.mock,
-.tiles {
-  width: 100%;
-  max-width: 320px;
-}
-.map {
-  position: relative;
-  height: 250px;
-  border-radius: 24px;
-  overflow: hidden;
-  border: 1px solid var(--bm-border);
-  background:
-    linear-gradient(var(--bm-border) 1px, transparent 1px) 0 0 / 36px 36px,
-    linear-gradient(90deg, var(--bm-border) 1px, transparent 1px) 0 0 / 36px 36px,
-    var(--bm-surface-alt);
-  text-align: left;
-}
-.pin {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: var(--ion-color-primary);
-  font-size: 30px;
-  line-height: 1;
-}
-.pin b {
-  font-size: 0.7rem;
-  padding: 2px 7px;
-  border-radius: 10px;
-  background: var(--ion-color-secondary);
-  color: var(--ion-color-secondary-contrast);
-}
-.p1 { top: 22px; left: 36px; }
-.p2 { top: 58px; right: 40px; }
-.p3 { top: 14px; left: 150px; }
-.mini {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border-radius: 14px;
-  background: var(--bm-surface);
-  border: 1px solid var(--bm-border);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-}
-.mini ion-icon {
-  font-size: 24px;
-  color: var(--ion-color-primary);
-}
-.mini strong,
-.mini small {
-  display: block;
-}
-.mini strong {
-  font-size: 0.85rem;
-}
-.mini small {
-  font-size: 0.7rem;
-  color: var(--ion-color-medium);
-}
-.m1 { left: 14px; bottom: 74px; }
-.m2 { right: 14px; bottom: 16px; }
-
-.mock {
-  position: relative;
-  padding: 18px;
-  border-radius: 22px;
-  text-align: left;
-  background: var(--bm-surface);
-  border: 1px solid var(--bm-border);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.12);
-}
-.mock .label {
-  color: var(--ion-color-medium);
-  font-weight: 600;
-}
-.mock h4 {
-  margin: 2px 0 4px;
-  font-size: 1.4rem;
-  font-weight: 800;
-}
-.price {
-  margin: 0 0 10px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--ion-color-primary);
-}
-.price span {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--ion-color-medium);
-}
-.checks,
-.people {
-  list-style: none;
-  margin: 0 0 14px;
-  padding: 0;
-  display: grid;
-  gap: 6px;
-}
-.checks li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.checks ion-icon,
-.ok {
-  color: var(--ion-color-primary);
-  font-size: 20px;
-}
-.wait {
-  color: var(--ion-color-medium);
-  font-size: 20px;
-}
-.fake-btn {
-  text-align: center;
-  padding: 11px;
-  border-radius: 12px;
-  font-weight: 700;
-  background: var(--ion-color-primary);
-  color: var(--ion-color-primary-contrast);
-}
-.badge {
-  position: absolute;
-  right: -8px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  background: var(--ion-color-secondary);
-  color: var(--ion-color-secondary-contrast);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
-}
-.badge.sent {
-  bottom: 20px;
-  animation: pop 0.5s 0.4s both;
-}
-.badge.bell {
-  top: -14px;
-  animation: pop 0.5s 0.4s both;
-}
-.lines {
-  margin: 8px 0 6px;
-}
-.lines div {
-  display: flex;
-  justify-content: space-between;
-  padding: 5px 0;
-}
-.lines dt,
-.lines dd {
-  margin: 0;
-}
-.lines .total {
-  margin-top: 4px;
-  border-top: 1px solid var(--bm-border);
-  font-weight: 800;
-}
-.due {
-  margin: 0 0 12px;
-  color: var(--ion-color-medium);
-  font-size: 0.9rem;
-}
-.people li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.people b {
-  margin-left: auto;
-}
-.av {
-  display: inline-grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  font-size: 0.8rem;
-  font-weight: 700;
-  background: var(--bm-surface-alt);
-  color: var(--ion-color-primary);
-  border: 1px solid var(--bm-border);
-}
-
-.tiles {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.tile {
-  padding: 16px 12px;
-  border-radius: 18px;
-  background: var(--bm-surface);
-  border: 1px solid var(--bm-border);
-  text-align: left;
-}
-.tile ion-icon {
-  display: block;
-  font-size: 28px;
-  margin-bottom: 8px;
-  color: var(--ion-color-primary);
-}
-.tile strong,
-.tile small {
-  display: block;
-}
-.tile small {
-  margin-top: 2px;
-  color: var(--ion-color-medium);
-}
-
-@keyframes pop {
-  from { opacity: 0; transform: scale(0.8) translateY(6px); }
-  to { opacity: 1; transform: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .badge { animation: none; }
-  .dot { transition: none; }
-}
 @media (max-height: 700px) {
-  .art { min-height: 200px; }
-  h1 { font-size: 1.6rem; }
+  .art { min-height: 240px; }
+  h1 { font-size: 26px; line-height: 30px; }
+  .wordmark { font-size: 40px; line-height: 44px; }
 }
 </style>

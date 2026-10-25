@@ -8,16 +8,18 @@
     </ion-header>
 
     <ion-content class="ion-padding">
-      <ion-refresher slot="fixed" @ion-refresh="refresh">
-        <ion-refresher-content />
-      </ion-refresher>
+      <DlRefresher :refresh="load" />
 
       <div class="narrow">
-        <ion-button v-if="staying" expand="block" @click="reporting = true">Report a problem</ion-button>
-        <p v-else-if="!loading" class="muted small">You can report a problem once you have moved in somewhere.</p>
+        <ion-button v-if="staying" expand="block" class="report" @click="reporting = true">
+          <Wrench slot="start" :size="18" aria-hidden="true" /> Report a problem
+        </ion-button>
+        <DlBanner v-else-if="!loading" tone="info" class="report">You can report a problem once you have moved in somewhere.</DlBanner>
 
-        <p v-if="loading" class="muted">Loading…</p>
-        <p v-else-if="!items.length" class="muted center">No requests yet.</p>
+        <DlSkeleton v-if="loading" :height="160" :radius="18" />
+        <DlCard v-else-if="!items.length">
+          <DlEmptyState note="all good here" :icon="Wrench">No requests yet. Report a problem and follow it here.</DlEmptyState>
+        </DlCard>
         <ion-list v-else lines="full">
           <ion-item v-for="r in items" :key="r.id" button :detail="true" @click="openId = r.id">
             <ion-label class="ion-text-wrap">
@@ -43,7 +45,6 @@
 
 <script setup lang="ts">
 import {
-  type RefresherCustomEvent,
   IonBackButton,
   IonBadge,
   IonButton,
@@ -54,15 +55,15 @@ import {
   IonLabel,
   IonList,
   IonPage,
-  IonRefresher,
-  IonRefresherContent,
   IonTitle,
   IonToolbar,
   onIonViewWillEnter,
 } from '@ionic/vue'
+import { Wrench } from 'lucide-vue-next'
 import { ref } from 'vue'
 import ReportSheet from '@/components/maintenance/ReportSheet.vue'
 import RequestSheet from '@/components/maintenance/RequestSheet.vue'
+import { DlBanner, DlCard, DlEmptyState, DlRefresher, DlSkeleton } from '@/components/dl'
 import { manilaDate } from '@/lib/dayjs'
 import { firstError } from '@/services/api'
 import { maintenanceService } from '@/services/maintenance'
@@ -94,10 +95,6 @@ async function load() {
 
 onIonViewWillEnter(load)
 
-async function refresh(event: RefresherCustomEvent) {
-  await load()
-  event.target.complete()
-}
 
 async function reported(message: string) {
   reporting.value = false
@@ -107,6 +104,9 @@ async function reported(message: string) {
 </script>
 
 <style scoped>
+.report {
+  margin: 0 0 var(--card-gap);
+}
 .small {
   font-size: 0.85rem;
 }

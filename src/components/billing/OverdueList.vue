@@ -1,6 +1,6 @@
 <template>
   <div>
-    <p v-if="loading" class="muted">Loading…</p>
+    <DlSkeleton v-if="loading" :height="120" :radius="18" />
     <p v-else-if="!rows.length" class="muted center">Nobody is overdue.</p>
 
     <ion-card v-for="r in rows" :key="r.payer.id">
@@ -47,6 +47,7 @@ import { billingService } from '@/services/billing'
 import { useToast } from '@/composables/useToast'
 import type { OverdueRow } from '@/types/billing'
 import type { Property } from '@/types/property'
+import DlSkeleton from '@/components/dl/DlSkeleton.vue'
 
 const props = defineProps<{ property: Property }>()
 const emit = defineEmits<{ record: [payerId: number]; total: [centavos: number, payers: number] }>()

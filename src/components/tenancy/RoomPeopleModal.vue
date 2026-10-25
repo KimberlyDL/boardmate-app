@@ -9,7 +9,7 @@
 
     <ion-content class="ion-padding">
       <div class="narrow">
-        <p v-if="loading" class="muted">Loading…</p>
+        <DlSkeleton v-if="loading" :height="120" :radius="18" />
 
         <template v-else>
           <!-- Leader -->
@@ -124,6 +124,7 @@ import { usePrompt } from '@/composables/usePrompt'
 import { useToast } from '@/composables/useToast'
 import type { Room } from '@/types/property'
 import type { NewOccupantInput, RoomLeader, RoomOccupant, Tenancy } from '@/types/tenancy'
+import DlSkeleton from '@/components/dl/DlSkeleton.vue'
 
 /**
  * A room's leader and the people in it. `staff`: the owner or a caretaker of the

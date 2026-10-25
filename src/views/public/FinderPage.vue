@@ -16,11 +16,11 @@
       <ion-toolbar>
         <div class="bar">
           <ion-segment v-model="view" class="view-toggle" @ion-change="search()">
-            <ion-segment-button value="map" aria-label="Map"><ion-icon :icon="mapOutline" /></ion-segment-button>
-            <ion-segment-button value="list" aria-label="List"><ion-icon :icon="listOutline" /></ion-segment-button>
+            <ion-segment-button value="map" aria-label="Map"><MapIcon :size="18" aria-hidden="true" /></ion-segment-button>
+            <ion-segment-button value="list" aria-label="List"><List :size="18" aria-hidden="true" /></ion-segment-button>
           </ion-segment>
-          <ion-button size="small" fill="outline" @click="filtersOpen = true">
-            <ion-icon slot="start" :icon="optionsOutline" /> Filters{{ active ? ` (${active})` : '' }}
+          <ion-button size="small" class="dl-tonal" @click="filtersOpen = true">
+            <SlidersHorizontal slot="start" :size="16" aria-hidden="true" /> Filters{{ active ? ` · ${active}` : '' }}
           </ion-button>
           <ion-select v-model="filters.sort" interface="popover" aria-label="Sort" class="sort" @ion-change="search()">
             <ion-select-option v-if="distance.near.value" value="nearest">Nearest</ion-select-option>
@@ -29,11 +29,7 @@
           </ion-select>
         </div>
         <div class="bar from">
-          <ion-chip outline @click="chooseFrom">
-            <ion-icon :icon="locationOutline" />
-            <ion-label>Distance from: {{ distance.label.value }}</ion-label>
-            <ion-icon :icon="chevronDown" />
-          </ion-chip>
+          <DlChip :icon="MapPin" @click="chooseFrom">Distance from: {{ distance.label.value }}</DlChip>
           <ion-button v-if="picking" size="small" fill="clear" @click="picking = false">Cancel</ion-button>
         </div>
       </ion-toolbar>
@@ -41,7 +37,10 @@
 
     <ion-content>
       <div class="narrow wide ion-padding">
-        <p class="muted">{{ total }} {{ total === 1 ? 'place' : 'places' }} found<span v-if="filters.bbox"> in this map area · <a href="#" @click.prevent="clearArea">clear area</a></span></p>
+        <p class="count">
+          <span class="dl-title">{{ total }} {{ total === 1 ? 'place' : 'places' }}</span>
+          <span v-if="filters.bbox" class="dl-small"> in this map area · <a href="#" @click.prevent="clearArea">clear area</a></span>
+        </p>
 
         <template v-if="view === 'map'">
           <listing-map
@@ -50,63 +49,64 @@
             :origin="origin"
             :picking="picking"
             searchable
-            height="62vh"
+            height="58vh"
             @select="select"
             @search-area="searchArea"
             @pick="pickPoint"
           />
-          <p class="muted legend">
-            <span class="dot free" /> Has free rooms <span class="dot full" /> Full right now
-            <span class="dot origin" /> {{ distance.label.value }}
+          <p class="legend dl-small">
+            <span class="key free" /> Has free rooms <span class="key full" /> Full right now
+            <span class="key origin" /> {{ distance.label.value }}
           </p>
 
-          <ion-card v-if="selected" class="pin-card">
-            <ion-card-header>
-              <ion-card-subtitle>{{ selected.type_label }} · {{ [selected.barangay, selected.city].filter(Boolean).join(', ') }}</ion-card-subtitle>
-              <ion-card-title>{{ selected.name }}</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-              <p v-if="selected.distance_m !== null">
-                <ion-icon :icon="walkOutline" /> {{ formatDistance(selected.distance_m) }} from {{ distance.label.value }} (straight line)
-              </p>
-              <p class="price">
-                <ion-badge v-if="selected.is_full" color="medium">Full right now</ion-badge>
-                <template v-else>
-                  <strong>{{ selected.price_from_centavos !== null ? `from ${peso(selected.price_from_centavos)}` : 'Price on request' }}</strong> / month
-                </template>
-              </p>
-              <p>{{ selected.availability.label }}</p>
-              <div class="card-actions">
-                <ion-button expand="block" @click="viewRooms(selected.id)">View rooms</ion-button>
-                <ion-button expand="block" fill="outline" @click="open(selected.id)">View details</ion-button>
-              </div>
-            </ion-card-content>
-          </ion-card>
+          <DlCard v-if="selected" class="pin-card" :padding="12">
+            <DlListingCard
+              :title="selected.name"
+              :eyebrow="placeLine(selected)"
+              :price="priceOf(selected)"
+              :full="selected.is_full"
+              :image-src="selected.cover_photo_url"
+              :meta="[distanceLine(selected), selected.availability.label]"
+            />
+            <div class="card-actions">
+              <ion-button @click="viewRooms(selected.id)"><BedDouble slot="start" :size="18" aria-hidden="true" /> View rooms</ion-button>
+              <ion-button class="dl-tonal" @click="open(selected.id)">Details</ion-button>
+            </div>
+          </DlCard>
         </template>
 
         <template v-else>
-          <p v-if="!loading && !items.length" class="muted center">No places match. Try fewer filters or another area.</p>
-          <ion-card v-for="l in items" :key="l.id" button class="card" :class="{ full: l.is_full }" @click="open(l.id)">
-            <img v-if="l.cover_photo_url" :src="l.cover_photo_url" alt="" class="cover" loading="lazy" />
-            <ion-card-header>
-              <ion-card-subtitle>{{ l.type_label }} · {{ [l.barangay, l.city].filter(Boolean).join(', ') }}</ion-card-subtitle>
-              <ion-card-title>{{ l.name }}</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-              <p class="price">
-                <ion-badge v-if="l.is_full" color="medium">Full right now</ion-badge>
-                <template v-else>
-                  <strong>{{ l.price_from_centavos !== null ? `from ${peso(l.price_from_centavos)}` : 'Price on request' }}</strong> / month
-                </template>
-              </p>
-              <p v-if="l.distance_m !== null">{{ formatDistance(l.distance_m) }} from {{ distance.label.value }}</p>
-              <p>{{ l.availability.label }}</p>
-              <p>
-                <ion-chip v-for="u in l.included_utilities" :key="u" class="chip" color="success">{{ u }} included</ion-chip>
-                <ion-chip v-if="l.who_can_apply" class="chip">{{ l.who_can_apply }}</ion-chip>
-              </p>
-            </ion-card-content>
-          </ion-card>
+          <div v-if="loading && !items.length" class="cards">
+            <DlCard v-for="n in 3" :key="n" :padding="10" class="skeleton-card">
+              <DlSkeleton :width="104" :height="104" :radius="12" />
+              <div class="skeleton-lines">
+                <DlSkeleton width="70%" :height="16" />
+                <DlSkeleton width="40%" :height="18" tone="brand" />
+                <DlSkeleton width="85%" :height="12" />
+              </div>
+            </DlCard>
+          </div>
+          <DlCard v-else-if="!items.length">
+            <DlEmptyState note="no places match yet" :icon="MapIcon" action-label="Clear filters" @action="clearFilters">
+              Try fewer filters or another area.
+            </DlEmptyState>
+          </DlCard>
+          <div v-else class="cards">
+            <DlListingCard
+              v-for="l in items"
+              :key="l.id"
+              :title="l.name"
+              :eyebrow="placeLine(l)"
+              :price="priceOf(l)"
+              :full="l.is_full"
+              :image-src="l.cover_photo_url"
+              :meta="[distanceLine(l), l.availability.label]"
+              @click="open(l.id)"
+            >
+              <DlChip v-for="u in l.included_utilities" :key="u" variant="amenity">{{ u }} included</DlChip>
+              <DlChip v-if="l.who_can_apply" variant="amenity">{{ l.who_can_apply }}</DlChip>
+            </DlListingCard>
+          </div>
           <ion-infinite-scroll :disabled="page >= lastPage" @ion-infinite="more">
             <ion-infinite-scroll-content />
           </ion-infinite-scroll>
@@ -123,9 +123,9 @@
         </ion-header>
         <ion-content class="ion-padding">
           <template v-if="roomsOf">
-            <h3>Rooms &amp; availability</h3>
+            <h2 class="dl-h2 sheet-title">Rooms &amp; availability</h2>
             <listing-rooms :rooms="roomsOf.rooms" :apply-href="`/listings/${roomsOf.id}/apply`" />
-            <ion-button expand="block" fill="outline" class="ion-margin-top" @click="open(roomsOf.id)">View details</ion-button>
+            <ion-button expand="block" class="dl-tonal ion-margin-top" @click="open(roomsOf.id)">View details</ion-button>
           </template>
         </ion-content>
       </ion-modal>
@@ -135,42 +135,50 @@
         <ion-header>
           <ion-toolbar>
             <ion-title>Filters</ion-title>
-            <ion-buttons slot="start"><ion-button @click="reset">Clear</ion-button></ion-buttons>
+            <ion-buttons slot="start"><ion-button @click="reset">Reset</ion-button></ion-buttons>
             <ion-buttons slot="end"><ion-button :strong="true" @click="applyFilters">Show results</ion-button></ion-buttons>
           </ion-toolbar>
         </ion-header>
         <ion-content class="ion-padding">
-          <h3>Monthly price (₱)</h3>
-          <div class="row">
-            <ion-input v-model="filters.minPrice" inputmode="decimal" label="Min" label-placement="stacked" fill="outline" />
-            <ion-input v-model="filters.maxPrice" inputmode="decimal" label="Max" label-placement="stacked" fill="outline" />
+          <div class="filters">
+            <section>
+              <h3 class="filter-label">Monthly price (₱)</h3>
+              <div class="row">
+                <ion-input v-model="filters.minPrice" inputmode="decimal" label="Min" label-placement="stacked" fill="outline" />
+                <ion-input v-model="filters.maxPrice" inputmode="decimal" label="Max" label-placement="stacked" fill="outline" />
+              </div>
+            </section>
+            <section>
+              <h3 class="filter-label">Rental type</h3>
+              <ion-segment v-model="filters.mode">
+                <ion-segment-button value=""><ion-label>Any</ion-label></ion-segment-button>
+                <ion-segment-button value="bedspaces"><ion-label>Bedspace</ion-label></ion-segment-button>
+                <ion-segment-button value="whole"><ion-label>Whole room</ion-label></ion-segment-button>
+              </ion-segment>
+            </section>
+            <section>
+              <h3 class="filter-label">Included in the rent</h3>
+              <div class="chips">
+                <DlChip v-for="u in includeOptions" :key="u.value" :icon="u.icon" :selected="filters.includes.includes(u.value)" @click="toggleInclude(u.value)">
+                  {{ u.label }}
+                </DlChip>
+              </div>
+            </section>
+            <section>
+              <h3 class="filter-label">Who can stay</h3>
+              <ion-segment v-model="filters.whoCanStay">
+                <ion-segment-button value=""><ion-label>Anyone</ion-label></ion-segment-button>
+                <ion-segment-button value="female"><ion-label>Female</ion-label></ion-segment-button>
+                <ion-segment-button value="male"><ion-label>Male</ion-label></ion-segment-button>
+              </ion-segment>
+            </section>
+            <section>
+              <h3 class="filter-label">Availability</h3>
+              <ion-list lines="none">
+                <ion-item><ion-toggle v-model="filters.availableOnly">Only places with a free room</ion-toggle></ion-item>
+              </ion-list>
+            </section>
           </div>
-          <h3>Rental type</h3>
-          <ion-segment v-model="filters.mode">
-            <ion-segment-button value=""><ion-label>Any</ion-label></ion-segment-button>
-            <ion-segment-button value="bedspaces"><ion-label>Bedspace</ion-label></ion-segment-button>
-            <ion-segment-button value="whole"><ion-label>Whole room</ion-label></ion-segment-button>
-          </ion-segment>
-          <h3>Included in the rent</h3>
-          <ion-chip
-            v-for="u in ['water', 'electricity', 'internet']"
-            :key="u"
-            :outline="!filters.includes.includes(u)"
-            :color="filters.includes.includes(u) ? 'primary' : undefined"
-            @click="toggleInclude(u)"
-          >
-            {{ u }}
-          </ion-chip>
-          <h3>Who can stay</h3>
-          <ion-segment v-model="filters.whoCanStay">
-            <ion-segment-button value=""><ion-label>Anyone</ion-label></ion-segment-button>
-            <ion-segment-button value="female"><ion-label>Female</ion-label></ion-segment-button>
-            <ion-segment-button value="male"><ion-label>Male</ion-label></ion-segment-button>
-          </ion-segment>
-          <h3>Availability</h3>
-          <ion-item lines="none" class="toggle">
-            <ion-toggle v-model="filters.availableOnly">Only places with a free room</ion-toggle>
-          </ion-item>
         </ion-content>
       </ion-modal>
     </ion-content>
@@ -182,23 +190,16 @@ import {
   actionSheetController,
   type InfiniteScrollCustomEvent,
   IonBackButton,
-  IonBadge,
   IonButton,
   IonButtons,
-  IonCard,
-  IonCardContent,
-  IonCardHeader,
-  IonCardSubtitle,
-  IonCardTitle,
-  IonChip,
   IonContent,
   IonHeader,
-  IonIcon,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
   IonInput,
   IonItem,
   IonLabel,
+  IonList,
   IonModal,
   IonPage,
   IonSearchbar,
@@ -210,11 +211,12 @@ import {
   IonToggle,
   IonToolbar,
 } from '@ionic/vue'
-import { chevronDown, listOutline, locationOutline, mapOutline, optionsOutline, walkOutline } from 'ionicons/icons'
+import { BedDouble, Droplets, List, Map as MapIcon, MapPin, SlidersHorizontal, Wifi, Zap } from 'lucide-vue-next'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ListingMap from '@/components/ListingMap.vue'
 import ListingRooms from '@/components/rooms/ListingRooms.vue'
+import { DlCard, DlChip, DlEmptyState, DlListingCard, DlSkeleton } from '@/components/dl'
 import { useDistanceFrom } from '@/composables/useDistanceFrom'
 import { formatDistance } from '@/lib/distance'
 import { activeCount, emptyFilters, type FinderFilters, fromRouteQuery, toQuery } from '@/lib/listingFilters'
@@ -332,6 +334,32 @@ function open(id: number) {
   router.push(`/listings/${id}`)
 }
 
+const includeOptions = [
+  { value: 'water', label: 'Water', icon: Droplets },
+  { value: 'electricity', label: 'Electricity', icon: Zap },
+  { value: 'internet', label: 'Internet', icon: Wifi },
+]
+
+/** "Dormitory · Barangay, City" */
+function placeLine(l: ListingSummary): string {
+  return [l.type_label, [l.barangay, l.city].filter(Boolean).join(', ')].filter(Boolean).join(' · ')
+}
+
+function priceOf(l: ListingSummary): string | null {
+  return l.price_from_centavos !== null ? `from ${peso(l.price_from_centavos).replace('.00', '')}` : null
+}
+
+function distanceLine(l: ListingSummary): string | null {
+  return l.distance_m !== null ? `${formatDistance(l.distance_m)} from ${distance.label.value}` : null
+}
+
+/** The empty list's action: drop every filter and the map area, keep the search words. */
+function clearFilters() {
+  reset()
+  filters.bbox = null
+  search()
+}
+
 function toggleInclude(u: string) {
   filters.includes = filters.includes.includes(u) ? filters.includes.filter((x) => x !== u) : [...filters.includes, u]
 }
@@ -364,80 +392,103 @@ function clearArea() {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 8px;
+  padding: 0 var(--screen-pad);
 }
 .view-toggle {
-  width: 110px;
+  width: 104px;
+  margin: 0;
 }
 .from {
-  padding-bottom: 4px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.sort {
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 700;
+}
+.count {
+  margin: 0 0 12px;
+}
+.count a {
+  font-weight: 700;
 }
 .legend {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 4px 10px;
-  font-size: 0.8rem;
+  margin: 10px 0;
 }
-.dot {
+.key {
   display: inline-block;
   width: 10px;
   height: 10px;
-  border-radius: 50%;
   margin-right: -6px;
+  border-radius: 50%;
 }
-.dot.free {
-  background: var(--ion-color-success);
-}
-.dot.full {
-  background: var(--ion-color-medium);
-}
-.dot.origin {
-  background: #3880ff;
-}
+.key.free { background: var(--brand-primary); }
+.key.full { background: var(--stone-400); }
+.key.origin { background: var(--info-solid); }
 .pin-card {
-  margin: 8px 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 4px 0 16px;
+}
+.pin-card :deep(.dl-listing-card) {
+  padding: 0;
+  background: none;
 }
 .card-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr auto;
   gap: 8px;
-  margin-top: 12px;
 }
-.card.full {
-  opacity: 0.7;
+.card-actions ion-button { margin: 0; }
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--card-gap);
 }
-.toggle {
-  --padding-start: 0;
+.skeleton-card {
+  display: flex;
+  gap: 12px;
 }
-.sort {
-  margin-left: auto;
+.skeleton-lines {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
 }
-.card {
-  margin: 0 0 16px;
+.sheet-title {
+  margin-bottom: 12px;
 }
-.cover {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  display: block;
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
 }
-.price {
-  color: var(--ion-text-color);
-  font-size: 1.05rem;
+.filters section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
-.chip {
-  height: 22px;
-  font-size: 0.75rem;
-  margin: 4px 4px 0 0;
+.filter-label {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-}
-h3 {
-  font-size: 0.95rem;
-  margin: 18px 0 8px;
 }
 </style>

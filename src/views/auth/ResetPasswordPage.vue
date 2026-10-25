@@ -1,46 +1,35 @@
 <template>
-  <auth-layout title="Set a new password" back-to="/login" back-label="Back to log in">
+  <auth-layout title="Set a new" highlight="password" :subtitle="token && email ? `For ${email}` : undefined" back-to="/login" back-label="Back to sign in">
     <template v-if="!token || !email">
-      <p>This reset link is incomplete. Please open the link from your email again, or request a new one.</p>
+      <DlBanner tone="warning" title="This link is incomplete">Open the link from your email again, or ask for a new one.</DlBanner>
       <ion-button expand="block" router-link="/forgot-password">Request a new link</ion-button>
     </template>
-
-    <form v-else @submit.prevent="submit">
-      <p class="muted">For {{ email }}</p>
+    <form v-else class="form" @submit.prevent="submit">
       <auth-field
         v-model="password"
-        :icon="lockClosedOutline"
         label="New password"
         type="password"
-        placeholder="New password"
         autocomplete="new-password"
         helper="At least 8 characters, with letters and numbers."
         :error="(errors.password ?? errors.email)?.[0]"
       />
-      <auth-field
-        v-model="passwordConfirmation"
-        :icon="lockClosedOutline"
-        label="Confirm new password"
-        type="password"
-        placeholder="Confirm new password"
-        autocomplete="new-password"
-      />
+      <auth-field v-model="passwordConfirmation" label="Confirm new password" type="password" autocomplete="new-password" />
       <ion-button expand="block" type="submit" :disabled="busy">
         <ion-spinner v-if="busy" name="crescent" />
         <span v-else>Save new password</span>
       </ion-button>
-      <p v-if="errors.email" class="center"><router-link to="/forgot-password">Request a new link</router-link></p>
+      <router-link v-if="errors.email" to="/forgot-password" class="again">Request a new link</router-link>
     </form>
   </auth-layout>
 </template>
 
 <script setup lang="ts">
 import { IonButton, IonSpinner } from '@ionic/vue'
-import { lockClosedOutline } from 'ionicons/icons'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AuthField from '@/components/AuthField.vue'
 import AuthLayout from '@/components/AuthLayout.vue'
+import DlBanner from '@/components/dl/DlBanner.vue'
 import { errorMessage, fieldErrors } from '@/services/api'
 import { authService } from '@/services/auth'
 import { useAuthStore } from '@/stores/auth'
@@ -80,3 +69,18 @@ async function submit() {
   }
 }
 </script>
+
+<style scoped>
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.again {
+  align-self: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--brand-primary);
+  text-decoration: none;
+}
+</style>

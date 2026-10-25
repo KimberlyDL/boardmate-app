@@ -8,122 +8,119 @@
     </ion-header>
 
     <ion-content class="ion-padding">
-      <ion-refresher slot="fixed" @ion-refresh="refresh">
-        <ion-refresher-content />
-      </ion-refresher>
+      <DlRefresher :refresh="load" />
 
-      <div class="narrow">
-        <p v-if="loading" class="muted">Loading…</p>
-        <p v-else-if="!stay" class="muted center">You are not moved in anywhere yet.</p>
+      <div class="narrow page">
+        <template v-if="loading">
+          <DlSkeleton :height="200" :radius="18" tone="brand" />
+          <DlSkeleton :height="140" :radius="18" />
+        </template>
+        <DlCard v-else-if="!stay">
+          <DlEmptyState note="no stay yet" :icon="House" action-label="Find a place" to="/find">You are not moved in anywhere yet.</DlEmptyState>
+        </DlCard>
 
         <template v-else>
-          <ion-card>
-            <ion-card-header>
-              <ion-card-subtitle>Room {{ stay.room.label }} · {{ stay.unit.label }}</ion-card-subtitle>
-              <ion-card-title>{{ stay.property.name }}</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-              <p>
-                Moved in <strong>{{ manilaDate(stay.moved_in_on).format('MMM D, YYYY') }}</strong>.<br />
-                Your rent is due every month on the <strong>{{ stay.anchor_day }}</strong>. Next:
-                <strong>{{ manilaDate(stay.next_rent_due_on).format('MMM D, YYYY') }}</strong>.
-              </p>
-              <p>
-                Rent <strong>{{ peso(stay.rent_after_discount_centavos) }}</strong> / month
-                <template v-if="stay.discount"> (agreed rate: {{ peso(stay.discount.amount_centavos) }} off {{ peso(stay.rent_centavos) }})</template>
-              </p>
-              <p v-if="stay.scheduled_discount" class="muted">
+          <!-- The stay -->
+          <DlCard tone="pine" :padding="20" class="stay">
+            <div class="row top">
+              <div class="stack">
+                <span class="dl-eyebrow inherit">Room {{ stay.room.label }} · {{ stay.unit.label }}</span>
+                <h1 class="dl-h2 name">{{ stay.property.name }}</h1>
+              </div>
+              <DlIconTile :icon="BedSingle" tone="pine" :size="40" />
+            </div>
+            <span class="rent">
+              {{ peso(stay.rent_after_discount_centavos) }} / month<template v-if="stay.discount">
+                <span class="dl-small inherit"> (agreed rate: {{ peso(stay.discount.amount_centavos) }} off {{ peso(stay.rent_centavos) }})</span></template>
+            </span>
+            <p class="dl-small inherit">
+              Moved in <strong>{{ manilaDate(stay.moved_in_on).format('MMM D, YYYY') }}</strong>. Your rent is due every month on the
+              <strong>{{ stay.anchor_day }}</strong>. Next: <strong>{{ manilaDate(stay.next_rent_due_on).format('MMM D, YYYY') }}</strong>.
+              <template v-if="stay.scheduled_discount">
                 From {{ manilaDate(stay.scheduled_discount.effective_from).format('MMM D, YYYY') }} your agreed rate changes.
-              </p>
-              <p class="muted small">Utilities are billed after each month, for what you used.</p>
-              <ion-button size="small" fill="outline" router-link="/boarder/bills">My bills and payments</ion-button>
-              <ion-button v-if="groupId" size="small" fill="outline" :router-link="`/groups/${groupId}`">Room group (shared costs)</ion-button>
-              <ion-button v-if="rules?.current" size="small" fill="outline" router-link="/stay/house-rules">House rules</ion-button>
-              <ion-button size="small" fill="outline" router-link="/stay/maintenance">Repairs</ion-button>
-              <ion-button size="small" fill="outline" router-link="/stay/visits">Visitors</ion-button>
-            </ion-card-content>
-          </ion-card>
-
-          <!-- Curfew (D2): the time, the reminder switch, and late entry -->
-          <ion-card v-if="stay.curfew?.time">
-            <ion-card-content>
-              <strong>Curfew: {{ clockTime(stay.curfew.time) }}</strong>
-              <ion-item lines="none" class="tight">
-                <ion-toggle :checked="!stay.curfew.reminders_muted" :disabled="busy" @ion-change="setReminders($event.detail.checked)">
-                  <span class="ion-text-wrap">Remind me {{ stay.curfew.reminder_minutes }} minutes before</span>
-                </ion-toggle>
-              </ion-item>
-              <ion-button size="small" fill="outline" router-link="/stay/visits?tab=late">Coming back late?</ion-button>
-            </ion-card-content>
-          </ion-card>
+              </template>
+              Utilities are billed after each month, for what you used.
+            </p>
+          </DlCard>
 
           <!-- New house rules to accept (D3) -->
-          <ion-card v-if="rules?.needs_acceptance" class="rules-ask" button router-link="/stay/house-rules">
-            <ion-card-content>
-              <strong>New house rules (version {{ rules.current?.version }})</strong>
-              <p>Please read and accept them.</p>
-            </ion-card-content>
-          </ion-card>
+          <DlBanner v-if="rules?.needs_acceptance" tone="info" :title="`New house rules (version ${rules.current?.version})`" action-label="Review" to="/stay/house-rules">
+            Please read and accept them.
+          </DlBanner>
+
+          <DlCard padding="4px 16px">
+            <DlListRow :icon="Receipt" title="My bills and payments" to="/boarder/bills" />
+            <DlListRow v-if="groupId" :icon="Users" title="Room group" subtitle="Shared costs" :to="`/groups/${groupId}`" divider />
+            <DlListRow v-if="rules?.current" :icon="ScrollText" title="House rules" to="/stay/house-rules" divider />
+            <DlListRow :icon="Wrench" title="Repairs" to="/stay/maintenance" divider />
+            <DlListRow :icon="UserPlus" title="Visitors and late entry" to="/stay/visits" divider />
+          </DlCard>
+
+          <!-- Curfew (D2): the time, the reminder switch, and late entry -->
+          <DlCard v-if="stay.curfew?.time" class="block">
+            <div class="row">
+              <span class="dl-title">Curfew: {{ clockTime(stay.curfew.time) }}</span>
+              <DlIconTile :icon="Moon" tone="lilac" />
+            </div>
+            <ion-toggle :checked="!stay.curfew.reminders_muted" :disabled="busy" @ion-change="setReminders($event.detail.checked)">
+              <span class="ion-text-wrap">Remind me {{ stay.curfew.reminder_minutes }} minutes before</span>
+            </ion-toggle>
+            <ion-button size="small" class="dl-tonal" router-link="/stay/visits?tab=late">Coming back late?</ion-button>
+          </DlCard>
 
           <!-- Leaving (C1) -->
-          <ion-card class="leaving">
-            <ion-card-content>
-              <template v-if="stay.status === 'notice_given'">
-                <strong>Your last day: {{ manilaDate(stay.end_on!).format('MMM D, YYYY') }}.</strong>
-                <p v-if="stay.is_overstaying" class="warn">That day has passed. Talk to the owner to record your move-out or change the date.</p>
-                <p v-else>The owner records your move-out, then settles your deposit. To change the date, talk to the owner.</p>
-              </template>
-              <template v-else-if="stay.pending_notice">
-                <strong>Notice sent: last day {{ manilaDate(stay.pending_notice.end_on).format('MMM D, YYYY') }}.</strong>
-                <p>Waiting for the owner to approve it.</p>
-                <ion-button size="small" fill="outline" color="medium" :disabled="busy" @click="withdraw">Withdraw notice</ion-button>
-              </template>
-              <template v-else>
-                <strong>Planning to leave?</strong>
-                <p>
-                  Tell the owner your last day.
-                  <template v-if="stay.notice_rules?.suggested_days">They ask for {{ stay.notice_rules.suggested_days }} days' notice.</template>
-                </p>
-                <ion-button size="small" fill="outline" :disabled="busy" @click="giveNotice">Give notice</ion-button>
-              </template>
-            </ion-card-content>
-          </ion-card>
+          <DlCard :tone="stay.status === 'notice_given' || stay.pending_notice ? 'butter' : 'muted'" class="block">
+            <template v-if="stay.status === 'notice_given'">
+              <strong class="dl-title">Your last day: {{ manilaDate(stay.end_on!).format('MMM D, YYYY') }}.</strong>
+              <p v-if="stay.is_overstaying" class="copy warn">That day has passed. Talk to the owner to record your move-out or change the date.</p>
+              <p v-else class="copy">The owner records your move-out, then settles your deposit. To change the date, talk to the owner.</p>
+            </template>
+            <template v-else-if="stay.pending_notice">
+              <strong class="dl-title">Notice sent: last day {{ manilaDate(stay.pending_notice.end_on).format('MMM D, YYYY') }}.</strong>
+              <p class="copy">Waiting for the owner to approve it.</p>
+              <ion-button size="small" fill="outline" :disabled="busy" @click="withdraw">Withdraw notice</ion-button>
+            </template>
+            <template v-else>
+              <span class="row">
+                <strong class="dl-title">Planning to leave?</strong>
+                <LogOut :size="20" aria-hidden="true" class="soft-icon" />
+              </span>
+              <p class="copy">
+                Tell the owner your last day.
+                <template v-if="stay.notice_rules?.suggested_days">They ask for {{ stay.notice_rules.suggested_days }} days' notice.</template>
+              </p>
+              <ion-button size="small" fill="outline" :disabled="busy" @click="giveNotice">Give notice</ion-button>
+            </template>
+          </DlCard>
 
-          <ion-card v-if="stay.is_leader">
-            <ion-card-content>
-              <strong>You are the leader of this room.</strong>
-              <p>You are billed for the room's shared bills.</p>
-              <ion-button v-if="stay.room.let_whole" size="small" fill="outline" @click="people = true">Who stays in the room</ion-button>
-            </ion-card-content>
-          </ion-card>
+          <DlCard v-if="stay.is_leader" tone="sky" class="block">
+            <strong class="dl-title">You are the leader of this room.</strong>
+            <p class="copy">You are billed for the room's shared bills.</p>
+            <ion-button v-if="stay.room.let_whole" size="small" class="dl-tonal" @click="people = true">Who stays in the room</ion-button>
+          </DlCard>
 
-          <h3>Emergency contact</h3>
-          <ion-item lines="none">
-            <ion-label class="ion-text-wrap">
-              <h2>{{ stay.emergency_contact.name }}</h2>
-              <p>{{ stay.emergency_contact.relationship ?? '—' }} · {{ stay.emergency_contact.phone }}</p>
-            </ion-label>
-            <ion-button slot="end" size="small" fill="outline" @click="editContact">Edit</ion-button>
-          </ion-item>
+          <DlSection title="Emergency contact">
+            <DlCard padding="4px 16px">
+              <DlListRow :title="stay.emergency_contact.name" :subtitle="`${stay.emergency_contact.relationship ?? '—'} · ${stay.emergency_contact.phone}`" :chevron="false">
+                <template #leading><DlAvatar :name="stay.emergency_contact.name" /></template>
+                <template #trailing><ion-button size="small" class="dl-tonal" @click="editContact">Edit</ion-button></template>
+              </DlListRow>
+            </DlCard>
+          </DlSection>
         </template>
 
         <!-- Past stays and their deposit (C8) -->
-        <template v-if="past.length">
-          <h3>Past stays</h3>
-          <ion-card v-for="p in past" :key="p.id">
-            <ion-card-header>
-              <ion-card-subtitle>Room {{ p.room.label }} · {{ manilaDate(p.moved_in_on).format('MMM D, YYYY') }} – {{ manilaDate(p.moved_out_on!).format('MMM D, YYYY') }}</ion-card-subtitle>
-              <ion-card-title>{{ p.property.name }}</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-              <template v-if="p.is_settled">
-                <p>Your deposit is settled.</p>
-                <ion-button size="small" fill="outline" @click="summary(p)">Settlement summary (PDF)</ion-button>
-              </template>
-              <p v-else class="muted">Moved out. The owner will settle your deposit soon.</p>
-            </ion-card-content>
-          </ion-card>
-        </template>
+        <DlSection v-if="past.length" title="Past stays">
+          <DlCard v-for="p in past" :key="p.id" class="block">
+            <span class="dl-data upper">Room {{ p.room.label }} · {{ manilaDate(p.moved_in_on).format('D MMM YYYY') }} – {{ manilaDate(p.moved_out_on!).format('D MMM YYYY') }}</span>
+            <strong class="dl-title">{{ p.property.name }}</strong>
+            <template v-if="p.is_settled">
+              <p class="copy">Your deposit is settled.</p>
+              <ion-button size="small" class="dl-tonal" @click="summary(p)">Settlement summary (PDF)</ion-button>
+            </template>
+            <p v-else class="copy">Moved out. The owner will settle your deposit soon.</p>
+          </DlCard>
+        </DlSection>
       </div>
 
       <room-people-modal
@@ -139,29 +136,21 @@
 
 <script setup lang="ts">
 import {
-  type RefresherCustomEvent,
   alertController,
   IonBackButton,
   IonButton,
   IonButtons,
-  IonCard,
-  IonCardContent,
-  IonCardHeader,
-  IonCardSubtitle,
-  IonCardTitle,
   IonContent,
   IonHeader,
-  IonItem,
-  IonLabel,
   IonPage,
-  IonRefresher,
-  IonRefresherContent,
   IonTitle,
   IonToggle,
   IonToolbar,
   onIonViewWillEnter,
 } from '@ionic/vue'
+import { BedSingle, House, LogOut, Moon, Receipt, ScrollText, UserPlus, Users, Wrench } from 'lucide-vue-next'
 import { ref } from 'vue'
+import { DlAvatar, DlBanner, DlCard, DlEmptyState, DlIconTile, DlListRow, DlRefresher, DlSection, DlSkeleton } from '@/components/dl'
 import RoomPeopleModal from '@/components/tenancy/RoomPeopleModal.vue'
 import { clockTime, manila, manilaDate } from '@/lib/dayjs'
 import { openDocument } from '@/lib/documents'
@@ -201,10 +190,6 @@ async function load() {
 
 onIonViewWillEnter(load)
 
-async function refresh(event: RefresherCustomEvent) {
-  await load()
-  event.target.complete()
-}
 
 /** Ask for the last day of stay and send the notice. */
 async function giveNotice() {
@@ -298,19 +283,78 @@ async function editContact() {
 </script>
 
 <style scoped>
-.small {
-  font-size: 0.85rem;
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--card-gap);
 }
-.tight {
-  --padding-start: 0;
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
-.rules-ask {
-  border-left: 4px solid var(--ion-color-warning);
+.row.top {
+  align-items: flex-start;
 }
-.leaving {
-  border-left: 4px solid var(--ion-color-medium);
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.inherit {
+  color: inherit;
+}
+.name {
+  margin: 0;
+}
+.stay {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.rent {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+}
+.rent .dl-small {
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+.stay p {
+  margin: 0;
+}
+.block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.block > .row {
+  width: 100%;
+}
+.block ion-button {
+  margin: 0;
+}
+.block ion-toggle {
+  width: 100%;
+  font-size: 14px;
+}
+.copy {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
 }
 .warn {
-  color: var(--ion-color-danger);
+  color: var(--danger-text);
+  font-weight: 700;
+}
+.soft-icon {
+  color: var(--text-muted);
+}
+.upper {
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 </style>

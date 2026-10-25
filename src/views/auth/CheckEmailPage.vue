@@ -1,37 +1,37 @@
 <template>
   <auth-layout title="Check your email" back-to="/register">
-    <div class="center">
-      <ion-icon :icon="mailOutline" class="icon" />
-      <h3>Confirm your email</h3>
-      <p v-if="auth.pendingConfirmationEmail">
-        We sent a link to <strong>{{ auth.pendingConfirmationEmail }}</strong>. Open it to confirm your address, then
-        log in.
+    <div class="center-block">
+      <span class="art" aria-hidden="true"><Mail :size="40" :stroke-width="1.75" /></span>
+      <p v-if="auth.pendingConfirmationEmail" class="dl-body copy">
+        We sent a link to <strong>{{ auth.pendingConfirmationEmail }}</strong>. Open it to confirm your address, then sign in.
       </p>
-      <p v-else>We sent a confirmation link to your email. Open it to confirm your address, then log in.</p>
-      <p class="muted">The link works for 24 hours. Check your spam folder if you don't see it.</p>
-
-      <ion-button expand="block" router-link="/login">Go to log in</ion-button>
-
-      <h3 class="resend-title">Didn't get it?</h3>
-      <form @submit.prevent="resend">
-        <auth-field
-          v-if="!auth.pendingConfirmationEmail"
-          v-model="email"
-          :icon="mailOutline"
-          label="Email"
-          type="email"
-          placeholder="Email"
-          autocomplete="email"
-        />
-        <ion-button type="submit" expand="block" fill="outline" :disabled="busy || !targetEmail">Resend email</ion-button>
-      </form>
+      <p v-else class="dl-body copy">We sent a confirmation link to your email. Open it to confirm your address, then sign in.</p>
+      <p class="dl-small">The link works for 24 hours. Check your spam folder if you don't see it.</p>
+      <span class="dl-note">almost there!</span>
     </div>
+
+    <ion-button expand="block" router-link="/login">I've confirmed, sign in</ion-button>
+
+    <form class="resend" @submit.prevent="resend">
+      <auth-field
+        v-if="!auth.pendingConfirmationEmail"
+        v-model="email"
+        label="Didn't get it? Your email"
+        type="email"
+        inputmode="email"
+        placeholder="you@email.com"
+        autocomplete="email"
+      />
+      <ion-button type="submit" expand="block" fill="clear" :disabled="busy || !targetEmail">Resend link</ion-button>
+    </form>
+
+    <template #footer>Wrong email? <router-link to="/register">Change it</router-link></template>
   </auth-layout>
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonIcon } from '@ionic/vue'
-import { mailOutline } from 'ionicons/icons'
+import { IonButton } from '@ionic/vue'
+import { Mail } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import AuthField from '@/components/AuthField.vue'
 import AuthLayout from '@/components/AuthLayout.vue'
@@ -59,12 +59,31 @@ async function resend() {
 </script>
 
 <style scoped>
-.icon {
-  font-size: 56px;
-  color: var(--ion-color-primary);
+.center-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 0;
+  text-align: center;
 }
-.resend-title {
-  margin-top: 32px;
-  font-size: 1rem;
+.art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  border-radius: var(--radius-full);
+  background: var(--card-butter-tint);
+  color: var(--card-butter-ink);
+}
+.copy {
+  margin: 0;
+  color: var(--text-secondary);
+}
+.resend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 </style>

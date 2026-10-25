@@ -23,7 +23,7 @@
         <template v-if="canEdit">
           <ion-button v-if="account.has_fixed_amount" slot="end" size="small" fill="outline" @click="changeAmount(account)">Price</ion-button>
           <ion-button slot="end" fill="clear" color="danger" aria-label="Remove" @click="remove(account)">
-            <ion-icon slot="icon-only" :icon="trashOutline" />
+            <Trash2 slot="icon-only" :size="20" aria-hidden="true" />
           </ion-button>
         </template>
       </ion-item>
@@ -95,7 +95,6 @@ import {
   IonCard,
   IonCardContent,
   IonChip,
-  IonIcon,
   IonInput,
   IonItem,
   IonLabel,
@@ -103,7 +102,7 @@ import {
   IonSelect,
   IonSelectOption,
 } from '@ionic/vue'
-import { trashOutline } from 'ionicons/icons'
+import { Trash2 } from 'lucide-vue-next'
 import { computed, onMounted, reactive, ref } from 'vue'
 import UtilityBillModal from '@/components/billing/UtilityBillModal.vue'
 import { billingService } from '@/services/billing'

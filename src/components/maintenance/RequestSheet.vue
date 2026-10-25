@@ -9,7 +9,7 @@
 
     <ion-content class="ion-padding">
       <div class="narrow">
-        <p v-if="!item" class="muted">Loading…</p>
+        <DlSkeleton v-if="!item" :height="120" :radius="18" />
 
         <template v-else>
           <p>
@@ -102,6 +102,7 @@ import { maintenanceService } from '@/services/maintenance'
 import { usePrompt } from '@/composables/usePrompt'
 import { useToast } from '@/composables/useToast'
 import type { MaintenanceRequest } from '@/types/maintenance'
+import DlSkeleton from '@/components/dl/DlSkeleton.vue'
 
 /**
  * One request: details, photos, history, and the actions the viewer may take

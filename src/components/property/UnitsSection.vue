@@ -35,7 +35,7 @@
               </div>
               <ion-buttons v-if="canEdit">
                 <ion-button aria-label="Room actions" @click="openRoomActions(room)">
-                  <ion-icon slot="icon-only" :icon="ellipsisVertical" />
+                  <EllipsisVertical slot="icon-only" :size="20" aria-hidden="true" />
                 </ion-button>
               </ion-buttons>
             </div>
@@ -75,7 +75,7 @@
               </ion-label>
               <ion-buttons v-if="canEdit || canPrice" slot="end">
                 <ion-button aria-label="Unit actions" @click="openActions(unit)">
-                  <ion-icon slot="icon-only" :icon="ellipsisVertical" />
+                  <EllipsisVertical slot="icon-only" :size="20" aria-hidden="true" />
                 </ion-button>
               </ion-buttons>
             </ion-item>
@@ -172,7 +172,6 @@ import {
   IonCardTitle,
   IonContent,
   IonHeader,
-  IonIcon,
   IonInput,
   IonItem,
   IonLabel,
@@ -185,7 +184,7 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/vue'
-import { ellipsisVertical } from 'ionicons/icons'
+import { EllipsisVertical } from 'lucide-vue-next'
 import { computed, reactive, ref } from 'vue'
 import { manila, manilaDate } from '@/lib/dayjs'
 import { peso, toCentavos, toPesoInput } from '@/lib/money'

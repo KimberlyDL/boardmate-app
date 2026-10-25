@@ -9,33 +9,38 @@
 
     <ion-content class="ion-padding">
       <div class="narrow">
-        <p v-if="loading" class="muted">Loading…</p>
-        <p v-else-if="!stay" class="muted center">You are not staying anywhere right now.</p>
-        <p v-else-if="!rules?.current" class="muted center">{{ stay.property.name }} has no house rules yet.</p>
+        <DlSkeleton v-if="loading" :height="200" :radius="18" />
+        <DlCard v-else-if="!stay">
+          <DlEmptyState note="not staying yet" :icon="House">You are not staying anywhere right now.</DlEmptyState>
+        </DlCard>
+        <DlCard v-else-if="!rules?.current">
+          <DlEmptyState note="no rules yet" :icon="ScrollText">{{ stay.property.name }} has no house rules yet.</DlEmptyState>
+        </DlCard>
 
         <template v-else>
-          <p>
-            <strong>{{ stay.property.name }}</strong> · version {{ rules.current.version }}, from
-            {{ manilaDate(rules.current.published_at!).format('MMM D, YYYY') }}
-          </p>
-          <p v-if="rules.current.note" class="muted small">What changed: {{ rules.current.note }}</p>
+          <header class="intro">
+            <span class="dl-eyebrow">{{ stay.property.name }}</span>
+            <h1 class="dl-h2">Version {{ rules.current.version }}</h1>
+            <p class="dl-small">
+              <strong>{{ stay.property.name }}</strong> · version {{ rules.current.version }}, from
+              {{ manilaDate(rules.current.published_at!).format('MMM D, YYYY') }}
+            </p>
+            <p v-if="rules.current.note" class="dl-small">What changed: {{ rules.current.note }}</p>
+          </header>
 
-          <ion-card v-if="rules.needs_acceptance" class="ask">
-            <ion-card-content>
-              <strong>Please read these and accept them.</strong>
-              <p>The owner published new house rules. Nothing is blocked in the meantime.</p>
-            </ion-card-content>
-          </ion-card>
+          <DlBanner v-if="rules.needs_acceptance" tone="info" title="Please read these and accept them." class="ask">
+            The owner published new house rules. Nothing is blocked in the meantime.
+          </DlBanner>
 
-          <house-rules-list :rules="rules.current.rules" />
+          <DlCard class="rules"><house-rules-list :rules="rules.current.rules" /></DlCard>
 
           <ion-button v-if="rules.needs_acceptance" expand="block" class="form-actions" :disabled="busy" @click="accept">
             I have read them and accept
           </ion-button>
-          <p v-else class="muted small accepted">You accepted these house rules.</p>
+          <p v-else class="accepted"><CircleCheck :size="16" aria-hidden="true" /> You accepted these house rules.</p>
 
           <template v-if="rules.acceptances.length">
-            <h3>What you accepted</h3>
+            <h2 class="dl-h2 history">What you accepted</h2>
             <ion-list lines="full">
               <ion-item v-for="a in rules.acceptances" :key="`${a.version}-${a.accepted_at}`">
                 <ion-label class="ion-text-wrap">
@@ -68,8 +73,10 @@ import {
   IonToolbar,
   onIonViewWillEnter,
 } from '@ionic/vue'
+import { CircleCheck, House, ScrollText } from 'lucide-vue-next'
 import { ref } from 'vue'
 import HouseRulesList from '@/components/houseRules/HouseRulesList.vue'
+import { DlBanner, DlCard, DlEmptyState, DlSkeleton } from '@/components/dl'
 import { manilaDate } from '@/lib/dayjs'
 import { firstError } from '@/services/api'
 import { houseRuleService } from '@/services/houseRules'
@@ -114,13 +121,29 @@ async function accept() {
 </script>
 
 <style scoped>
-.small {
-  font-size: 0.85rem;
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
 }
-.ask {
-  border-left: 4px solid var(--ion-color-warning);
+.intro h1,
+.intro p {
+  margin: 0;
+}
+.ask,
+.rules {
+  margin-bottom: 16px;
 }
 .accepted {
-  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--success-text);
+}
+.history {
+  margin: 24px 0 12px;
 }
 </style>

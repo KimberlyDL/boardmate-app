@@ -1,58 +1,55 @@
 <template>
-  <auth-layout title="Create an account" back-to="/">
-    <form @submit.prevent="submit">
-      <p class="muted intro">You start as a boarder. Owners can apply to list a property after signing up.</p>
-
-      <auth-field v-model="form.name" :icon="personOutline" label="Full name" placeholder="Full name" autocomplete="name" :error="errors.name?.[0]" />
-      <auth-field v-model="form.email" :icon="mailOutline" label="Email" type="email" placeholder="Email" autocomplete="email" :error="errors.email?.[0]" />
+  <auth-layout
+    title="Create your"
+    highlight="account"
+    subtitle="You start as a boarder. Owners can apply to list a property after signing up."
+    back-to="/"
+  >
+    <form class="form" @submit.prevent="submit">
+      <auth-field v-model="form.name" label="Full name" autocomplete="name" :error="errors.name?.[0]" />
+      <auth-field v-model="form.email" label="Email" type="email" inputmode="email" placeholder="you@email.com" autocomplete="email" :error="errors.email?.[0]" />
       <auth-field
         v-model="form.phone"
-        :icon="callOutline"
         label="Mobile number (optional)"
         type="tel"
-        placeholder="Mobile number (optional)"
+        inputmode="tel"
+        placeholder="09XX XXX XXXX"
         autocomplete="tel"
         :error="errors.phone?.[0]"
       />
       <auth-field
         v-model="form.password"
-        :icon="lockClosedOutline"
         label="Password"
         type="password"
-        placeholder="Password"
         autocomplete="new-password"
         helper="At least 8 characters, with letters and numbers."
         :error="errors.password?.[0]"
       />
-      <auth-field
-        v-model="form.password_confirmation"
-        :icon="lockClosedOutline"
-        label="Confirm password"
-        type="password"
-        placeholder="Confirm password"
-        autocomplete="new-password"
-      />
+      <auth-field v-model="form.password_confirmation" label="Confirm password" type="password" autocomplete="new-password" />
 
-      <ion-checkbox v-model="form.consent" label-placement="end" justify="start" class="consent">
-        I agree to the <router-link to="/privacy" target="_blank">privacy notice</router-link>.
-      </ion-checkbox>
-      <ion-note v-if="errors.consent" color="danger" class="block">{{ errors.consent[0] }}</ion-note>
+      <div class="consent-card">
+        <span class="dl-eyebrow">YOUR CONSENT</span>
+        <p class="dl-small consent-copy">We only collect what's needed to run your stay: your name, contact details and payment records.</p>
+        <ion-checkbox v-model="form.consent" label-placement="end" justify="start" class="consent">
+          I agree to the <router-link to="/privacy" target="_blank">privacy notice</router-link>.
+        </ion-checkbox>
+        <small v-if="errors.consent" class="error" role="alert">{{ errors.consent[0] }}</small>
+      </div>
 
-      <ion-button expand="block" type="submit" class="submit" :disabled="busy">
+      <ion-button expand="block" type="submit" :disabled="busy">
         <ion-spinner v-if="busy" name="crescent" />
         <span v-else>Create account</span>
       </ion-button>
-
-      <google-sign-in-button :consent="form.consent" />
-
-      <p class="center muted foot">Already have an account? <router-link to="/login">Log in</router-link></p>
     </form>
+
+    <google-sign-in-button :consent="form.consent" />
+
+    <template #footer>Already have an account? <router-link to="/login">Sign in</router-link></template>
   </auth-layout>
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonCheckbox, IonNote, IonSpinner } from '@ionic/vue'
-import { callOutline, lockClosedOutline, mailOutline, personOutline } from 'ionicons/icons'
+import { IonButton, IonCheckbox, IonSpinner } from '@ionic/vue'
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AuthField from '@/components/AuthField.vue'
@@ -93,20 +90,32 @@ async function submit() {
 </script>
 
 <style scoped>
-.intro {
-  margin-top: 0;
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.consent-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+}
+.consent-copy {
+  color: var(--text-secondary);
 }
 .consent {
   white-space: normal;
+  font-size: 14px;
 }
-.submit {
-  margin-top: 18px;
+.consent a {
+  color: var(--brand-primary);
+  font-weight: 700;
 }
-.foot {
-  margin-top: 22px;
-}
-.block {
-  display: block;
-  margin-top: 4px;
+.error {
+  font-size: 12px;
+  color: var(--danger-text);
 }
 </style>

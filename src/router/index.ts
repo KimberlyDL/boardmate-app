@@ -1,18 +1,7 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router'
 import { RouteRecordRaw } from 'vue-router'
-import {
-  bookmarkOutline,
-  businessOutline,
-  documentTextOutline,
-  homeOutline,
-  notificationsOutline,
-  peopleOutline,
-  personCircleOutline,
-  receiptOutline,
-  schoolOutline,
-  shieldCheckmarkOutline,
-  storefrontOutline,
-} from 'ionicons/icons'
+import { Bookmark, Building2, CircleUser, FileText, House, Receipt, School, ShieldCheck, Users } from 'lucide-vue-next'
+import { markRaw } from 'vue'
 import RoleTabsLayout, { type RoleTab } from '@/layouts/RoleTabsLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import { UserRole } from '@/types/enums'
@@ -33,22 +22,22 @@ const PropertiesListPage = () => import('@/views/properties/PropertiesListPage.v
 const ApplicationsPage = () => import('@/views/owner/ApplicationsPage.vue')
 const AccountPage = () => import('@/views/account/AccountPage.vue')
 
-/** Builds one role's bottom-tab area: /<base>/<tab>, with Notifications and Account on every role. */
+/**
+ * Builds one role's bottom-tab area: /<base>/<tab>, with Account on every role.
+ * Notifications lives in the area too (/<base>/notifications) but has no tab: the bell opens it.
+ */
 function roleArea(base: string, role: UserRole, tabs: (RoleTab & { component: () => Promise<unknown> })[]): RouteRecordRaw {
-  const all = [
-    ...tabs,
-    { tab: 'notifications', href: `${base}/notifications`, label: 'Alerts', icon: notificationsOutline, component: NotificationsPage },
-    { tab: 'account', href: `${base}/account`, label: 'Account', icon: personCircleOutline, component: AccountPage },
-  ]
+  const all = [...tabs, { tab: 'account', href: `${base}/account`, label: 'Account', icon: CircleUser, component: AccountPage }]
 
   return {
     path: `${base}/`,
     component: RoleTabsLayout,
-    props: { tabs: all.map(({ tab, href, label, icon }) => ({ tab, href, label, icon })) },
+    props: { tabs: all.map(({ tab, href, label, icon }) => ({ tab, href, label, icon: markRaw(icon) })) },
     meta: { requiresAuth: true, role },
     children: [
       { path: '', redirect: all[0].href },
       ...all.map((t) => ({ path: t.tab, component: t.component })),
+      { path: 'notifications', component: NotificationsPage },
     ],
   }
 }
@@ -106,25 +95,25 @@ const routes: Array<RouteRecordRaw> = [
 
   // Role areas
   roleArea('/boarder', UserRole.Boarder, [
-    { tab: 'home', href: '/boarder/home', label: 'Home', icon: homeOutline, component: () => import('@/views/boarder/BoarderHomePage.vue') },
-    { tab: 'bookings', href: '/boarder/bookings', label: 'Bookings', icon: bookmarkOutline, component: () => import('@/views/boarder/MyBookingsPage.vue') },
-    { tab: 'bills', href: '/boarder/bills', label: 'Bills', icon: receiptOutline, component: () => import('@/views/boarder/MyBillsPage.vue') },
+    { tab: 'home', href: '/boarder/home', label: 'Home', icon: House, component: () => import('@/views/boarder/BoarderHomePage.vue') },
+    { tab: 'bookings', href: '/boarder/bookings', label: 'Bookings', icon: Bookmark, component: () => import('@/views/boarder/MyBookingsPage.vue') },
+    { tab: 'bills', href: '/boarder/bills', label: 'Bills', icon: Receipt, component: () => import('@/views/boarder/MyBillsPage.vue') },
   ]),
   roleArea('/owner', UserRole.Owner, [
-    { tab: 'home', href: '/owner/home', label: 'Home', icon: storefrontOutline, component: () => import('@/views/owner/OwnerHomePage.vue') },
-    { tab: 'properties', href: '/owner/properties', label: 'Properties', icon: businessOutline, component: PropertiesListPage },
-    { tab: 'applications', href: '/owner/applications', label: 'Applications', icon: documentTextOutline, component: ApplicationsPage },
-    { tab: 'caretakers', href: '/owner/caretakers', label: 'Caretakers', icon: peopleOutline, component: () => import('@/views/owner/OwnerCaretakersPage.vue') },
+    { tab: 'home', href: '/owner/home', label: 'Home', icon: House, component: () => import('@/views/owner/OwnerHomePage.vue') },
+    { tab: 'properties', href: '/owner/properties', label: 'Properties', icon: Building2, component: PropertiesListPage },
+    { tab: 'applications', href: '/owner/applications', label: 'Applications', icon: FileText, component: ApplicationsPage },
+    { tab: 'caretakers', href: '/owner/caretakers', label: 'Caretakers', icon: Users, component: () => import('@/views/owner/OwnerCaretakersPage.vue') },
   ]),
   roleArea('/caretaker', UserRole.Caretaker, [
-    { tab: 'home', href: '/caretaker/home', label: 'Home', icon: homeOutline, component: () => import('@/views/caretaker/CaretakerHomePage.vue') },
-    { tab: 'properties', href: '/caretaker/properties', label: 'Properties', icon: businessOutline, component: PropertiesListPage },
-    { tab: 'applications', href: '/caretaker/applications', label: 'Applications', icon: documentTextOutline, component: ApplicationsPage },
+    { tab: 'home', href: '/caretaker/home', label: 'Home', icon: House, component: () => import('@/views/caretaker/CaretakerHomePage.vue') },
+    { tab: 'properties', href: '/caretaker/properties', label: 'Properties', icon: Building2, component: PropertiesListPage },
+    { tab: 'applications', href: '/caretaker/applications', label: 'Applications', icon: FileText, component: ApplicationsPage },
   ]),
   roleArea('/admin', UserRole.PlatformAdmin, [
-    { tab: 'owners', href: '/admin/owners', label: 'Owners', icon: shieldCheckmarkOutline, component: () => import('@/views/admin/AdminOwnersPage.vue') },
-    { tab: 'users', href: '/admin/users', label: 'Accounts', icon: peopleOutline, component: () => import('@/views/admin/AdminUsersPage.vue') },
-    { tab: 'campuses', href: '/admin/campuses', label: 'Campuses', icon: schoolOutline, component: () => import('@/views/admin/AdminCampusesPage.vue') },
+    { tab: 'owners', href: '/admin/owners', label: 'Owners', icon: ShieldCheck, component: () => import('@/views/admin/AdminOwnersPage.vue') },
+    { tab: 'users', href: '/admin/users', label: 'Accounts', icon: Users, component: () => import('@/views/admin/AdminUsersPage.vue') },
+    { tab: 'campuses', href: '/admin/campuses', label: 'Campuses', icon: School, component: () => import('@/views/admin/AdminCampusesPage.vue') },
   ]),
 
   // Role-neutral links (emails, notifications) → the right role's area,
@@ -132,6 +121,9 @@ const routes: Array<RouteRecordRaw> = [
   roleLink('/account', (auth) => `${auth.homePath}/account`),
   roleLink('/notifications', (auth) => `${auth.homePath}/notifications`),
   roleLink('/applications', (auth) => (auth.hasRole(UserRole.Owner) ? '/owner/applications' : '/caretaker/applications')),
+
+  // Dev only (`vite dev`): a gallery of the DormLink components. Left out of production builds.
+  ...(import.meta.env.DEV ? [{ path: '/dev/ui', component: () => import('@/views/dev/UiGalleryPage.vue') }] : []),
 
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]

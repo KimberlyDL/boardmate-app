@@ -72,13 +72,18 @@ function floorName(floor: number): string {
 </script>
 
 <style scoped>
-/* Each floor is a slanted slab with a visible edge; slabs overlap a little,
-   upper floors in front, so the floors read as one building. Text stays upright. */
+/* Each floor is a slanted Stone slab with a solid edge; slabs overlap a little,
+   upper floors in front, so the floors read as one building. Text stays upright.
+   Room tiles are tinted by status, like the design system's room cards. */
 .rooms-stack {
-  --slab: color-mix(in srgb, var(--ion-text-color, #000) 9%, var(--ion-background-color, #fff));
-  --slab-edge: color-mix(in srgb, var(--ion-text-color, #000) 22%, var(--ion-background-color, #fff));
+  --slab: var(--stone-200);
+  --slab-edge: var(--stone-300);
   padding: 4px 22px 8px 4px;
   overflow: hidden;
+}
+:global(.ion-palette-dark) .rooms-stack {
+  --slab: var(--bg-muted);
+  --slab-edge: var(--border-default);
 }
 .level {
   position: relative;
@@ -92,13 +97,11 @@ function floorName(floor: number): string {
   grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
   gap: 8px;
   margin-left: 14px;
-  padding: 10px 14px 14px;
-  border-radius: 8px;
+  padding: 10px 12px 12px;
+  border-radius: var(--radius-lg);
   background: var(--slab);
   transform: skewX(-10deg);
-  box-shadow:
-    7px 7px 0 var(--slab-edge),
-    10px 14px 16px rgba(0, 0, 0, 0.18);
+  box-shadow: 7px 7px 0 var(--slab-edge);
 }
 .level-label,
 .tile {
@@ -106,11 +109,12 @@ function floorName(floor: number): string {
 }
 .level-label {
   grid-column: 1 / -1;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ion-color-medium);
+  color: var(--text-muted);
 }
 .tile {
   display: flex;
@@ -118,63 +122,68 @@ function floorName(floor: number): string {
   align-items: flex-start;
   gap: 2px;
   min-height: 62px;
-  padding: 7px 8px;
-  border-radius: 7px;
+  padding: 10px 8px;
   border: none;
-  border-top: 4px solid transparent;
-  background: var(--ion-background-color, #fff);
-  color: var(--ion-text-color, #000);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
   text-align: left;
   font: inherit;
   cursor: pointer;
-  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.15);
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+.tile:active {
+  transform: skewX(10deg) scale(0.97);
 }
 .tile:focus-visible {
-  outline: 3px solid var(--ion-color-primary);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 .tile.available {
-  border-top-color: var(--ion-color-success);
+  background: var(--success-subtle);
+  color: var(--success-text);
 }
 .tile.full {
-  border-top-color: var(--ion-color-medium);
-  opacity: 0.7;
+  background: var(--bg-muted);
+  color: var(--text-muted);
 }
 .tile.not_ready {
-  border-top-color: var(--ion-color-warning);
+  background: var(--warning-subtle);
+  color: var(--warning-text);
 }
 .title {
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 14px;
 }
 .line {
-  font-size: 0.78rem;
-  line-height: 1.2;
+  font-size: 12px;
+  line-height: 1.25;
 }
 .line.small {
-  color: var(--ion-color-medium);
+  opacity: 0.85;
 }
 .legend {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 10px;
+  gap: 4px 12px;
   margin-top: 18px;
-  font-size: 0.8rem;
+  font-size: 13px;
 }
 .dot {
   display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
   margin-right: -6px;
 }
 .dot.available {
-  background: var(--ion-color-success);
+  background: var(--success-solid);
 }
 .dot.full {
-  background: var(--ion-color-medium);
+  background: var(--stone-400);
 }
 .dot.not_ready {
-  background: var(--ion-color-warning);
+  background: var(--warning-solid);
 }
 </style>

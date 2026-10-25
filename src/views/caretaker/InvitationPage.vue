@@ -8,23 +8,25 @@
 
     <ion-content class="ion-padding">
       <div class="narrow">
-        <p v-if="loading">Loading…</p>
+        <DlSkeleton v-if="loading" :height="220" :radius="18" />
 
         <template v-else-if="loadError">
-          <h2>Invitation not found</h2>
-          <p>{{ loadError }}</p>
-          <ion-button expand="block" fill="outline" :router-link="auth.isLoggedIn ? auth.homePath : '/'">Go home</ion-button>
+          <DlCard>
+            <DlEmptyState note="invitation not found" :icon="MailX" action-label="Go home" :to="auth.isLoggedIn ? auth.homePath : '/'">{{ loadError }}</DlEmptyState>
+          </DlCard>
         </template>
 
         <template v-else-if="invite">
-          <h2>{{ invite.owner_name }}</h2>
-          <p>invited <strong>{{ invite.email_hint }}</strong> to help run their boarding house as a:</p>
-          <ion-card>
-            <ion-card-header>
-              <ion-card-title>{{ invite.access_level_label }}</ion-card-title>
-            </ion-card-header>
-            <ion-card-content>{{ invite.access_level_description }}</ion-card-content>
-          </ion-card>
+          <header class="intro">
+            <DlAvatar :name="invite.owner_name" :size="56" />
+            <span class="dl-eyebrow">CARETAKER INVITATION</span>
+            <h1 class="dl-h1">Join <DlGradientText>{{ invite.owner_name }}</DlGradientText></h1>
+            <p class="dl-body copy">invited <strong>{{ invite.email_hint }}</strong> to help run their boarding house as a:</p>
+          </header>
+          <DlCard tone="pine" class="level">
+            <span class="dl-title">{{ invite.access_level_label }}</span>
+            <span class="dl-small inherit">{{ invite.access_level_description }}</span>
+          </DlCard>
 
           <!-- Closed invitation -->
           <template v-if="invite.status !== CaretakerInvitationStatus.Pending">
@@ -34,18 +36,18 @@
 
           <!-- Signed out: sign in or sign up with the invited email, then come back -->
           <template v-else-if="!auth.isLoggedIn">
-            <p class="muted">
-              Log in or create a DormLink account with the invited email address to accept. We'll bring you back here.
+            <p class="dl-small">
+              Sign in or create a DormLink account with the invited email address to accept. We'll bring you back here.
             </p>
-            <ion-button expand="block" @click="goTo('/login')">Log in</ion-button>
+            <ion-button expand="block" @click="goTo('/login')">Sign in</ion-button>
             <ion-button expand="block" fill="outline" @click="goTo('/register')">Create an account</ion-button>
           </template>
 
           <!-- Signed in -->
           <template v-else>
-            <p class="muted">Signed in as {{ auth.user?.email }}</p>
+            <p class="dl-small">Signed in as {{ auth.user?.email }}</p>
             <ion-button expand="block" :disabled="busy" @click="accept">Accept invitation</ion-button>
-            <ion-button expand="block" fill="clear" color="medium" :disabled="busy" @click="decline">Decline</ion-button>
+            <ion-button expand="block" fill="clear" :disabled="busy" @click="decline">Decline</ion-button>
           </template>
         </template>
       </div>
@@ -54,7 +56,9 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/vue'
+import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/vue'
+import { MailX } from 'lucide-vue-next'
+import { DlAvatar, DlCard, DlEmptyState, DlGradientText, DlSkeleton } from '@/components/dl'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { errorMessage } from '@/services/api'
@@ -122,3 +126,26 @@ async function decline() {
   }
 }
 </script>
+
+<style scoped>
+.intro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.copy {
+  margin: 0;
+  color: var(--text-secondary);
+}
+.level {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.inherit {
+  color: inherit;
+}
+</style>

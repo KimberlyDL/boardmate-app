@@ -3,7 +3,7 @@
     <div ref="mapEl" class="map" role="application" aria-label="Map: tap to place the pin" />
     <div class="actions">
       <ion-button size="small" fill="outline" :disabled="locating" @click="useMyLocation">
-        <ion-icon slot="start" :icon="locateOutline" /> Use my location
+        <LocateFixed slot="start" :size="18" aria-hidden="true" /> Use my location
       </ion-button>
       <ion-button v-if="modelValue" size="small" fill="clear" color="medium" @click="clear">Remove pin</ion-button>
     </div>
@@ -14,8 +14,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonIcon } from '@ionic/vue'
-import { locateOutline } from 'ionicons/icons'
+import { IonButton } from '@ionic/vue'
+import { LocateFixed } from 'lucide-vue-next'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'

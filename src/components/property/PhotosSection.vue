@@ -8,16 +8,16 @@
         <ion-badge v-if="photo.is_cover" class="cover">Cover</ion-badge>
         <div v-if="canEdit" class="tools">
           <ion-button size="small" fill="clear" :disabled="i === 0" aria-label="Move left" @click="move(i, -1)">
-            <ion-icon slot="icon-only" :icon="chevronBack" />
+            <ChevronLeft slot="icon-only" :size="20" aria-hidden="true" />
           </ion-button>
           <ion-button v-if="!photo.is_cover" size="small" fill="clear" aria-label="Make cover" @click="cover(photo.id)">
-            <ion-icon slot="icon-only" :icon="starOutline" />
+            <Star slot="icon-only" :size="20" aria-hidden="true" />
           </ion-button>
           <ion-button size="small" fill="clear" color="danger" aria-label="Delete" @click="remove(photo.id)">
-            <ion-icon slot="icon-only" :icon="trashOutline" />
+            <Trash2 slot="icon-only" :size="20" aria-hidden="true" />
           </ion-button>
           <ion-button size="small" fill="clear" :disabled="i === property.photos.length - 1" aria-label="Move right" @click="move(i, 1)">
-            <ion-icon slot="icon-only" :icon="chevronForward" />
+            <ChevronRight slot="icon-only" :size="20" aria-hidden="true" />
           </ion-button>
         </div>
       </div>
@@ -26,15 +26,15 @@
     <template v-if="canEdit && property.photos.length < 15">
       <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden @change="upload" />
       <ion-button expand="block" fill="outline" :disabled="busy" @click="fileInput?.click()">
-        <ion-icon slot="start" :icon="imagesOutline" /> {{ progress ? `Uploading ${progress.done + 1} of ${progress.total}…` : busy ? 'Saving…' : 'Add photos' }}
+        <Images slot="start" :size="18" aria-hidden="true" /> {{ progress ? `Uploading ${progress.done + 1} of ${progress.total}…` : busy ? 'Saving…' : 'Add photos' }}
       </ion-button>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { IonBadge, IonButton, IonIcon } from '@ionic/vue'
-import { chevronBack, chevronForward, imagesOutline, starOutline, trashOutline } from 'ionicons/icons'
+import { IonBadge, IonButton } from '@ionic/vue'
+import { ChevronLeft, ChevronRight, Images, Star, Trash2 } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { errorMessage, fieldErrors } from '@/services/api'
 import { propertyService } from '@/services/properties'

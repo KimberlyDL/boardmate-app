@@ -6,7 +6,7 @@
       <ion-segment-button v-if="hasCurfew" value="log"><ion-label>Curfew log</ion-label></ion-segment-button>
     </ion-segment>
 
-    <p v-if="loading" class="muted">Loading…</p>
+    <DlSkeleton v-if="loading" :height="120" :radius="18" />
 
     <!-- Requests waiting for a decision -->
     <template v-else-if="tab === 'decide'">
@@ -115,6 +115,7 @@ import { usePrompt } from '@/composables/usePrompt'
 import { useToast } from '@/composables/useToast'
 import type { CurfewViolation, LateEntry, Visitor } from '@/types/houseOps'
 import type { Property } from '@/types/property'
+import DlSkeleton from '@/components/dl/DlSkeleton.vue'
 
 type Tab = 'decide' | 'visitors' | 'log'
 

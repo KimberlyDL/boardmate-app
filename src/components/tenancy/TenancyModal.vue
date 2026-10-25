@@ -9,7 +9,7 @@
 
     <ion-content class="ion-padding">
       <div class="narrow">
-        <p v-if="loading" class="muted">Loading…</p>
+        <DlSkeleton v-if="loading" :height="120" :radius="18" />
 
         <template v-else-if="tenancy">
           <ion-card>
@@ -171,6 +171,7 @@ import { usePrompt } from '@/composables/usePrompt'
 import { useToast } from '@/composables/useToast'
 import type { DiscountKind } from '@/types/enums'
 import type { DiscountRow, Tenancy } from '@/types/tenancy'
+import DlSkeleton from '@/components/dl/DlSkeleton.vue'
 
 /** One tenant's stay for the owner or a caretaker: what was received at move-in, the emergency contact and the agreed rate. */
 const props = withDefaults(defineProps<{ tenancyId: number | null; canManage: boolean; canApproveMoveOut?: boolean; canSettle?: boolean }>(), {

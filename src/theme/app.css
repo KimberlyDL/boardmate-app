@@ -11,21 +11,17 @@
 }
 
 .muted {
-  color: var(--ion-color-medium);
-  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-size: 13px;
 }
 
 .center {
   text-align: center;
 }
 
-/* Auth pages (see components/AuthLayout.vue): pill buttons on the sheet. */
-.auth-sheet ion-button {
-  --border-radius: 999px;
-  min-height: 48px;
-}
+/* Auth pages (see components/AuthLayout.vue) */
 .auth-sheet a {
-  color: var(--ion-color-primary);
-  font-weight: 600;
+  color: var(--brand-primary);
+  font-weight: 700;
   text-decoration: none;
 }

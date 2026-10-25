@@ -9,7 +9,7 @@
     <ion-button size="small" fill="outline" class="gap" @click="logging = true">Log a request</ion-button>
     <p v-if="filter === 'resolved'" class="muted small">Waiting for the boarder to confirm. They close by themselves 3 days after the fix.</p>
 
-    <p v-if="loading" class="muted">Loading…</p>
+    <DlSkeleton v-if="loading" :height="120" :radius="18" />
     <p v-else-if="!items.length" class="muted center">{{ filter === 'open' ? 'No open requests.' : 'Nothing here.' }}</p>
     <ion-list v-else lines="full">
       <ion-item v-for="r in items" :key="r.id" button :detail="true" @click="openId = r.id">
@@ -46,6 +46,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import type { MaintenanceRequest } from '@/types/maintenance'
 import type { Property } from '@/types/property'
+import DlSkeleton from '@/components/dl/DlSkeleton.vue'
 
 type Filter = 'open' | 'resolved' | 'done'
 

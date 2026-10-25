@@ -1,5 +1,6 @@
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { IonicVue } from '@ionic/vue'
+import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import BillingSection from '@/components/billing/BillingSection.vue'
 import RecordPaymentModal from '@/components/billing/RecordPaymentModal.vue'
@@ -100,6 +101,8 @@ function mountSection(abilities: string[]) {
 }
 
 beforeEach(() => {
+  // Pages carry the notification bell, which reads the notifications store.
+  setActivePinia(createPinia())
   vi.clearAllMocks()
   vi.mocked(billingService.bills).mockResolvedValue({
     items: [october],

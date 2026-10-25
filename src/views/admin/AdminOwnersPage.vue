@@ -3,6 +3,7 @@
     <ion-header>
       <ion-toolbar>
         <ion-title>Owners</ion-title>
+        <ion-buttons slot="end"><NotificationBell /></ion-buttons>
       </ion-toolbar>
       <ion-toolbar>
         <ion-segment :value="status" :scrollable="true" @ion-change="setStatus($event.detail.value as OwnerVerificationStatus)">
@@ -16,13 +17,13 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content>
-      <ion-refresher slot="fixed" @ion-refresh="refresh">
-        <ion-refresher-content />
-      </ion-refresher>
+    <ion-content class="ion-padding">
+      <DlRefresher :refresh="load" />
 
       <div class="narrow">
-        <p v-if="!loading && !owners.length" class="ion-padding muted center">Nothing here.</p>
+        <DlCard v-if="!loading && !owners.length">
+          <DlEmptyState note="nothing here" :icon="ShieldCheck">No owners in this list.</DlEmptyState>
+        </DlCard>
 
         <ion-card v-for="o in owners" :key="o.id">
           <ion-card-header>
@@ -33,8 +34,10 @@
           </ion-card-header>
           <ion-card-content>
             <p><strong>{{ o.name }}</strong> · {{ o.email }}<span v-if="o.phone"> · {{ o.phone }}</span></p>
-            <p v-if="!o.email_verified_at" class="warn">Email not confirmed</p>
-            <p v-if="o.suspended_at" class="warn">Account suspended</p>
+            <p v-if="!o.email_verified_at || o.suspended_at" class="tags">
+              <DlStatusTag v-if="!o.email_verified_at" tone="warning">Email not confirmed</DlStatusTag>
+              <DlStatusTag v-if="o.suspended_at" tone="danger">Account suspended</DlStatusTag>
+            </p>
             <p class="notes">{{ o.owner_profile?.application_notes }}</p>
             <p v-if="o.owner_profile?.review_reason" class="muted">Last reason: {{ o.owner_profile.review_reason }}</p>
 
@@ -84,8 +87,8 @@
 <script setup lang="ts">
 import {
   type InfiniteScrollCustomEvent,
-  type RefresherCustomEvent,
   IonButton,
+  IonButtons,
   IonCard,
   IonCardContent,
   IonCardHeader,
@@ -97,8 +100,6 @@ import {
   IonInfiniteScrollContent,
   IonLabel,
   IonPage,
-  IonRefresher,
-  IonRefresherContent,
   IonSearchbar,
   IonSegment,
   IonSegmentButton,
@@ -106,7 +107,10 @@ import {
   IonToolbar,
   onIonViewWillEnter,
 } from '@ionic/vue'
+import { ShieldCheck } from 'lucide-vue-next'
+import { DlCard, DlEmptyState, DlRefresher, DlStatusTag } from '@/components/dl'
 import { ref } from 'vue'
+import NotificationBell from '@/components/NotificationBell.vue'
 import { manila } from '@/lib/dayjs'
 import { adminService, type OwnerCounts } from '@/services/admin'
 import { errorMessage } from '@/services/api'
@@ -155,10 +159,6 @@ function onSearch(value: string) {
   load()
 }
 
-async function refresh(event: RefresherCustomEvent) {
-  await load()
-  event.target.complete()
-}
 
 async function loadMore(event: InfiniteScrollCustomEvent) {
   await load(false)
@@ -190,6 +190,11 @@ async function act(owner: AdminUser, action: 'verify' | 'reject' | 'suspend' | '
 </script>
 
 <style scoped>
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 .documents {
   display: flex;
   flex-direction: column;

@@ -1,28 +1,33 @@
 <template>
-  <auth-layout title="Forgot password" back-to="/login" back-label="Back to log in">
+  <auth-layout
+    title="Forgot your"
+    highlight="password?"
+    subtitle="Enter the email you signed up with and we'll send a link to set a new password."
+    back-to="/login"
+    back-label="Back to sign in"
+  >
     <template v-if="sentMessage">
-      <p>{{ sentMessage }}</p>
-      <p class="muted">The link works for 60 minutes. Check your spam folder if you don't see it.</p>
-      <ion-button expand="block" fill="outline" router-link="/login">Back to log in</ion-button>
+      <DlBanner tone="success" title="Link sent">{{ sentMessage }} The link works for 60 minutes. Check your spam folder too.</DlBanner>
+      <ion-button expand="block" fill="outline" router-link="/login">Back to sign in</ion-button>
     </template>
-
-    <form v-else @submit.prevent="submit">
-      <p>Enter the email you signed up with. We'll send you a link to set a new password.</p>
-      <auth-field v-model="email" :icon="mailOutline" label="Email" type="email" placeholder="Email" autocomplete="email" :error="errors.email?.[0]" />
+    <form v-else class="form" @submit.prevent="submit">
+      <auth-field v-model="email" label="Email" type="email" inputmode="email" placeholder="you@email.com" autocomplete="email" :error="errors.email?.[0]" />
       <ion-button expand="block" type="submit" :disabled="busy">
         <ion-spinner v-if="busy" name="crescent" />
         <span v-else>Send reset link</span>
       </ion-button>
     </form>
+
+    <template #footer>Remembered it? <router-link to="/login">Back to sign in</router-link></template>
   </auth-layout>
 </template>
 
 <script setup lang="ts">
 import { IonButton, IonSpinner } from '@ionic/vue'
-import { mailOutline } from 'ionicons/icons'
 import { ref } from 'vue'
 import AuthField from '@/components/AuthField.vue'
 import AuthLayout from '@/components/AuthLayout.vue'
+import DlBanner from '@/components/dl/DlBanner.vue'
 import { errorMessage, fieldErrors } from '@/services/api'
 import { authService } from '@/services/auth'
 import { useToast } from '@/composables/useToast'
@@ -46,3 +51,11 @@ async function submit() {
   }
 }
 </script>
+
+<style scoped>
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+</style>

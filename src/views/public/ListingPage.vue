@@ -1,127 +1,134 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start"><ion-back-button default-href="/find" /></ion-buttons>
-        <ion-title>{{ listing?.name ?? 'Listing' }}</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content>
-      <p v-if="loading" class="ion-padding muted">Loading…</p>
-      <div v-else-if="loadError" class="ion-padding narrow">
-        <p>{{ loadError }}</p>
-        <ion-button router-link="/find">Back to search</ion-button>
+    <ion-content :fullscreen="true">
+      <!-- Photos, with the back button floating on top -->
+      <div class="hero">
+        <div v-if="listing?.photos.length" class="gallery">
+          <img v-for="(url, i) in listing.photos" :key="url" :src="url" :alt="`Photo ${i + 1} of ${listing.photos.length}`" :loading="i === 0 ? 'eager' : 'lazy'" />
+        </div>
+        <div v-else class="placeholder"><ImageIcon :size="28" aria-hidden="true" /><span class="dl-eyebrow">No photos yet</span></div>
+        <DlIconButton class="back" :icon="ChevronLeft" label="Back" @click="goBack" />
+        <span v-if="(listing?.photos.length ?? 0) > 1" class="count dl-data">{{ listing!.photos.length }} PHOTOS</span>
       </div>
 
-      <template v-else-if="listing">
-        <div class="gallery">
-          <img v-for="(url, i) in listing.photos" :key="url" :src="url" :alt="`Photo ${i + 1}`" :loading="i === 0 ? 'eager' : 'lazy'" />
+      <div v-if="loading" class="narrow ion-padding body">
+        <DlSkeleton width="40%" :height="12" />
+        <DlSkeleton width="80%" :height="28" />
+        <DlSkeleton width="60%" :height="14" />
+        <div class="grid2"><DlSkeleton :height="88" :radius="18" tone="brand" /><DlSkeleton :height="88" :radius="18" /></div>
+      </div>
+      <div v-else-if="loadError" class="narrow ion-padding body">
+        <DlCard>
+          <DlEmptyState note="this place isn't listed" :icon="House" action-label="Back to search" to="/find">{{ loadError }}</DlEmptyState>
+        </DlCard>
+      </div>
+
+      <div v-else-if="listing" class="narrow ion-padding body">
+        <header class="title-block">
+          <div class="tags">
+            <DlStatusTag :tone="listing.is_full ? 'neutral' : 'success'">{{ listing.is_full ? 'Full right now' : listing.availability.label }}</DlStatusTag>
+            <DlStatusTag v-if="listing.who_can_apply" tone="info">{{ listing.who_can_apply }}</DlStatusTag>
+          </div>
+          <h1 class="dl-h1">{{ listing.name }}</h1>
+          <span class="dl-small">{{ listing.type_label }} · {{ area }}</span>
+        </header>
+
+        <div class="grid2">
+          <DlStatCard
+            label="Rent from"
+            :value="listing.price_from_centavos !== null ? peso(listing.price_from_centavos).replace('.00', '') : 'Ask'"
+            caption="per month"
+          />
+          <DlStatCard
+            label="Available"
+            :value="`${listing.availability.available}/${listing.availability.total}`"
+            :caption="listing.rental_mode === 'whole' ? 'rooms free' : 'places free'"
+            :tone="listing.is_full ? 'clay' : 'sky'"
+          />
         </div>
 
-        <div class="narrow ion-padding">
-          <p class="muted">{{ listing.type_label }} · {{ area }}</p>
-          <h1>{{ listing.name }}</h1>
-          <p class="price">
-            <template v-if="!listing.is_full">
-              <strong>{{ listing.price_from_centavos !== null ? `from ${peso(listing.price_from_centavos)}` : 'Price on request' }}</strong> / month ·
-            </template>
-            {{ listing.availability.label }}
+        <!-- My application -->
+        <DlCard v-if="mine" :tone="mine.status === 'approved' ? 'pine' : 'muted'" class="mine">
+          <span class="dl-eyebrow">YOUR APPLICATION</span>
+          <strong class="dl-title">{{ mine.status_label }}</strong>
+          <p v-if="mine.status === 'approved'" class="dl-small mine-copy">
+            {{ mine.unit?.label }} is reserved for you until {{ manilaDate(mine.reserved_until!).format('MMM D, YYYY') }}.
           </p>
-          <p v-if="listing.who_can_apply"><ion-chip>{{ listing.who_can_apply }}</ion-chip></p>
+          <p v-else class="dl-small mine-copy">You applied for move-in on {{ manilaDate(mine.planned_move_in_on).format('MMM D, YYYY') }}.</p>
+          <ion-button size="small" class="dl-tonal" router-link="/boarder/bookings">My bookings</ion-button>
+        </DlCard>
+        <DlBanner v-else-if="listing.is_full" tone="warning" title="Full right now">
+          Every room here is taken. Check again later, or find a place with a free room nearby.
+        </DlBanner>
 
-          <!-- My application, or Apply -->
-          <ion-card v-if="mine" :color="mine.status === 'approved' ? 'success' : 'light'">
-            <ion-card-content>
-              <strong>{{ mine.status_label }}</strong>
-              <p v-if="mine.status === 'approved'">
-                {{ mine.unit?.label }} is reserved for you until {{ manilaDate(mine.reserved_until!).format('MMM D, YYYY') }}.
-              </p>
-              <p v-else>You applied for move-in on {{ manilaDate(mine.planned_move_in_on).format('MMM D, YYYY') }}.</p>
-              <ion-button size="small" fill="outline" color="dark" router-link="/boarder/bookings">My bookings</ion-button>
-            </ion-card-content>
-          </ion-card>
-          <ion-card v-else-if="listing.is_full" color="light">
-            <ion-card-content>
-              <strong>Full right now</strong>
-              <p>Every room here is taken. Check again later, or find a place with a free room nearby.</p>
-            </ion-card-content>
-          </ion-card>
-          <ion-button v-else expand="block" :router-link="`/listings/${listing.id}/apply`">Apply</ion-button>
+        <DlSection v-if="listing.description" title="About this place">
+          <p class="dl-body description">{{ listing.description }}</p>
+        </DlSection>
 
-          <p v-if="listing.description" class="description">{{ listing.description }}</p>
-
-          <h3>Rooms &amp; availability</h3>
+        <DlSection title="Rooms & availability">
           <listing-rooms :rooms="listing.rooms" :apply-href="mine ? null : `/listings/${listing.id}/apply`" />
-          <p v-if="listing.rental_mode !== 'whole'" class="muted small">The owner assigns your bedspace when approving.</p>
+          <p v-if="listing.rental_mode !== 'whole'" class="dl-small">The owner assigns your bedspace when approving.</p>
+        </DlSection>
 
-          <h3>Utilities</h3>
-          <ion-list lines="inset">
-            <ion-item v-for="u in listing.utilities" :key="u.type + u.name">
-              <ion-label class="ion-text-wrap">
-                <h2>{{ u.name }}</h2>
-                <p>{{ utilityText(u) }}</p>
-              </ion-label>
-            </ion-item>
-            <ion-item v-if="!listing.utilities.length"><ion-label class="muted">Ask the owner.</ion-label></ion-item>
-          </ion-list>
+        <DlSection title="Utilities">
+          <DlCard padding="4px 16px">
+            <DlListRow
+              v-for="(u, i) in listing.utilities"
+              :key="u.type + u.name"
+              :icon="utilityIcon(u.type)"
+              :title="u.name"
+              :subtitle="utilityText(u)"
+              :divider="i > 0"
+            />
+            <DlListRow v-if="!listing.utilities.length" :icon="Info" title="Ask the owner" subtitle="No utilities listed yet" />
+          </DlCard>
+        </DlSection>
 
-          <h3>Good to know</h3>
-          <ion-list lines="inset">
-            <ion-item>
-              <ion-label>Deposit</ion-label>
-              <ion-note slot="end">{{ depositText }}</ion-note>
-            </ion-item>
-            <ion-item>
-              <ion-label>Curfew</ion-label>
-              <ion-note slot="end">{{ listing.curfew_time ? clockTime(listing.curfew_time) : 'None' }}</ion-note>
-            </ion-item>
-            <ion-item>
-              <ion-label>Owner</ion-label>
-              <ion-note slot="end">{{ listing.owner_name }}</ion-note>
-            </ion-item>
-          </ion-list>
+        <DlSection title="Good to know">
+          <DlCard padding="4px 16px">
+            <DlListRow :icon="Wallet" title="Deposit" :trailing="depositText" />
+            <DlListRow :icon="Clock" title="Curfew" :trailing="listing.curfew_time ? clockTime(listing.curfew_time) : 'None'" divider />
+            <DlListRow :icon="UserRound" title="Owner" :trailing="listing.owner_name" divider />
+          </DlCard>
+        </DlSection>
 
-          <template v-if="listing.house_rules">
-            <h3>House rules</h3>
+        <DlSection v-if="listing.house_rules" title="House rules">
+          <DlCard>
             <house-rules-list :rules="listing.house_rules.rules" />
-            <p class="muted small">You accept these when you apply.</p>
-          </template>
+          </DlCard>
+          <p class="dl-small">You accept these when you apply.</p>
+        </DlSection>
 
-          <h3>Location</h3>
-          <p>{{ listing.street ? `${listing.street}, ${area}` : area }}</p>
-          <p v-if="!listing.street" class="muted small">The exact address is shared once your booking is approved.</p>
+        <DlSection title="Location">
+          <p class="dl-body location">{{ listing.street ? `${listing.street}, ${area}` : area }}</p>
+          <p v-if="!listing.street" class="dl-small">The exact address is shared once your booking is approved.</p>
           <listing-map v-if="listing.latitude !== null" :listings="[listing]" height="240px" />
-        </div>
-      </template>
+        </DlSection>
+      </div>
     </ion-content>
+
+    <!-- Sticky action: price + Apply -->
+    <ion-footer v-if="listing && !mine && !listing.is_full" class="action-footer">
+      <div class="footer-inner">
+        <div class="footer-price">
+          <span class="price">{{ listing.price_from_centavos !== null ? `from ${peso(listing.price_from_centavos).replace('.00', '')}` : 'Price on request' }}</span>
+          <span class="dl-small">{{ listing.availability.label }}</span>
+        </div>
+        <ion-button :router-link="`/listings/${listing.id}/apply`" class="apply">Apply</ion-button>
+      </div>
+    </ion-footer>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import {
-  IonBackButton,
-  IonButton,
-  IonButtons,
-  IonCard,
-  IonCardContent,
-  IonChip,
-  IonContent,
-  IonHeader,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonNote,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-  onIonViewWillEnter,
-} from '@ionic/vue'
+import { IonButton, IonContent, IonFooter, IonPage, onIonViewWillEnter, useIonRouter } from '@ionic/vue'
+import { ChevronLeft, Clock, Droplets, House, Image as ImageIcon, Info, Receipt, UserRound, Wallet, Wifi, Zap } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import ListingMap from '@/components/ListingMap.vue'
 import HouseRulesList from '@/components/houseRules/HouseRulesList.vue'
 import ListingRooms from '@/components/rooms/ListingRooms.vue'
+import { DlBanner, DlCard, DlEmptyState, DlIconButton, DlListRow, DlSection, DlSkeleton, DlStatCard, DlStatusTag } from '@/components/dl'
 import { clockTime, manilaDate } from '@/lib/dayjs'
 import { peso } from '@/lib/money'
 import { errorMessage } from '@/services/api'
@@ -129,6 +136,7 @@ import { listingService } from '@/services/listings'
 import type { BookingApplication, ListingDetail } from '@/types/booking'
 
 const route = useRoute()
+const ionRouter = useIonRouter()
 const id = Number(route.params.id)
 
 const listing = ref<ListingDetail | null>(null)
@@ -152,6 +160,15 @@ function utilityText(u: ListingDetail['utilities'][number]): string {
   return `${u.method_label}: ${peso(u.amount_centavos)} / month`
 }
 
+function goBack() {
+  if (ionRouter.canGoBack()) ionRouter.back()
+  else ionRouter.navigate('/find', 'back', 'replace')
+}
+
+function utilityIcon(type: string) {
+  return ({ water: Droplets, electricity: Zap, internet: Wifi } as Record<string, typeof Wifi>)[type] ?? Receipt
+}
+
 onIonViewWillEnter(async () => {
   try {
     const data = await listingService.get(id)
@@ -166,32 +183,125 @@ onIonViewWillEnter(async () => {
 </script>
 
 <style scoped>
+.hero {
+  position: relative;
+  height: 280px;
+  background: var(--bg-muted);
+}
 .gallery {
   display: flex;
+  height: 100%;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  gap: 4px;
+  scrollbar-width: none;
+}
+.gallery::-webkit-scrollbar {
+  display: none;
 }
 .gallery img {
   flex: 0 0 100%;
-  max-height: 320px;
+  height: 100%;
   object-fit: cover;
   scroll-snap-align: start;
 }
-h1 {
-  margin: 4px 0;
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  color: var(--text-muted);
+  background: repeating-linear-gradient(135deg, var(--bg-muted) 0 12px, var(--skeleton-neutral) 12px 24px);
 }
-h3 {
-  margin-top: 24px;
+.back {
+  position: absolute;
+  top: calc(var(--ion-safe-area-top, 0px) + 16px);
+  left: 16px;
 }
-.price {
-  font-size: 1.05rem;
+.count {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--bg-ink);
+  color: var(--text-on-ink);
+}
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 20px;
+}
+.title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--card-gap);
+}
+.mine {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.mine-copy {
+  margin: 0 0 4px;
+  color: inherit;
+}
+.mine ion-button {
+  margin: 0;
 }
 .description {
+  margin: 0;
   white-space: pre-wrap;
-  margin-top: 16px;
+  color: var(--text-secondary);
 }
-.small {
-  font-size: 0.85rem;
+.location {
+  margin: 0;
+}
+.dl-section {
+  margin-bottom: 0;
+}
+.action-footer {
+  box-shadow: none;
+}
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 12px 16px calc(var(--ion-safe-area-bottom, 0px) + 12px);
+  border-top: 1px solid var(--border-default);
+  background: var(--bg-surface);
+}
+.footer-price {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.price {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--brand-primary);
+}
+.apply {
+  min-width: 120px;
+  height: 52px;
+  margin: 0;
+  font-size: 16px;
 }
 </style>

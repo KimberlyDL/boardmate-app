@@ -33,8 +33,16 @@ import '@ionic/vue/css/display.css';
 /* @import '@ionic/vue/css/palettes/dark.always.css'; */
 import '@ionic/vue/css/palettes/dark.class.css';
 
-/* Theme variables */
+/* DormLink fonts, bundled so the installed app has them offline (latin and latin-ext load on demand) */
+import '@fontsource-variable/bricolage-grotesque/wght.css';
+import '@fontsource-variable/karla/wght.css';
+import '@fontsource-variable/caveat/wght.css';
+import '@fontsource-variable/jetbrains-mono/wght.css';
+
+/* Theme: design tokens, Ionic mapped onto them, Ionic components restyled, app helpers */
+import './theme/tokens.css';
 import './theme/variables.css';
+import './theme/ionic.css';
 import './theme/app.css';
 
 const app = createApp(App)

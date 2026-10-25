@@ -21,9 +21,7 @@
     </ion-header>
 
     <ion-content>
-      <ion-refresher slot="fixed" @ion-refresh="refresh">
-        <ion-refresher-content />
-      </ion-refresher>
+      <DlRefresher :refresh="load" />
 
       <div class="narrow">
         <p v-if="!loading && !entries.length" class="ion-padding muted center">Nothing recorded yet.</p>
@@ -60,7 +58,6 @@
 <script setup lang="ts">
 import {
   type InfiniteScrollCustomEvent,
-  type RefresherCustomEvent,
   IonBackButton,
   IonButtons,
   IonContent,
@@ -71,8 +68,6 @@ import {
   IonLabel,
   IonList,
   IonPage,
-  IonRefresher,
-  IonRefresherContent,
   IonSelect,
   IonSelectOption,
   IonTitle,
@@ -80,6 +75,7 @@ import {
   onIonViewWillEnter,
 } from '@ionic/vue'
 import { computed, ref } from 'vue'
+import DlRefresher from '@/components/dl/DlRefresher.vue'
 import { manila } from '@/lib/dayjs'
 import { errorMessage } from '@/services/api'
 import { auditService, type AuditEntry } from '@/services/audit'
@@ -139,10 +135,6 @@ function setEvent(value: string) {
   load()
 }
 
-async function refresh(e: RefresherCustomEvent) {
-  await load()
-  e.target.complete()
-}
 
 async function loadMore(e: InfiniteScrollCustomEvent) {
   await load(false)

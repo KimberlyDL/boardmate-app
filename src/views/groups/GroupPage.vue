@@ -16,20 +16,26 @@
     </ion-header>
 
     <ion-content class="ion-padding">
-      <ion-refresher slot="fixed" @ion-refresh="refresh">
-        <ion-refresher-content />
-      </ion-refresher>
+      <DlRefresher :refresh="load" />
 
       <div class="narrow">
-        <p v-if="loading" class="muted">Loading…</p>
+        <DlSkeleton v-if="loading" :height="180" :radius="18" />
 
         <template v-else-if="group">
-          <p class="muted small">{{ group.property.name }}<template v-if="!isMember"> · you see the members and the owner's bills only</template></p>
+          <header class="intro">
+            <span class="dl-eyebrow">{{ group.property.name }}</span>
+            <h1 class="dl-h1">Room {{ group.room.label }} <DlGradientText>group</DlGradientText></h1>
+            <p v-if="!isMember" class="dl-small">{{ group.property.name }} · you see the members and the owner's bills only</p>
+          </header>
 
           <!-- Bills: the owner's shared bills and members' own expenses -->
           <template v-if="tab === 'lines'">
-            <ion-button v-if="group.me?.is_current" size="small" @click="expenseOpen = true">Add expense</ion-button>
-            <p v-if="!lines.length" class="muted center">Nothing to share yet. The owner's shared bills for this room show up here.</p>
+            <ion-button v-if="group.me?.is_current" expand="block" class="gap" @click="expenseOpen = true">
+              <Plus slot="start" :size="18" aria-hidden="true" /> Add expense
+            </ion-button>
+            <DlCard v-if="!lines.length">
+              <DlEmptyState note="nothing to share yet" :icon="Receipt">Nothing to share yet. The owner's shared bills for this room show up here.</DlEmptyState>
+            </DlCard>
             <ion-list v-else lines="full">
               <ion-item v-for="l in lines" :key="l.id" button :detail="false" @click="selected = l">
                 <ion-label class="ion-text-wrap">
@@ -50,18 +56,21 @@
 
           <!-- Balances: who owes whom, pair by pair -->
           <template v-if="tab === 'balances' && balances">
-            <ion-card>
-              <ion-card-content>
-                <p>You owe <strong>{{ peso(balances.me.owe_centavos) }}</strong>. Others owe you <strong>{{ peso(balances.me.owed_to_me_centavos) }}</strong>.</p>
-                <p class="muted small">Each pair is counted on its own: what you owe one person is not swapped with what someone else owes you.</p>
-              </ion-card-content>
-            </ion-card>
-            <p v-if="!balances.pairs.length" class="muted center">Everyone is even.</p>
+            <div class="grid2 gap">
+              <DlStatCard label="You owe" :value="peso(balances.me.owe_centavos)" tone="butter" />
+              <DlStatCard label="Owed to you" :value="peso(balances.me.owed_to_me_centavos)" />
+            </div>
+            <p class="balance-line">You owe <strong>{{ peso(balances.me.owe_centavos) }}</strong>. Others owe you <strong>{{ peso(balances.me.owed_to_me_centavos) }}</strong>.</p>
+            <p class="dl-small gap">Each pair is counted on its own: what you owe one person is not swapped with what someone else owes you.</p>
+            <DlCard v-if="!balances.pairs.length">
+              <DlEmptyState note="all square!" :icon="CircleCheck">Everyone is even.</DlEmptyState>
+            </DlCard>
             <ion-list v-else lines="full">
               <ion-item v-for="p in balances.pairs" :key="`${p.from.id}-${p.to.id}`">
+                <DlAvatar slot="start" :name="p.from.name" :size="36" />
                 <ion-label class="ion-text-wrap">
                   <h2>{{ p.from.name }} → {{ p.to.name }}</h2>
-                  <p>{{ peso(p.amount_centavos) }}</p>
+                  <p class="amount">{{ peso(p.amount_centavos) }}</p>
                 </ion-label>
                 <ion-button v-if="p.from.id === group.me?.id" slot="end" size="small" @click="payBack(p)">Pay back</ion-button>
                 <ion-button v-else-if="p.to.id === group.me?.id || group.can_manage" slot="end" size="small" fill="outline" @click="payBack(p)">Record payment</ion-button>
@@ -71,7 +80,9 @@
 
           <!-- Paybacks: waiting ones first -->
           <template v-if="tab === 'repayments'">
-            <p v-if="!repayments.length" class="muted center">No paybacks yet.</p>
+            <DlCard v-if="!repayments.length">
+              <DlEmptyState note="no paybacks yet" :icon="Wallet">No paybacks yet.</DlEmptyState>
+            </DlCard>
             <ion-list v-else lines="full">
               <ion-item v-for="r in repayments" :key="r.id">
                 <ion-label class="ion-text-wrap">
@@ -97,6 +108,7 @@
           <template v-if="tab === 'members'">
             <ion-list lines="full">
               <ion-item v-for="m in group.members" :key="m.id">
+                <DlAvatar slot="start" :name="m.name" :size="36" />
                 <ion-label class="ion-text-wrap">
                   <h2>
                     {{ m.name }}<template v-if="m.is_me"> (me)</template>
@@ -151,7 +163,6 @@
 
 <script setup lang="ts">
 import {
-  type RefresherCustomEvent,
   IonBackButton,
   IonBadge,
   IonButton,
@@ -165,8 +176,6 @@ import {
   IonList,
   IonNote,
   IonPage,
-  IonRefresher,
-  IonRefresherContent,
   IonSegment,
   IonSegmentButton,
   IonSelect,
@@ -175,11 +184,13 @@ import {
   IonToolbar,
   onIonViewWillEnter,
 } from '@ionic/vue'
+import { CircleCheck, Plus, Receipt, Wallet } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import ExpenseSheet from '@/components/groups/ExpenseSheet.vue'
 import LineSheet from '@/components/groups/LineSheet.vue'
 import RepaySheet, { type RepayPreset } from '@/components/groups/RepaySheet.vue'
+import { DlAvatar, DlCard, DlEmptyState, DlGradientText, DlRefresher, DlSkeleton, DlStatCard } from '@/components/dl'
 import { manilaDate } from '@/lib/dayjs'
 import { peso } from '@/lib/money'
 import { firstError } from '@/services/api'
@@ -231,10 +242,6 @@ async function load() {
 
 onIonViewWillEnter(load)
 
-async function refresh(event: RefresherCustomEvent) {
-  await load()
-  event.target.complete()
-}
 
 function statusColor(status: RepaymentStatus) {
   return status === 'confirmed' ? 'success' : status === 'rejected' ? 'danger' : 'warning'
@@ -305,6 +312,33 @@ async function setDefaultSplit(method: string) {
 </script>
 
 <style scoped>
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.intro p {
+  margin: 0;
+}
+.gap {
+  margin: 0 0 var(--card-gap);
+}
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--card-gap);
+}
+.balance-line {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+.amount,
+.amounts {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--brand-primary);
+}
 .small {
   font-size: 0.85rem;
 }

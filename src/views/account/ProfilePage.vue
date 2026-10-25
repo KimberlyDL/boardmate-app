@@ -11,12 +11,9 @@
       <div v-if="auth.user" class="narrow">
         <!-- Photo -->
         <div class="center">
-          <ion-avatar class="avatar">
-            <img v-if="auth.user.photo_url" :src="auth.user.photo_url" alt="Profile photo" />
-            <ion-icon v-else :icon="personCircleOutline" class="placeholder" />
-          </ion-avatar>
+          <DlAvatar :name="auth.user.name" :src="auth.user.photo_url" :size="96" class="avatar" />
           <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp" hidden @change="uploadPhoto" />
-          <ion-button size="small" fill="outline" :disabled="photoBusy" @click="fileInput?.click()">
+          <ion-button size="small" class="dl-tonal" :disabled="photoBusy" @click="fileInput?.click()">
             {{ auth.user.photo_url ? 'Change photo' : 'Add photo' }}
           </ion-button>
           <ion-button v-if="auth.user.photo_url" size="small" fill="clear" color="medium" :disabled="photoBusy" @click="removePhoto">
@@ -26,7 +23,7 @@
         </div>
 
         <!-- Details -->
-        <h3>Details</h3>
+        <h2 class="dl-h2 section">Details</h2>
         <form @submit.prevent="saveProfile">
           <ion-input
             v-model="profile.name"
@@ -50,13 +47,13 @@
         </form>
 
         <!-- Email -->
-        <h3>Email</h3>
+        <h2 class="dl-h2 section">Email</h2>
         <p>
           <strong>{{ auth.user.email }}</strong>
-          <ion-chip v-if="auth.user.google_linked" class="chip">Linked to Google</ion-chip>
+          <DlStatusTag v-if="auth.user.google_linked" tone="info">Linked to Google</DlStatusTag>
         </p>
 
-        <ion-card v-if="auth.user.pending_email" color="light">
+        <ion-card v-if="auth.user.pending_email" color="warning">
           <ion-card-content>
             <p>
               Waiting for confirmation at <strong>{{ auth.user.pending_email }}</strong>. Open the link we sent there to
@@ -101,7 +98,7 @@
 
         <!-- Emergency contact (boarders) -->
         <template v-if="isBoarder">
-          <h3>Emergency contact</h3>
+          <h2 class="dl-h2 section">Emergency contact</h2>
           <p class="muted">Who your boarding house should call if something happens to you.</p>
           <form @submit.prevent="saveEmergency">
             <ion-input
@@ -135,9 +132,9 @@
         </template>
 
         <!-- Password -->
-        <h3>{{ auth.user.has_password ? 'Change password' : 'Set a password' }}</h3>
+        <h2 class="dl-h2 section">{{ auth.user.has_password ? 'Change password' : 'Set a password' }}</h2>
         <p v-if="!auth.user.has_password" class="muted">
-          You signed up with Google. Set a password if you also want to log in with your email.
+          You signed up with Google. Set a password if you also want to sign in with your email.
         </p>
         <form @submit.prevent="savePassword">
           <ion-input
@@ -183,22 +180,19 @@
 
 <script setup lang="ts">
 import {
-  IonAvatar,
   IonBackButton,
   IonButton,
   IonButtons,
   IonCard,
   IonCardContent,
-  IonChip,
   IonContent,
   IonHeader,
-  IonIcon,
   IonInput,
   IonPage,
   IonTitle,
   IonToolbar,
 } from '@ionic/vue'
-import { personCircleOutline } from 'ionicons/icons'
+import { DlAvatar, DlStatusTag } from '@/components/dl'
 import { computed, reactive, ref } from 'vue'
 import { errorMessage, fieldErrors } from '@/services/api'
 import { accountService } from '@/services/account'
@@ -336,21 +330,11 @@ function cancelEmailChange() {
 </script>
 
 <style scoped>
+.section {
+  margin: 28px 0 12px;
+}
 .avatar {
-  width: 96px;
-  height: 96px;
-  margin: 0 auto 8px;
-}
-.placeholder {
-  width: 96px;
-  height: 96px;
-  color: var(--ion-color-medium);
-}
-h3 {
-  margin-top: 28px;
-}
-.chip {
-  margin-left: 8px;
-  vertical-align: middle;
+  display: flex;
+  margin: 0 auto 12px;
 }
 </style>

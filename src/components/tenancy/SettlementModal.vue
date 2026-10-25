@@ -9,7 +9,7 @@
 
     <ion-content class="ion-padding">
       <div class="narrow">
-        <p v-if="loading" class="muted">Loading…</p>
+        <DlSkeleton v-if="loading" :height="120" :radius="18" />
 
         <!-- Settled: the result -->
         <template v-else-if="result">
@@ -135,6 +135,7 @@ import { usePrompt } from '@/composables/usePrompt'
 import { useToast } from '@/composables/useToast'
 import type { PaymentMethod } from '@/types/enums'
 import type { SettlementResult, SettlementWorksheet, Tenancy } from '@/types/tenancy'
+import DlSkeleton from '@/components/dl/DlSkeleton.vue'
 
 const props = defineProps<{ open: boolean; tenancy: Tenancy | null; canSettle: boolean }>()
 const emit = defineEmits<{ close: []; settled: [message: string] }>()

@@ -78,22 +78,22 @@ async function askConsent(): Promise<boolean> {
 
 <style scoped>
 .google {
-  margin-top: 20px;
+  margin-top: 8px;
   text-align: center;
 }
 .divider {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: var(--ion-color-medium);
-  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-size: 13px;
   margin-bottom: 16px;
 }
 .divider::before,
 .divider::after {
   content: '';
   flex: 1;
-  border-top: 1px solid var(--ion-color-step-200, #ccc);
+  border-top: 1px solid var(--border-default);
 }
 .button-slot {
   display: flex;

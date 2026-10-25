@@ -27,15 +27,34 @@ const groups = computed(() => {
 </script>
 
 <style scoped>
+.house-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 .category {
-  margin: 12px 0 4px;
+  margin: 12px 0 2px;
+  font-family: var(--font-mono);
+  font-size: 11px;
   font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.category:first-child {
+  margin-top: 0;
 }
 ul {
   margin: 0;
-  padding-left: 20px;
+  padding-left: 18px;
 }
 li {
-  margin: 2px 0;
+  margin: 4px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+li::marker {
+  color: var(--brand-primary);
 }
 </style>

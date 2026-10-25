@@ -3,6 +3,7 @@
     <ion-header>
       <ion-toolbar>
         <ion-title>Applications</ion-title>
+        <ion-buttons slot="end"><NotificationBell /></ion-buttons>
       </ion-toolbar>
       <ion-toolbar>
         <ion-segment :value="status" :scrollable="true" @ion-change="setStatus(String($event.detail.value))">
@@ -17,48 +18,63 @@
     </ion-header>
 
     <ion-content class="ion-padding">
-      <ion-refresher slot="fixed" @ion-refresh="refresh">
-        <ion-refresher-content />
-      </ion-refresher>
+      <DlRefresher :refresh="load" />
 
-      <div class="narrow">
-        <p v-if="!loading && !items.length" class="muted center">Nothing here.</p>
+      <div class="narrow page">
+        <template v-if="loading && !items.length">
+          <DlSkeleton v-for="n in 2" :key="n" :height="170" :radius="18" />
+        </template>
+        <DlCard v-else-if="!items.length">
+          <DlEmptyState note="nothing here" :icon="FileText">No applications in this list.</DlEmptyState>
+        </DlCard>
 
-        <ion-card v-for="a in items" :key="a.id">
-          <ion-card-header>
-            <ion-card-subtitle>
-              {{ a.property.name }}
-              <template v-if="a.unit"> · {{ a.unit.room_label ? `Room ${a.unit.room_label} · ` : '' }}{{ a.unit.label }}</template>
-              <template v-else-if="a.room"> · wants {{ a.wants_whole ? 'the whole of ' : '' }}room {{ a.room.label }}</template>
-            </ion-card-subtitle>
-            <ion-card-title>{{ a.applicant?.name }}</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <p>{{ a.applicant?.phone }} · {{ a.applicant?.email }}</p>
-            <p>Move-in <strong>{{ manilaDate(a.planned_move_in_on).format('MMM D, YYYY') }}</strong> · applied {{ manila(a.created_at).format('MMM D') }}</p>
-            <p v-if="a.message" class="message">“{{ a.message }}”</p>
-            <p v-if="a.id_document_url"><a :href="a.id_document_url" target="_blank" rel="noopener">View ID</a></p>
-            <p v-else-if="a.id_document_purged" class="muted small">ID deleted (30 days after closing)</p>
-            <p v-if="a.status === 'approved'">
-              Reserved until <strong>{{ manilaDate(a.reserved_until!).format('MMM D, YYYY') }}</strong>
-              <span v-if="a.decided_by"> · approved by {{ a.decided_by }}</span>
-            </p>
-            <p v-if="a.status === 'approved' && a.leader_on_move_in" class="muted">Will be the leader of their room.</p>
-            <p v-if="a.status === 'approved' && a.planned_occupants?.length" class="muted">
-              Also staying: {{ a.planned_occupants.map((o) => o.name).join(', ') }}
-            </p>
-            <p v-if="a.closed_reason" class="muted">{{ a.closed_reason }}</p>
+        <DlCard v-for="a in items" :key="a.id" class="app">
+          <div class="head">
+            <DlAvatar :name="a.applicant?.name ?? '?'" :src="a.applicant?.photo_url" :size="44" />
+            <span class="who">
+              <span class="dl-title">{{ a.applicant?.name }}</span>
+              <span class="dl-data upper">
+                {{ a.property.name }}
+                <template v-if="a.unit"> · {{ a.unit.room_label ? `Room ${a.unit.room_label} · ` : '' }}{{ a.unit.label }}</template>
+                <template v-else-if="a.room"> · wants {{ a.wants_whole ? 'the whole of ' : '' }}room {{ a.room.label }}</template>
+              </span>
+            </span>
+            <DlStatusTag :tone="statusTone[a.status] ?? 'neutral'">{{ a.status_label }}</DlStatusTag>
+          </div>
 
+          <div class="facts">
+            <span class="fact"><Phone :size="14" aria-hidden="true" /> {{ a.applicant?.phone }} · {{ a.applicant?.email }}</span>
+            <span class="fact">
+              <Calendar :size="14" aria-hidden="true" />
+              <span>Move-in <strong>{{ manilaDate(a.planned_move_in_on).format('MMM D, YYYY') }}</strong> · applied {{ manila(a.created_at).format('MMM D') }}</span>
+            </span>
+          </div>
+
+          <p v-if="a.message" class="message">“{{ a.message }}”</p>
+          <a v-if="a.id_document_url" :href="a.id_document_url" target="_blank" rel="noopener" class="id-link"><FileText :size="16" aria-hidden="true" /> View ID</a>
+          <p v-else-if="a.id_document_purged" class="dl-small">ID deleted (30 days after closing)</p>
+
+          <p v-if="a.status === 'approved'" class="line">
+            Reserved until <strong>{{ manilaDate(a.reserved_until!).format('MMM D, YYYY') }}</strong>
+            <span v-if="a.decided_by"> · approved by {{ a.decided_by }}</span>
+          </p>
+          <p v-if="a.status === 'approved' && a.leader_on_move_in" class="dl-small">Will be the leader of their room.</p>
+          <p v-if="a.status === 'approved' && a.planned_occupants?.length" class="dl-small">
+            Also staying: {{ a.planned_occupants.map((o) => o.name).join(', ') }}
+          </p>
+          <p v-if="a.closed_reason" class="dl-small">{{ a.closed_reason }}</p>
+
+          <div v-if="a.status === 'pending' || a.status === 'approved'" class="actions">
             <template v-if="a.status === 'pending'">
-              <ion-button size="small" @click="approve(a)">Approve</ion-button>
-              <ion-button size="small" fill="outline" color="medium" @click="decline(a)">Decline</ion-button>
+              <ion-button @click="approve(a)">Approve</ion-button>
+              <ion-button class="dl-tonal" @click="decline(a)">Decline</ion-button>
             </template>
             <template v-if="a.status === 'approved'">
-              <ion-button size="small" @click="movingIn = a">Move in</ion-button>
-              <ion-button size="small" fill="outline" color="danger" @click="cancel(a)">Cancel reservation</ion-button>
+              <ion-button @click="movingIn = a"><KeyRound slot="start" :size="18" aria-hidden="true" /> Move in</ion-button>
+              <ion-button fill="outline" color="danger" @click="cancel(a)">Cancel reservation</ion-button>
             </template>
-          </ion-card-content>
-        </ion-card>
+          </div>
+        </DlCard>
 
         <ion-infinite-scroll :disabled="page >= lastPage" @ion-infinite="more">
           <ion-infinite-scroll-content />
@@ -80,32 +96,29 @@
 <script setup lang="ts">
 import {
   type InfiniteScrollCustomEvent,
-  type RefresherCustomEvent,
   alertController,
   IonButton,
-  IonCard,
-  IonCardContent,
-  IonCardHeader,
-  IonCardSubtitle,
-  IonCardTitle,
+  IonButtons,
   IonContent,
   IonHeader,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
   IonLabel,
   IonPage,
-  IonRefresher,
-  IonRefresherContent,
   IonSegment,
   IonSegmentButton,
   IonTitle,
   IonToolbar,
   onIonViewWillEnter,
 } from '@ionic/vue'
+import { Calendar, FileText, KeyRound, Phone } from 'lucide-vue-next'
 import { ref } from 'vue'
+import NotificationBell from '@/components/NotificationBell.vue'
 import { manila, manilaDate } from '@/lib/dayjs'
 import ApproveModal from '@/components/tenancy/ApproveModal.vue'
 import MoveInModal from '@/components/tenancy/MoveInModal.vue'
+import { DlAvatar, DlCard, DlEmptyState, DlRefresher, DlSkeleton, DlStatusTag } from '@/components/dl'
+import type { TagTone } from '@/lib/tones'
 import { errorMessage, firstError } from '@/services/api'
 import { bookingService } from '@/services/bookings'
 import { useBookingStore } from '@/stores/bookings'
@@ -114,6 +127,15 @@ import { useToast } from '@/composables/useToast'
 import type { BookableUnit, BookingApplication } from '@/types/booking'
 
 /** Owner and Manager caretakers: review applications for the properties they run. */
+
+const statusTone: Record<string, TagTone> = {
+  pending: 'warning',
+  approved: 'success',
+  moved_in: 'brand',
+  declined: 'danger',
+  cancelled: 'neutral',
+  expired: 'neutral',
+}
 const toast = useToast()
 const prompt = usePrompt()
 const store = useBookingStore()
@@ -148,10 +170,6 @@ function setStatus(value: string) {
   load()
 }
 
-async function refresh(event: RefresherCustomEvent) {
-  await load()
-  event.target.complete()
-}
 
 async function more(event: InfiniteScrollCustomEvent) {
   await load(false)
@@ -213,10 +231,74 @@ async function cancel(a: BookingApplication) {
 </script>
 
 <style scoped>
-.message {
-  font-style: italic;
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--card-gap);
 }
-.small {
-  font-size: 0.85rem;
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.who {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.upper {
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.message {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg-muted);
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.id-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--brand-primary);
+  text-decoration: none;
+}
+.line {
+  margin: 0;
+  font-size: 14px;
+}
+.dl-small {
+  margin: 0;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.actions ion-button {
+  margin: 0;
 }
 </style>

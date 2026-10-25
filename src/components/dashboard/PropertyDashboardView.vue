@@ -1,25 +1,27 @@
 <template>
   <div v-if="d" class="dash">
     <div class="tiles">
-      <div class="tile">
-        <span class="label">Places taken</span>
-        <strong>{{ d.occupancy.occupied }} / {{ d.occupancy.places }}</strong>
-        <span class="small">{{ d.occupancy.available }} available<template v-if="d.occupancy.reserved"> · {{ d.occupancy.reserved }} reserved</template><template v-if="d.occupancy.not_ready"> · {{ d.occupancy.not_ready }} not ready</template></span>
-      </div>
-      <div v-if="d.overdue" class="tile" role="button" @click="emit('open', 'billing')">
-        <span class="label">Overdue</span>
-        <strong :class="{ warn: d.overdue.centavos > 0 }">{{ peso(d.overdue.centavos) }}</strong>
-        <span class="small">{{ d.overdue.payers }} boarder{{ d.overdue.payers === 1 ? '' : 's' }}</span>
-      </div>
-      <div v-if="d.due_this_week" class="tile">
-        <span class="label">Due this week</span>
-        <strong>{{ peso(d.due_this_week.centavos) }}</strong>
-        <span class="small">{{ d.due_this_week.bills }} bill{{ d.due_this_week.bills === 1 ? '' : 's' }}</span>
-      </div>
-      <div v-if="d.collected_this_month !== null" class="tile">
-        <span class="label">Collected this month</span>
-        <strong>{{ peso(d.collected_this_month) }}</strong>
-      </div>
+      <DlStatCard
+        label="Places taken"
+        :value="`${d.occupancy.occupied} / ${d.occupancy.places}`"
+        :caption="occupancyCaption"
+      />
+      <DlStatCard
+        v-if="d.overdue"
+        label="Overdue"
+        :value="peso(d.overdue.centavos)"
+        :caption="`${d.overdue.payers} boarder${d.overdue.payers === 1 ? '' : 's'}`"
+        tone="coral"
+        @click="emit('open', 'billing')"
+      />
+      <DlStatCard
+        v-if="d.due_this_week"
+        label="Due this week"
+        :value="peso(d.due_this_week.centavos)"
+        :caption="`${d.due_this_week.bills} bill${d.due_this_week.bills === 1 ? '' : 's'}`"
+        tone="butter"
+      />
+      <DlStatCard v-if="d.collected_this_month !== null" label="Collected this month" :value="peso(d.collected_this_month)" dark />
     </div>
 
     <ion-list v-if="waiting.length" inset>
@@ -29,7 +31,7 @@
     </ion-list>
 
     <template v-if="d.unpaid_shared_bills?.length">
-      <h3>Rooms with unpaid shared bills</h3>
+      <h3 class="dl-h2 sub">Rooms with unpaid shared bills</h3>
       <ion-list lines="full">
         <ion-item v-for="r in d.unpaid_shared_bills" :key="r.room.id">
           <ion-label class="ion-text-wrap">
@@ -41,13 +43,14 @@
       </ion-list>
     </template>
 
-    <p v-if="!d.occupancy.places" class="muted">No rooms yet. Add rooms in the Rooms tab, set prices, then publish the listing.</p>
+    <p v-if="!d.occupancy.places" class="dl-small">No rooms yet. Add rooms in the Rooms tab, set prices, then publish the listing.</p>
   </div>
 </template>
 
 <script setup lang="ts">
 import { IonItem, IonLabel, IonList, IonNote } from '@ionic/vue'
 import { computed, onMounted, ref } from 'vue'
+import DlStatCard from '@/components/dl/DlStatCard.vue'
 import { peso } from '@/lib/money'
 import { dashboardService } from '@/services/dashboard'
 import type { PropertyDashboard } from '@/types/dashboard'
@@ -64,6 +67,12 @@ onMounted(async () => {
   } catch {
     // The rest of the Overview still works without it.
   }
+})
+
+const occupancyCaption = computed(() => {
+  const o = d.value?.occupancy
+  if (!o) return ''
+  return [`${o.available} available`, o.reserved ? `${o.reserved} reserved` : null, o.not_ready ? `${o.not_ready} not ready` : null].filter(Boolean).join(' · ')
 })
 
 const waiting = computed(() => {
@@ -84,29 +93,14 @@ const waiting = computed(() => {
 <style scoped>
 .tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 8px;
-  margin-bottom: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--card-gap);
+  margin-bottom: var(--card-gap);
 }
-.tile {
-  display: flex;
-  flex-direction: column;
-  padding: 12px;
-  border-radius: 8px;
-  background: var(--ion-color-light);
-}
-.tile[role='button'] {
-  cursor: pointer;
-}
-.label,
-.small {
-  font-size: 0.8rem;
-  color: var(--ion-color-medium);
-}
-strong {
-  font-size: 1.2rem;
+.sub {
+  margin: 20px 0 12px;
 }
 .warn {
-  color: var(--ion-color-danger);
+  color: var(--danger-text);
 }
 </style>

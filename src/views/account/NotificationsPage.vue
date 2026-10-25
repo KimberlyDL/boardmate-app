@@ -2,6 +2,9 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-back-button :default-href="auth.homePath" />
+        </ion-buttons>
         <ion-title>Notifications</ion-title>
         <ion-buttons slot="end">
           <ion-button :disabled="!store.unreadCount" @click="store.markAllRead()">Mark all read</ion-button>
@@ -9,15 +12,17 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content>
+    <ion-content class="ion-padding">
       <ion-refresher slot="fixed" @ion-refresh="refresh">
         <ion-refresher-content />
       </ion-refresher>
 
       <div class="narrow">
-        <p v-if="!store.loading && !store.items.length" class="ion-padding muted center">No notifications yet.</p>
+        <DlCard v-if="!store.loading && !store.items.length">
+          <DlEmptyState note="you're all caught up" :icon="Bell">No notifications yet.</DlEmptyState>
+        </DlCard>
 
-        <ion-list>
+        <ion-list v-else lines="full">
           <ion-item
             v-for="n in store.items"
             :key="n.id"
@@ -26,12 +31,13 @@
             :class="{ unread: !n.read_at }"
             @click="open(n)"
           >
+            <span slot="start" class="dot" :class="{ on: !n.read_at }" aria-hidden="true" />
             <ion-label class="ion-text-wrap">
               <h2>{{ n.title }}</h2>
               <p>{{ n.body }}</p>
-              <p class="muted">{{ manila(n.created_at).format('MMM D, h:mm A') }}</p>
+              <p class="when">{{ manila(n.created_at).format('D MMM · h:mm A') }}</p>
             </ion-label>
-            <ion-note v-if="!n.read_at" slot="end" color="primary">New</ion-note>
+            <DlStatusTag v-if="!n.read_at" slot="end" status="new" />
           </ion-item>
         </ion-list>
 
@@ -47,6 +53,7 @@
 import {
   type InfiniteScrollCustomEvent,
   type RefresherCustomEvent,
+  IonBackButton,
   IonButton,
   IonButtons,
   IonContent,
@@ -56,7 +63,6 @@ import {
   IonItem,
   IonLabel,
   IonList,
-  IonNote,
   IonPage,
   IonRefresher,
   IonRefresherContent,
@@ -64,12 +70,16 @@ import {
   IonToolbar,
   onIonViewWillEnter,
 } from '@ionic/vue'
+import { Bell } from 'lucide-vue-next'
+import { DlCard, DlEmptyState, DlStatusTag } from '@/components/dl'
 import { useRouter } from 'vue-router'
 import { manila } from '@/lib/dayjs'
+import { useAuthStore } from '@/stores/auth'
 import { useNotificationStore } from '@/stores/notifications'
 import type { AppNotification } from '@/types/user'
 
 const store = useNotificationStore()
+const auth = useAuthStore()
 const router = useRouter()
 
 onIonViewWillEnter(() => store.load())
@@ -91,6 +101,24 @@ async function open(n: AppNotification) {
 </script>
 
 <style scoped>
+.unread {
+  --background: var(--brand-primary-subtle);
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  margin-right: 4px;
+  border-radius: var(--radius-full);
+  background: transparent;
+}
+.dot.on {
+  background: var(--brand-primary);
+}
+.when {
+  font-family: var(--font-mono);
+  font-size: 11px !important;
+  text-transform: uppercase;
+}
 .unread h2 {
   font-weight: 600;
 }
