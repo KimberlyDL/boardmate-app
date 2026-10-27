@@ -1,157 +1,270 @@
 <template>
-  <div>
-    <rooms-stack :tiles="tiles" @select="selectedId = $event" />
+  <div ref="root">
+    <div v-if="rooms.length" class="filters">
+      <ion-segment v-model="filters.kind" class="kind">
+        <ion-segment-button value="any"><ion-label>All</ion-label></ion-segment-button>
+        <ion-segment-button value="bedspace"><ion-label>Bedspace</ion-label></ion-segment-button>
+        <ion-segment-button value="whole"><ion-label>Whole room</ion-label></ion-segment-button>
+      </ion-segment>
+      <div class="filter-row">
+        <ion-select v-model="filters.who" interface="popover" label="Who can stay" label-placement="stacked" class="who">
+          <ion-select-option value="any">Anyone</ion-select-option>
+          <ion-select-option value="female">Female</ion-select-option>
+          <ion-select-option value="male">Male</ion-select-option>
+        </ion-select>
+        <ion-toggle v-model="filters.availableOnly" label-placement="end" class="free-only">Free only</ion-toggle>
+      </div>
+      <!-- Price range picked on the Find page -->
+      <div v-if="priceText" class="price-filter">
+        <span class="muted small">Your price range:</span>
+        <ion-chip class="price-chip" @click="clearPrice">
+          <ion-label>{{ priceText }}</ion-label>
+          <ion-icon :icon="closeCircle" aria-label="Clear the price range" />
+        </ion-chip>
+      </div>
+    </div>
 
-    <ion-modal :is-open="!!room" :initial-breakpoint="0.6" :breakpoints="[0, 0.6, 1]" @did-dismiss="selectedId = null">
-      <ion-content v-if="room" class="ion-padding">
-        <div class="sheet">
-          <div class="head">
-            <div class="who">
-              <h2 class="dl-title name">Room {{ room.label }}</h2>
-              <span class="dl-data meta">
-                {{ room.floor === null ? 'No floor set' : `Floor ${room.floor}` }}<template v-if="room.door_no"> · {{ room.code }}</template> ·
-                {{ room.rental_mode_label }}
-              </span>
-            </div>
-            <span class="price">{{ room.rent_from_centavos !== null ? peso(room.rent_from_centavos).replace('.00', '') : 'Ask' }}</span>
-          </div>
-
-          <div class="tags">
-            <DlStatusTag :tone="badge[room.status].tone">{{ badge[room.status].text }}</DlStatusTag>
-            <DlStatusTag v-if="room.who_can_stay !== 'any'" tone="info">{{ room.who_can_stay_label }}</DlStatusTag>
-          </div>
-
-          <p class="dl-body line">
-            <strong>{{ room.rent_from_centavos !== null ? peso(room.rent_from_centavos) : 'Price on request' }}</strong>
-            / month{{ room.rental_mode === 'bedspaces' ? ' per bedspace' : '' }} · {{ room.availability_label }}
-          </p>
-
-          <DlCard v-if="room.whole_option" tone="muted" :padding="14" class="whole">
-            <span class="dl-eyebrow">WHOLE ROOM</span>
-            <p class="dl-small whole-copy">
-              Also rented as one room for up to {{ room.whole_option.capacity }}:
-              <strong>{{ room.whole_option.rent_centavos !== null ? peso(room.whole_option.rent_centavos) : 'ask the owner' }}</strong> / month<template
-                v-if="!room.whole_option.available"
-              >, only while every bedspace is free</template>.
-            </p>
-          </DlCard>
-
-          <p class="dl-small">Shared spaces such as the CR and kitchen are described in the place's details.</p>
-
-          <div v-if="applyHref" class="actions">
-            <ion-button v-if="room.available > 0" expand="block" :router-link="`${applyHref}?room=${room.id}`" @click="selectedId = null">
-              {{ room.whole_option ? 'Rent a bedspace' : `Apply for Room ${room.label}` }}
-            </ion-button>
-            <ion-button
-              v-if="room.whole_option?.available"
-              expand="block"
-              :class="{ 'dl-tonal': room.available > 0 }"
-              :router-link="`${applyHref}?room=${room.id}&whole=1`"
-              @click="selectedId = null"
-            >
-              Rent the whole room
-            </ion-button>
-          </div>
+    <template v-if="!floor">
+      <div v-if="rooms.length" class="hint-row">
+        <p class="muted small hint">Pick a floor to see its rooms.</p>
+        <ion-button v-if="can3d" fill="clear" size="small" class="view-switch" @click="use3d = !use3d">{{ use3d ? 'Simple view' : '3D view' }}</ion-button>
+      </div>
+      <Building3D v-if="use3d" :floors="floors" @select="floorKey = $event" />
+      <building-floors v-else :floors="floors" @select="floorKey = $event" />
+    </template>
+    <template v-else>
+      <div v-if="!singleFloor" class="floor-head">
+        <ion-button fill="clear" size="small" @click="floorKey = null">
+          <ion-icon slot="start" :icon="chevronBack" /> All floors
+        </ion-button>
+        <div class="floor-tabs" role="group" aria-label="Floors">
+          <button
+            v-for="f in floors"
+            :key="f.key"
+            type="button"
+            class="floor-tab"
+            :class="{ on: f.key === floor.key, free: f.freeRooms > 0 }"
+            :aria-pressed="f.key === floor.key"
+            @click="floorKey = f.key"
+          >
+            {{ floorTabText(f) }}
+          </button>
         </div>
+      </div>
+      <p v-if="!floor.rooms.length" class="muted">Nothing on this floor matches. Change the filters or pick another floor.</p>
+      <div v-else class="hint-row">
+        <p class="muted small hint">{{ floor.label }}, seen from above. Tap a room.</p>
+        <ion-button v-if="can3d" fill="clear" size="small" class="view-switch" @click="use3d = !use3d">{{ use3d ? 'Simple view' : '3D view' }}</ion-button>
+      </div>
+      <!-- Floor plan, with room details beside it on big screens -->
+      <div class="floor-body" :class="{ wide }">
+        <div class="plan-col">
+          <Floor3D
+            v-if="use3d"
+            :rooms="floor.allRooms"
+            :match-ids="floor.rooms.map((r) => r.id)"
+            :label="floor.label"
+            :selected-id="preview?.id ?? null"
+            @select="selectedId = $event"
+          />
+          <floor-plan
+            v-else
+            :rooms="floor.allRooms"
+            :match-ids="floor.rooms.map((r) => r.id)"
+            :label="floor.label"
+            :selected-id="preview?.id ?? null"
+            @select="selectedId = $event"
+          />
+        </div>
+        <aside v-if="wide" class="detail-col" aria-label="Room details">
+          <room-details v-if="preview" :room="preview" :apply-href="applyHref" :show3d="use3d" />
+          <p v-else class="pick muted">Tap a room on the plan to see its details here.</p>
+        </aside>
+      </div>
+    </template>
+
+    <!-- Room details in a bottom sheet on phones -->
+    <ion-modal
+      v-if="!wide"
+      :is-open="!!preview"
+      :initial-breakpoint="0.55"
+      :breakpoints="[0, 0.55, 0.95]"
+      :backdrop-breakpoint="0.6"
+      class="room-sheet"
+      @did-dismiss="selectedId = null"
+    >
+      <ion-content v-if="preview" class="ion-padding">
+        <room-details :room="preview" :apply-href="applyHref" :show3d="use3d" closable @close="selectedId = null" />
       </ion-content>
     </ion-modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonContent, IonModal } from '@ionic/vue'
-import { computed, ref } from 'vue'
-import DlCard from '@/components/dl/DlCard.vue'
-import DlStatusTag from '@/components/dl/DlStatusTag.vue'
-import RoomsStack, { type StackTile } from '@/components/rooms/RoomsStack.vue'
+import { IonButton, IonChip, IonContent, IonIcon, IonLabel, IonModal, IonSegment, IonSegmentButton, IonSelect, IonSelectOption, IonToggle } from '@ionic/vue'
+import { chevronBack, closeCircle } from 'ionicons/icons'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import BuildingFloors from '@/components/rooms/BuildingFloors.vue'
+import FloorPlan from '@/components/rooms/FloorPlan.vue'
+import RoomDetails from '@/components/rooms/RoomDetails.vue'
+import { defaultRoomFilters, floorSummaries, floorTabText, type RoomFilters } from '@/lib/floors'
 import { peso } from '@/lib/money'
+import { supports3d } from '@/lib/room3d/model'
 import type { PublicRoom } from '@/types/booking'
 
-/**
- * Public "Rooms & availability": the stacked floors of one place. Tapping a
- * room opens its details, with Apply for that room when it has a free
- * place and `applyHref` is given (left out when the viewer already applied).
- */
-const props = defineProps<{ rooms: PublicRoom[]; applyHref?: string | null }>()
+/** Rooms & availability: pick a floor, then a room, to see its details. */
+const props = defineProps<{ rooms: PublicRoom[]; applyHref?: string | null; initialFilters?: Partial<RoomFilters> }>()
+
+// 3D views load only when needed; phones without 3D get the flat views
+const Building3D = defineAsyncComponent(() => import('@/components/rooms/Building3D.vue'))
+const Floor3D = defineAsyncComponent(() => import('@/components/rooms/Floor3D.vue'))
+const can3d = supports3d()
+const use3d = ref(can3d)
+
+// Use two columns when there is enough space
+const WIDE_PX = 820
+const root = ref<HTMLElement | null>(null)
+const wide = ref(true)
+let observer: ResizeObserver | null = null
+onMounted(() => {
+  // In unit tests there is no ResizeObserver, so keep two columns
+  if (!root.value || typeof ResizeObserver === 'undefined') return
+  wide.value = root.value.clientWidth >= WIDE_PX
+  observer = new ResizeObserver(() => {
+    if (root.value) wide.value = root.value.clientWidth >= WIDE_PX
+  })
+  observer.observe(root.value)
+})
+onBeforeUnmount(() => observer?.disconnect())
+
+const filters = reactive<RoomFilters>({ ...defaultRoomFilters(), ...props.initialFilters })
+
+const wholePeso = (c: number) => peso(c).replace('.00', '')
+/** Text for the price range chip */
+const priceText = computed(() => {
+  const { minRent: min, maxRent: max } = filters
+  if (min !== null && max !== null) return `${wholePeso(min)}–${wholePeso(max)}`
+  if (min !== null) return `${wholePeso(min)} and up`
+  if (max !== null) return `Up to ${wholePeso(max)}`
+  return ''
+})
+function clearPrice() {
+  filters.minRent = null
+  filters.maxRent = null
+}
+const floors = computed(() => floorSummaries(props.rooms, filters))
+const singleFloor = computed(() => floors.value.length === 1)
+const floorKey = ref<string | null>(null)
+const floor = computed(() => (singleFloor.value ? floors.value[0] : floors.value.find((f) => f.key === floorKey.value)) ?? null)
 
 const selectedId = ref<number | null>(null)
 const room = computed(() => props.rooms.find((r) => r.id === selectedId.value) ?? null)
-
-const badge = {
-  available: { text: 'Available', tone: 'success' },
-  full: { text: 'Full', tone: 'neutral' },
-  not_ready: { text: 'Not ready', tone: 'warning' },
-} as const
-
-const tiles = computed<StackTile[]>(() =>
-  props.rooms.map((r) => ({
-    id: r.id,
-    floor: r.floor,
-    title: r.label,
-    status: r.status,
-    line1: r.status === 'available' && r.rent_from_centavos !== null ? peso(r.rent_from_centavos).replace('.00', '') : badge[r.status].text,
-    line2:
-      r.rental_mode === 'bedspaces'
-        ? `${r.available}/${r.total} beds free${r.whole_option?.available ? ' · or whole' : ''}`
-        : `Whole · ${r.capacity} max`,
-  })),
-)
+/** The tapped room, if it is on the floor being shown */
+const preview = computed(() => (room.value && floor.value?.allRooms.includes(room.value) ? room.value : null))
+// Opening another floor clears the tapped room
+watch(floorKey, () => {
+  selectedId.value = null
+})
 </script>
 
 <style scoped>
-.sheet {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding-top: 8px;
+.filters {
+  margin-bottom: 6px;
 }
-.head {
+.filter-row {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+  align-items: center;
+  gap: 16px;
+  margin-top: 6px;
 }
-.who {
+.price-filter {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
 }
-.name {
+.price-chip {
   margin: 0;
 }
-.meta {
-  color: var(--text-muted);
-  text-transform: uppercase;
+.who {
+  flex: 1;
+  max-width: 180px;
 }
-.price {
-  flex-shrink: 0;
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--brand-primary);
+.hint {
+  margin: 4px 0 0;
 }
-.tags {
+/* Hint and the view switch on one line */
+.hint-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 2px 0 4px;
+}
+.hint-row .hint {
+  margin: 0;
+}
+.view-switch {
+  flex: none;
+  margin: 0;
+}
+.floor-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.floor-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
-.line {
-  color: var(--text-secondary);
+.floor-tab {
+  padding: 4px 10px;
+  border: 1px solid var(--ion-color-medium);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--ion-text-color);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
 }
-.whole {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.floor-tab.free {
+  border-color: var(--ion-color-success);
 }
-.whole-copy {
-  color: var(--text-secondary);
+.floor-tab.on {
+  background: var(--ion-color-primary);
+  border-color: var(--ion-color-primary);
+  color: var(--ion-color-primary-contrast);
 }
-.actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.floor-tab:focus-visible {
+  outline: 3px solid var(--ion-color-primary);
+  outline-offset: 2px;
 }
-.actions ion-button {
+/* Two columns: floor plan and room details */
+.floor-body.wide {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+.plan-col {
+  min-width: 0;
+}
+.detail-col {
+  position: sticky;
+  top: 8px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--ion-text-color, #000) 15%, transparent);
+  border-radius: 12px;
+}
+.pick {
   margin: 0;
+  padding: 24px 4px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+.small {
+  font-size: 0.8rem;
 }
 </style>

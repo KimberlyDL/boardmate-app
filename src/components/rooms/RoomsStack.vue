@@ -27,6 +27,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { floorName } from '@/lib/floors'
 
 export type TileStatus = 'available' | 'full' | 'not_ready'
 
@@ -55,20 +56,13 @@ const slabs = computed(() => {
   for (const tile of props.tiles) {
     const key = tile.floor === null ? 'none' : String(tile.floor)
     if (!byFloor.has(key)) {
-      byFloor.set(key, { key, floor: tile.floor, label: tile.floor === null ? 'No floor set' : floorName(tile.floor), tiles: [] })
+      byFloor.set(key, { key, floor: tile.floor, label: floorName(tile.floor), tiles: [] })
     }
     byFloor.get(key)!.tiles.push(tile)
   }
   // Top floor first on screen, so the stack reads from the roof down.
   return [...byFloor.values()].sort((a, b) => (b.floor ?? -Infinity) - (a.floor ?? -Infinity))
 })
-
-function floorName(floor: number): string {
-  if (floor === 0) return 'Ground floor'
-  if (floor < 0) return `Basement ${-floor}`
-  const suffix = floor % 100 >= 11 && floor % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[floor % 10] ?? 'th'
-  return `${floor}${suffix} floor`
-}
 </script>
 
 <style scoped>
