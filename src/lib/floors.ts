@@ -170,7 +170,7 @@ export function floorFreeText(summary: FloorSummary): string {
 }
 
 /** The room type: Bedspace, Solo (1 person), Whole room (2) or Family (3 or more) */
-export function roomType(room: PublicRoom): 'Bedspace' | 'Solo' | 'Whole room' | 'Family' {
+export function roomType(room: Pick<PublicRoom, 'rental_mode' | 'capacity'>): 'Bedspace' | 'Solo' | 'Whole room' | 'Family' {
   if (room.rental_mode === 'bedspaces') return 'Bedspace'
   if (room.capacity <= 1) return 'Solo'
   return room.capacity >= 3 ? 'Family' : 'Whole room'

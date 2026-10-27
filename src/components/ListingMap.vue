@@ -177,10 +177,11 @@ function drawOrigin() {
       fillColor: '#3880ff',
       fillOpacity: 0.06,
       interactive: false,
+      className: 'origin-radius', // brand color set in the styles below
     }).addTo(originLayer)
     fit(circle.getBounds(), 12)
   }
-  L.circleMarker(center, { radius: 9, color: '#fff', weight: 3, fillColor: '#3880ff', fillOpacity: 1 })
+  L.circleMarker(center, { radius: 9, color: '#fff', weight: 3, fillColor: '#3880ff', fillOpacity: 1, className: 'origin-dot' })
     .bindTooltip(props.origin.label, { permanent: true, direction: 'top', offset: [0, -8], className: 'origin-label', pane: 'originLabel' })
     .addTo(originLayer)
 }
@@ -286,18 +287,19 @@ onBeforeUnmount(() => {
   gap: 1px;
   white-space: nowrap;
   transform: translate(-50%, calc(-100% + 14px));
-  --pin: var(--ion-color-success, #2dd36f);
+  --pin: var(--brand-primary);
 }
 .building-marker .pin.full {
-  --pin: var(--ion-color-medium, #92949c);
+  --pin: var(--stone-400);
 }
 .building-marker .bubble {
   position: relative;
   padding: 2px 8px;
   border-radius: 10px;
   background: var(--pin);
-  color: #fff;
-  font-weight: 600;
+  color: var(--text-on-primary);
+  font-family: var(--font-body);
+  font-weight: 700;
   font-size: 11px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
@@ -315,21 +317,23 @@ onBeforeUnmount(() => {
   display: flex;
   margin-top: 3px;
   padding: 3px;
-  border-radius: 8px;
-  background: #fff;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
   color: var(--pin);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
 }
 .building-marker .price {
   padding: 0 5px;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.9);
-  color: #222;
+  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
+  color: var(--text-primary);
+  font-family: var(--font-display);
   font-weight: 700;
   font-size: 11px;
 }
 .building-marker .pin.selected .building {
-  outline: 3px solid var(--ion-color-primary, #3880ff);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
 }
 .building-marker .pin.selected .bubble {
   font-size: 12px;
@@ -348,8 +352,9 @@ onBeforeUnmount(() => {
   height: 18px;
   padding: 0 4px;
   border-radius: 9px;
-  background: #222;
-  color: #fff;
+  background: var(--bg-ink);
+  color: var(--text-on-ink);
+  font-family: var(--font-body);
   font-size: 11px;
   font-weight: 700;
   line-height: 18px;
@@ -358,5 +363,14 @@ onBeforeUnmount(() => {
 .origin-label {
   font-family: var(--font-body);
   font-weight: 700;
+}
+/* The "measure from" point and its search circle, in the brand's info blue */
+.origin-radius {
+  stroke: var(--info-solid);
+  fill: var(--info-solid);
+}
+.origin-dot {
+  stroke: var(--bg-surface);
+  fill: var(--info-solid);
 }
 </style>

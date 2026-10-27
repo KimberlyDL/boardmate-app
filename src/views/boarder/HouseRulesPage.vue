@@ -61,8 +61,6 @@ import {
   IonBackButton,
   IonButton,
   IonButtons,
-  IonCard,
-  IonCardContent,
   IonContent,
   IonHeader,
   IonItem,

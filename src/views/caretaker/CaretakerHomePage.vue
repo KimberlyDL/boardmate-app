@@ -106,7 +106,9 @@ const eyebrow = computed(() => {
 
 async function load() {
   try {
-    ;[owners.value, dash.value] = await Promise.all([caretakerService.employers(), dashboardService.mine()])
+    const [employers, dashboard] = await Promise.all([caretakerService.employers(), dashboardService.mine()])
+    owners.value = employers
+    dash.value = dashboard
   } catch (e) {
     toast.error(errorMessage(e))
   } finally {

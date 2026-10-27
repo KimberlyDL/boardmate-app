@@ -220,25 +220,26 @@ watch(floorKey, () => {
   gap: 6px;
 }
 .floor-tab {
-  padding: 4px 10px;
-  border: 1px solid var(--ion-color-medium);
-  border-radius: 14px;
-  background: transparent;
-  color: var(--ion-text-color);
+  padding: 6px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  color: var(--text-primary);
   font: inherit;
-  font-size: 0.8rem;
+  font-family: var(--font-body);
+  font-size: 13px;
   cursor: pointer;
 }
 .floor-tab.free {
-  border-color: var(--ion-color-success);
+  border-color: var(--success-solid);
 }
 .floor-tab.on {
-  background: var(--ion-color-primary);
-  border-color: var(--ion-color-primary);
-  color: var(--ion-color-primary-contrast);
+  background: var(--bg-ink);
+  border-color: var(--bg-ink);
+  color: var(--text-on-ink);
 }
 .floor-tab:focus-visible {
-  outline: 3px solid var(--ion-color-primary);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 /* Two columns: floor plan and room details */
@@ -255,16 +256,17 @@ watch(floorKey, () => {
   position: sticky;
   top: 8px;
   padding: 12px 14px;
-  border: 1px solid color-mix(in srgb, var(--ion-text-color, #000) 15%, transparent);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
 }
 .pick {
   margin: 0;
   padding: 24px 4px;
   text-align: center;
-  font-size: 0.9rem;
+  font-size: 14px;
+  color: var(--text-muted);
 }
 .small {
-  font-size: 0.8rem;
+  font-size: 13px;
 }
 </style>

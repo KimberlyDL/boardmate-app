@@ -61,11 +61,11 @@ function matches(room: PublicRoom): boolean {
 }
 /* Outer wall of the floor */
 .plan {
-  --wall: color-mix(in srgb, var(--ion-text-color, #000) 55%, var(--ion-background-color, #fff));
-  --floor: color-mix(in srgb, var(--ion-text-color, #000) 5%, var(--ion-background-color, #fff));
+  --wall: color-mix(in srgb, var(--text-primary) 45%, var(--bg-surface));
+  --floor: var(--bg-muted);
   min-width: min-content;
   border: 4px solid var(--wall);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--floor);
 }
 .row {
@@ -85,9 +85,9 @@ function matches(room: PublicRoom): boolean {
   border: none;
   border-right: 2px solid var(--wall);
   border-bottom: 2px solid var(--wall);
-  border-left: 5px solid var(--ion-color-medium);
-  background: var(--ion-background-color, #fff);
-  color: var(--ion-text-color, #000);
+  border-left: 5px solid var(--stone-400);
+  background: var(--bg-surface);
+  color: var(--text-primary);
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -97,45 +97,49 @@ function matches(room: PublicRoom): boolean {
   border-bottom: none;
 }
 .room.available {
-  border-left-color: var(--ion-color-success);
-  background: color-mix(in srgb, var(--ion-color-success) 8%, var(--ion-background-color, #fff));
+  border-left-color: var(--success-solid);
+  background: var(--success-subtle);
 }
 .room.not_ready {
-  border-left-color: var(--ion-color-warning);
+  border-left-color: var(--warning-solid);
+  background: var(--warning-subtle);
 }
 .room.dim {
   opacity: 0.4;
 }
 .room.selected {
-  outline: 3px solid var(--ion-color-primary);
-  outline-offset: -3px;
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
   opacity: 1;
 }
 .room:focus-visible {
-  outline: 3px solid var(--ion-color-primary);
-  outline-offset: -3px;
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
 }
 .hallway {
   flex-basis: 100%;
   padding: 7px 0;
-  font-size: 0.7rem;
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
   letter-spacing: 0.25em;
   text-align: center;
   text-transform: uppercase;
-  color: var(--ion-color-medium);
-  background: repeating-linear-gradient(90deg, transparent 0 14px, color-mix(in srgb, var(--ion-text-color, #000) 6%, transparent) 14px 28px);
+  color: var(--text-muted);
+  background: repeating-linear-gradient(90deg, transparent 0 14px, color-mix(in srgb, var(--text-primary) 6%, transparent) 14px 28px);
 }
 .name {
-  font-size: 1rem;
+  font-family: var(--font-display);
+  font-size: 16px;
   font-weight: 700;
 }
 .type {
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--ion-color-medium);
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
 }
 /* Small bed icon */
 .beds {
@@ -149,27 +153,33 @@ function matches(room: PublicRoom): boolean {
   display: inline-block;
   width: 10px;
   height: 15px;
-  border: 2px solid var(--ion-color-medium);
+  border: 2px solid var(--stone-400);
   border-top-width: 5px;
   border-radius: 3px;
-  background: var(--ion-color-medium);
+  background: var(--stone-400);
 }
 .bed.free {
-  border-color: var(--ion-color-success);
+  border-color: var(--success-solid);
   background: transparent;
 }
 .status {
-  font-size: 0.8rem;
-  line-height: 1.2;
+  font-size: 12px;
+  line-height: 1.25;
+  color: var(--text-secondary);
 }
 .room.available .status {
-  color: var(--ion-color-success-shade, var(--ion-color-success));
-  font-weight: 600;
+  color: var(--success-text);
+  font-weight: 700;
+}
+.room.not_ready .status {
+  color: var(--warning-text);
 }
 .rent {
   margin-top: auto;
-  font-size: 0.78rem;
+  font-family: var(--font-display);
+  font-size: 13px;
   font-weight: 700;
+  color: var(--brand-primary);
 }
 .legend {
   display: flex;
@@ -177,7 +187,8 @@ function matches(room: PublicRoom): boolean {
   align-items: center;
   gap: 4px 10px;
   margin-top: 10px;
-  font-size: 0.8rem;
+  font-size: 13px;
+  color: var(--text-muted);
 }
 .legend .bed {
   margin-right: -6px;
@@ -187,10 +198,10 @@ function matches(room: PublicRoom): boolean {
   width: 12px;
   height: 12px;
   margin-right: -6px;
-  border-radius: 2px;
-  background: var(--ion-color-medium);
+  border-radius: 4px;
+  background: var(--stone-400);
 }
 .legend .swatch.available {
-  background: var(--ion-color-success);
+  background: var(--success-solid);
 }
 </style>

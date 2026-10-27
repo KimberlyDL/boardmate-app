@@ -76,5 +76,5 @@ const { go } = useTap(props)
   font-size: 9px;
   line-height: 1;
 }
-:global(.ion-palette-dark) .badge { color: var(--text-on-primary); }
+:root.ion-palette-dark .badge { color: var(--text-on-primary); }
 </style>

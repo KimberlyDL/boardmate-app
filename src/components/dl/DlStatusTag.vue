@@ -64,5 +64,5 @@ const presetLabel = computed(() => preset.value?.[1] ?? props.status ?? '')
 .solid.tone-brand { background: var(--brand-primary); color: var(--text-on-primary); }
 .solid.tone-neutral { background: var(--stone-700); }
 /* Dark theme's solids are light: dark text keeps them readable. */
-:global(.ion-palette-dark) .solid:not(.tone-neutral) { color: var(--text-on-primary); }
+:root.ion-palette-dark .solid:not(.tone-neutral) { color: var(--text-on-primary); }
 </style>

@@ -466,7 +466,7 @@ h1 {
   background: #ffffff;
   opacity: 0.7;
 }
-:global(.ion-palette-dark) .road { opacity: 0.12; }
+:root.ion-palette-dark .road { opacity: 0.12; }
 .r1 { left: 0; right: 0; top: 130px; height: 14px; transform: rotate(-8deg); }
 .r2 { top: 0; bottom: 0; left: 62%; width: 12px; transform: rotate(12deg); }
 .pin {
@@ -567,7 +567,7 @@ h1 {
   background: var(--stone-300);
   transition: width var(--motion-base) var(--ease-out), background var(--motion-base) var(--ease-out);
 }
-:global(.ion-palette-dark) .pip { background: var(--stone-700); }
+:root.ion-palette-dark .pip { background: var(--stone-700); }
 .dot.on .pip {
   width: 24px;
   background: var(--brand-primary);

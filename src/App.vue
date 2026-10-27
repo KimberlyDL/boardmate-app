@@ -2,7 +2,8 @@
   <ion-app>
     <GlobalProgress />
     <OfflineNotice />
-    <UpdatePrompt />
+    <!-- The Android app updates through new app versions, not the web service worker -->
+    <UpdatePrompt v-if="!native" />
     <ion-router-outlet />
   </ion-app>
 </template>
@@ -12,4 +13,7 @@ import { IonApp, IonRouterOutlet } from '@ionic/vue';
 import GlobalProgress from '@/components/GlobalProgress.vue';
 import OfflineNotice from '@/components/OfflineNotice.vue';
 import UpdatePrompt from '@/components/UpdatePrompt.vue';
+import { Capacitor } from '@capacitor/core';
+
+const native = Capacitor.isNativePlatform();
 </script>

@@ -4,7 +4,10 @@ import type { PublicRoom } from '@/types/booking'
 /** Which 3D room model to show, based on the room's type and size. */
 export type RoomKind = 'solo' | 'bunk2' | 'bunk4' | 'family'
 
-export function roomKind(room: PublicRoom): RoomKind {
+/** What the room models need to know: its type and size. */
+export type RoomShape = Pick<PublicRoom, 'rental_mode' | 'total' | 'capacity'>
+
+export function roomKind(room: RoomShape): RoomKind {
   if (room.rental_mode === 'bedspaces') return room.total <= 2 ? 'bunk2' : 'bunk4'
   if (room.capacity <= 1) return 'solo'
   return room.capacity >= 3 ? 'family' : 'bunk2'

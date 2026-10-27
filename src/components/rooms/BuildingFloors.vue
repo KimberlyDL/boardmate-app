@@ -36,11 +36,12 @@ const emit = defineEmits<{ select: [key: string] }>()
 /* Slanted side wall and roof for the 3D look */
 .building {
   --depth: 26px;
-  --wall: color-mix(in srgb, var(--ion-text-color, #000) 8%, var(--ion-background-color, #fff));
-  --wall-side: color-mix(in srgb, var(--ion-text-color, #000) 20%, var(--ion-background-color, #fff));
-  --roof: color-mix(in srgb, var(--ion-text-color, #000) 30%, var(--ion-background-color, #fff));
-  --line: color-mix(in srgb, var(--ion-text-color, #000) 16%, var(--ion-background-color, #fff));
-  --window: color-mix(in srgb, var(--ion-text-color, #000) 18%, var(--ion-background-color, #fff));
+  /* Stone walls, like the design system's room slabs */
+  --wall: var(--bg-muted);
+  --wall-side: color-mix(in srgb, var(--text-primary) 12%, var(--bg-muted));
+  --roof: color-mix(in srgb, var(--text-primary) 22%, var(--bg-muted));
+  --line: var(--border-default);
+  --window: color-mix(in srgb, var(--text-primary) 14%, var(--bg-muted));
   position: relative;
   max-width: 420px;
   margin: 8px auto 4px;
@@ -52,7 +53,7 @@ const emit = defineEmits<{ select: [key: string] }>()
   background: var(--roof);
   transform: skewX(-45deg);
   transform-origin: bottom left;
-  border-radius: 3px 3px 0 0;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 }
 .floor {
   position: relative;
@@ -65,7 +66,7 @@ const emit = defineEmits<{ select: [key: string] }>()
   border: none;
   border-bottom: 2px solid var(--line);
   background: var(--wall);
-  color: var(--ion-text-color, #000);
+  color: var(--text-primary);
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -88,11 +89,11 @@ const emit = defineEmits<{ select: [key: string] }>()
 }
 .floor:not(:disabled):hover,
 .floor:focus-visible {
-  background: color-mix(in srgb, var(--ion-color-primary) 12%, var(--wall));
+  background: color-mix(in srgb, var(--brand-primary) 12%, var(--wall));
 }
 .floor:focus-visible {
-  outline: 3px solid var(--ion-color-primary);
-  outline-offset: -3px;
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
 }
 .floor.empty {
   cursor: default;
@@ -112,8 +113,8 @@ const emit = defineEmits<{ select: [key: string] }>()
   background: var(--window);
 }
 .floor.free .windows i {
-  background: var(--ion-color-success);
-  box-shadow: 0 0 6px color-mix(in srgb, var(--ion-color-success) 60%, transparent);
+  background: var(--success-solid);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--success-solid) 60%, transparent);
 }
 .inner {
   display: flex;
@@ -122,22 +123,25 @@ const emit = defineEmits<{ select: [key: string] }>()
   gap: 2px;
 }
 .label {
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: var(--text-muted);
 }
 .line {
-  font-size: 0.85rem;
-  color: var(--ion-color-medium);
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text-secondary);
 }
 .floor.free .line {
-  color: var(--ion-color-success-shade, var(--ion-color-success));
-  font-weight: 600;
+  color: var(--success-text);
+  font-weight: 700;
 }
 .go {
   font-size: 1.1rem;
-  color: var(--ion-color-medium);
+  color: var(--text-muted);
 }
 .ground-line {
   height: 6px;

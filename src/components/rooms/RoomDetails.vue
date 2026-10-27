@@ -84,8 +84,9 @@ const badge = {
   gap: 8px;
 }
 .preview-name {
+  font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: 17px;
 }
 .close {
   flex: none;
@@ -97,7 +98,9 @@ const badge = {
   gap: 8px;
 }
 .price {
-  font-size: 1.05rem;
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: var(--brand-primary);
   margin-top: 6px !important;
 }
 .chip {
@@ -118,10 +121,10 @@ const badge = {
   grid-template-columns: auto 1fr;
   gap: 2px 14px;
   margin: 10px 0 6px;
-  font-size: 0.85rem;
+  font-size: 14px;
 }
 .facts dt {
-  color: var(--ion-color-medium);
+  color: var(--text-muted);
 }
 .facts dd {
   margin: 0;

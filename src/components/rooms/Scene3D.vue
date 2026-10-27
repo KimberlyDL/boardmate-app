@@ -137,11 +137,11 @@ onBeforeUnmount(() => {
 .view3d {
   position: relative;
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: radial-gradient(
     ellipse at 50% 40%,
-    color-mix(in srgb, var(--ion-text-color, #000) 3%, var(--ion-background-color, #fff)) 0%,
-    color-mix(in srgb, var(--ion-text-color, #000) 9%, var(--ion-background-color, #fff)) 100%
+    var(--bg-surface) 0%,
+    var(--bg-muted) 100%
   );
 }
 .view3d.building {
@@ -186,11 +186,12 @@ onBeforeUnmount(() => {
   left: 50%;
   margin: 0;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   transform: translateX(-50%);
-  background: color-mix(in srgb, var(--ion-background-color, #fff) 88%, transparent);
-  color: var(--ion-color-medium);
-  font-size: 0.72rem;
+  background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 12px;
   pointer-events: none;
 }
 .zoomed.dragging .drag-hint {
@@ -209,13 +210,14 @@ onBeforeUnmount(() => {
   top: 0;
   left: 0;
   padding: 3px 9px;
-  border: 1px solid color-mix(in srgb, var(--ion-text-color, #000) 14%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ion-background-color, #fff) 92%, transparent);
-  color: var(--ion-text-color, #000);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  color: var(--text-primary);
   font: inherit;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
   white-space: nowrap;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
   pointer-events: auto;
@@ -230,28 +232,28 @@ button.tag {
   height: 8px;
   margin-right: 6px;
   border-radius: 50%;
-  background: var(--ion-color-medium);
+  background: var(--stone-400);
 }
 .tag.free::before {
-  background: var(--ion-color-success);
+  background: var(--success-solid);
 }
 .tag.full,
 .tag.off {
-  color: var(--ion-color-medium);
+  color: var(--text-muted);
 }
 .tag.off {
   opacity: 0.55;
 }
 .tag.selected {
-  background: var(--ion-color-primary);
-  border-color: var(--ion-color-primary);
-  color: var(--ion-color-primary-contrast);
+  background: var(--bg-ink);
+  border-color: var(--bg-ink);
+  color: var(--text-on-ink);
 }
 .tag.selected::before {
-  background: var(--ion-color-primary-contrast);
+  background: var(--brand-accent);
 }
 .tag:focus-visible {
-  outline: 3px solid var(--ion-color-primary);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 .zoom {
@@ -264,10 +266,10 @@ button.tag {
 .zoom button {
   width: 32px;
   height: 32px;
-  border: 1px solid color-mix(in srgb, var(--ion-text-color, #000) 14%, transparent);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--ion-background-color, #fff) 92%, transparent);
-  color: var(--ion-text-color, #000);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  color: var(--text-primary);
   font: inherit;
   font-weight: 700;
   cursor: pointer;

@@ -41,16 +41,18 @@ const labels = computed<TagLabel[]>(() =>
   align-items: center;
   gap: 4px 8px;
   margin-top: 8px;
-  font-size: 0.8rem;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-muted);
 }
 .dot {
   display: inline-block;
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: var(--ion-color-medium);
+  background: var(--stone-400);
 }
 .dot.free {
-  background: var(--ion-color-success);
+  background: var(--success-solid);
 }
 </style>

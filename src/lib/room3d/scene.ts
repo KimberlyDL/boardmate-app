@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
-import { FLOOR_H, HALL, STAIR_LEN, type Footprint, type PlacedRoom, type RoomKind, footprint, placeRooms, roomKind } from '@/lib/room3d/model'
+import { FLOOR_H, HALL, STAIR_LEN, type Footprint, type PlacedRoom, type RoomKind, type RoomShape, footprint, placeRooms, roomKind } from '@/lib/room3d/model'
 import type { PublicRoom } from '@/types/booking'
 
 /* Builds the 3D rooms, floors and building, and draws them on screen. */
@@ -471,7 +471,7 @@ export function buildFloor(rooms: PublicRoom[]): Built {
 }
 
 /** Builds a single room. */
-export function buildRoom(room: PublicRoom): Built {
+export function buildRoom(room: RoomShape): Built {
   const kind = roomKind(room)
   const g = new THREE.Group()
   BUILD[kind](g)

@@ -1,10 +1,17 @@
+import { Capacitor } from '@capacitor/core'
+import type { SocialLoginPlugin } from '@capgo/capacitor-social-login'
+
 /**
- * Google Identity Services (web). Loads Google's script once and renders the
- * official "Continue with Google" button. Google hands back a signed ID token,
+ * "Continue with Google". Either way Google hands back a signed ID token,
  * which the app sends to POST /auth/google.
  *
- * For the Android build, swap the button for a native Google sign-in plugin
- * that returns the same ID token; the API side does not change.
+ * - Web: Google Identity Services. Loads Google's script once and renders the
+ *   official button.
+ * - Android app: Google blocks its sign-in page inside the app's WebView, so
+ *   the native account picker (Credential Manager) is used instead. It asks for
+ *   a token addressed to the same Web client ID, so the API side does not
+ *   change. Google Cloud also needs an Android OAuth client for
+ *   com.dormlink.app with the signing key's SHA-1.
  */
 
 interface CredentialResponse {
@@ -46,10 +53,49 @@ function loadScript(): Promise<void> {
   return scriptPromise
 }
 
+let nativeReady: Promise<SocialLoginPlugin> | null = null
+
+/** Loaded only in the Android app: importing the plugin runs web setup code the website doesn't need. */
+function initNative(): Promise<SocialLoginPlugin> {
+  nativeReady ??= import('@capgo/capacitor-social-login')
+    .then(async ({ SocialLogin }) => {
+      await SocialLogin.initialize({ google: { webClientId: clientId!, mode: 'online' } })
+      return SocialLogin
+    })
+    .catch((e) => {
+      nativeReady = null
+      throw e
+    })
+  return nativeReady
+}
+
 export const googleAuth = {
   /** False until VITE_GOOGLE_CLIENT_ID is set; the button stays hidden. */
   isConfigured(): boolean {
     return !!clientId
+  },
+
+  /** True in the Android app, where the native account picker is used instead of Google's web button. */
+  isNative(): boolean {
+    return Capacitor.isNativePlatform()
+  },
+
+  /**
+   * Android app: open the native Google account picker and return the ID token,
+   * or null if the person closed the picker.
+   */
+  async signInNative(): Promise<string | null> {
+    if (!clientId) return null
+    const SocialLogin = await initNative()
+    try {
+      const login = await SocialLogin.login({ provider: 'google', options: {} })
+      const idToken = login.result && 'idToken' in login.result ? login.result.idToken : null
+      if (!idToken) throw new Error('Google did not return a sign-in token. Please try again.')
+      return idToken
+    } catch (e) {
+      if ((e as { code?: string }).code === 'USER_CANCELLED') return null
+      throw e
+    }
   },
 
   /** Render Google's button into `el`; `onIdToken` gets the ID token after sign-in. */

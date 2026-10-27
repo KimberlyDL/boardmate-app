@@ -43,6 +43,13 @@
             </p>
           </DlCard>
 
+          <!-- A sample 3D model of the room -->
+          <DlSection v-if="can3d && roomShape" :title="`Room ${stay.room.label} in 3D`">
+            <DlCard :padding="12">
+              <Room3D :room="roomShape" />
+            </DlCard>
+          </DlSection>
+
           <!-- New house rules to accept (D3) -->
           <DlBanner v-if="rules?.needs_acceptance" tone="info" :title="`New house rules (version ${rules.current?.version})`" action-label="Review" to="/stay/house-rules">
             Please read and accept them.
@@ -149,12 +156,13 @@ import {
   onIonViewWillEnter,
 } from '@ionic/vue'
 import { BedSingle, House, LogOut, Moon, Receipt, ScrollText, UserPlus, Users, Wrench } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
 import { DlAvatar, DlBanner, DlCard, DlEmptyState, DlIconTile, DlListRow, DlRefresher, DlSection, DlSkeleton } from '@/components/dl'
 import RoomPeopleModal from '@/components/tenancy/RoomPeopleModal.vue'
 import { clockTime, manila, manilaDate } from '@/lib/dayjs'
 import { openDocument } from '@/lib/documents'
 import { peso } from '@/lib/money'
+import { type RoomShape, supports3d } from '@/lib/room3d/model'
 import { firstError } from '@/services/api'
 import { groupService } from '@/services/groups'
 import { houseOpsService } from '@/services/houseOps'
@@ -173,6 +181,16 @@ const busy = ref(false)
 const people = ref(false)
 const groupId = ref<number | null>(null)
 const rules = ref<StayHouseRules | null>(null)
+
+// Loaded only when shown, so the 3D library stays out of the page's first load
+const Room3D = defineAsyncComponent(() => import('@/components/rooms/Room3D.vue'))
+const can3d = supports3d()
+/** The room's type and size, when the server sends them */
+const roomShape = computed<RoomShape | null>(() => {
+  const room = stay.value?.room
+  if (!room || room.total === undefined || room.capacity === undefined) return null
+  return { rental_mode: room.rental_mode, total: room.total, capacity: room.capacity }
+})
 
 async function load() {
   try {

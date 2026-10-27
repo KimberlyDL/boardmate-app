@@ -9,12 +9,11 @@
 import { computed, markRaw, shallowRef, watch } from 'vue'
 import Scene3D from '@/components/rooms/Scene3D.vue'
 import { roomType } from '@/lib/floors'
-import { roomKind } from '@/lib/room3d/model'
+import { roomKind, type RoomShape } from '@/lib/room3d/model'
 import { buildRoom } from '@/lib/room3d/scene'
-import type { PublicRoom } from '@/types/booking'
 
 /** A sample 3D model of the room */
-const props = defineProps<{ room: PublicRoom }>()
+const props = defineProps<{ room: RoomShape }>()
 
 // Only rebuild when it is a different kind of room
 const kind = computed(() => roomKind(props.room))

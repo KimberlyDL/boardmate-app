@@ -75,7 +75,7 @@ const slabs = computed(() => {
   padding: 4px 22px 8px 4px;
   overflow: hidden;
 }
-:global(.ion-palette-dark) .rooms-stack {
+:root.ion-palette-dark .rooms-stack {
   --slab: var(--bg-muted);
   --slab-edge: var(--border-default);
 }

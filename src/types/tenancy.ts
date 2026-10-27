@@ -60,7 +60,18 @@ export interface Tenancy {
   status: TenancyStatus
   status_label: string
   property: { id: number; name: string }
-  room: { id: number; code: string; door_no: string | null; label: string; rental_mode: 'whole' | 'bedspaces'; let_whole: boolean }
+  room: {
+    id: number
+    code: string
+    door_no: string | null
+    label: string
+    rental_mode: 'whole' | 'bedspaces'
+    let_whole: boolean
+    /** Tenant view only: number of bedspaces (1 for a whole room) */
+    total?: number
+    /** Tenant view only: most people (whole room) or number of bedspaces */
+    capacity?: number
+  }
   unit: { id: number; label: string; kind: 'whole' | 'bedspace' }
   tenant: { id: number; name: string; phone: string | null; photo_url: string | null; email?: string }
   moved_in_on: string

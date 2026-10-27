@@ -167,8 +167,6 @@ import {
   IonBadge,
   IonButton,
   IonButtons,
-  IonCard,
-  IonCardContent,
   IonContent,
   IonHeader,
   IonItem,

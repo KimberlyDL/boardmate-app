@@ -34,6 +34,12 @@
           <small v-if="errors.room_id" class="error" role="alert">{{ errors.room_id[0] }}</small>
         </section>
 
+        <!-- A sample 3D model of the chosen room -->
+        <section v-if="can3d && chosen" class="block">
+          <h2 class="dl-h2">Room {{ chosen.label }} in 3D</h2>
+          <Room3D :room="chosen" />
+        </section>
+
         <section v-if="chosen?.whole_option" class="block">
           <h2 class="dl-h2">Rent as</h2>
           <ion-segment v-model="rentAs">
@@ -152,18 +158,23 @@ import {
   IonToolbar,
 } from '@ionic/vue'
 import { ArrowRight, FileText, Upload, X } from 'lucide-vue-next'
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { DlCard, DlGradientText } from '@/components/dl'
 import HouseRulesList from '@/components/houseRules/HouseRulesList.vue'
 import { manila } from '@/lib/dayjs'
 import { peso } from '@/lib/money'
+import { supports3d } from '@/lib/room3d/model'
 import { errorCode, errorMessage, fieldErrors } from '@/services/api'
 import { bookingService } from '@/services/bookings'
 import { listingService } from '@/services/listings'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import type { ListingDetail, PublicRoom } from '@/types/booking'
+
+// Loaded only when shown, so the 3D library stays out of the page's first load
+const Room3D = defineAsyncComponent(() => import('@/components/rooms/Room3D.vue'))
+const can3d = supports3d()
 
 const route = useRoute()
 const router = useRouter()
