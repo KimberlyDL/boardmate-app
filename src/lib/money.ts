@@ -13,6 +13,16 @@ export function peso(centavos: number | null | undefined): string {
   return `${sign}₱${whole}.${cents}`
 }
 
+/** For chart axes and tight spaces: 1234500 → "₱12.3k", 250000000 → "₱2.5M", 45000 → "₱450". */
+export function pesoShort(centavos: number | null | undefined): string {
+  if (centavos === null || centavos === undefined) return '—'
+  const sign = centavos < 0 ? '-' : ''
+  const pesos = Math.abs(centavos) / 100
+  const [n, unit] = pesos >= 1_000_000 ? [pesos / 1_000_000, 'M'] : pesos >= 1_000 ? [pesos / 1_000, 'k'] : [pesos, '']
+  const text = unit ? (Math.round(n * 10) / 10).toString() : Math.round(n).toLocaleString('en-PH')
+  return `${sign}₱${text}${unit}`
+}
+
 /** "1,800.50" / "₱1800" → 180050; null for empty or invalid input. */
 export function toCentavos(input: string | number | null | undefined): number | null {
   if (input === null || input === undefined) return null

@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router'
 import { RouteRecordRaw } from 'vue-router'
-import { Bookmark, Building2, CircleUser, FileText, House, Receipt, School, ShieldCheck, Users } from 'lucide-vue-next'
+import { Bookmark, Building2, ChartColumn, CircleUser, FileText, House, Receipt, School, ShieldCheck, Users } from 'lucide-vue-next'
 import { markRaw } from 'vue'
 import RoleTabsLayout, { type RoleTab } from '@/layouts/RoleTabsLayout.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -81,6 +81,7 @@ const routes: Array<RouteRecordRaw> = [
   { path: '/stay', name: 'stay', component: () => import('@/views/boarder/MyStayPage.vue'), meta: { requiresAuth: true, role: UserRole.Boarder } },
   { path: '/stay/house-rules', name: 'stay-house-rules', component: () => import('@/views/boarder/HouseRulesPage.vue'), meta: { requiresAuth: true, role: UserRole.Boarder } },
   { path: '/stay/visits', name: 'stay-visits', component: () => import('@/views/boarder/VisitsPage.vue'), meta: { requiresAuth: true, role: UserRole.Boarder } },
+  { path: '/spending', name: 'spending', component: () => import('@/views/boarder/MySpendingPage.vue'), meta: { requiresAuth: true, role: UserRole.Boarder } },
   { path: '/stay/maintenance', name: 'stay-maintenance', component: () => import('@/views/boarder/MyRequestsPage.vue'), meta: { requiresAuth: true, role: UserRole.Boarder } },
   { path: '/groups', name: 'groups', component: () => import('@/views/groups/GroupsPage.vue'), meta: { requiresAuth: true } },
   { path: '/groups/:id(\\d+)', name: 'group', component: () => import('@/views/groups/GroupPage.vue'), meta: { requiresAuth: true } },
@@ -90,6 +91,13 @@ const routes: Array<RouteRecordRaw> = [
   // Owners and assigned caretakers; the API decides what each may see and do.
   { path: '/properties/:id(\\d+)', name: 'property', component: () => import('@/views/properties/PropertyPage.vue'), meta: { requiresAuth: true } },
   { path: '/reports', name: 'reports', component: () => import('@/views/account/ReportsPage.vue'), meta: { requiresAuth: true } },
+  // Owner and Managers; the API refuses others and the screen says so.
+  { path: '/insights', name: 'insights', component: () => import('@/views/account/InsightsPage.vue'), meta: { requiresAuth: true } },
+  { path: '/insights/properties/:id(\\d+)', name: 'insights-property', component: () => import('@/views/account/PropertyInsightsPage.vue'), meta: { requiresAuth: true } },
+  { path: '/insights/rooms/:id(\\d+)', name: 'insights-room', component: () => import('@/views/account/RoomInsightsPage.vue'), meta: { requiresAuth: true } },
+  { path: '/insights/stays/:id(\\d+)', name: 'insights-stay', component: () => import('@/views/account/StayInsightsPage.vue'), meta: { requiresAuth: true } },
+  // Owner and every caretaker (Collectors included); the API decides which properties.
+  { path: '/collections', name: 'collections', component: () => import('@/views/account/CollectionsPage.vue'), meta: { requiresAuth: true } },
   { path: '/owner/activity', name: 'owner-activity', component: () => import('@/views/account/ActivityLogPage.vue'), props: { scope: 'owner' }, meta: { requiresAuth: true, role: UserRole.Owner } },
   { path: '/admin/activity', name: 'admin-activity', component: () => import('@/views/account/ActivityLogPage.vue'), props: { scope: 'admin' }, meta: { requiresAuth: true, role: UserRole.PlatformAdmin } },
 
@@ -111,6 +119,7 @@ const routes: Array<RouteRecordRaw> = [
     { tab: 'applications', href: '/caretaker/applications', label: 'Applications', icon: FileText, component: ApplicationsPage },
   ]),
   roleArea('/admin', UserRole.PlatformAdmin, [
+    { tab: 'overview', href: '/admin/overview', label: 'Overview', icon: ChartColumn, component: () => import('@/views/admin/AdminOverviewPage.vue') },
     { tab: 'owners', href: '/admin/owners', label: 'Owners', icon: ShieldCheck, component: () => import('@/views/admin/AdminOwnersPage.vue') },
     { tab: 'users', href: '/admin/users', label: 'Accounts', icon: Users, component: () => import('@/views/admin/AdminUsersPage.vue') },
     { tab: 'campuses', href: '/admin/campuses', label: 'Campuses', icon: School, component: () => import('@/views/admin/AdminCampusesPage.vue') },

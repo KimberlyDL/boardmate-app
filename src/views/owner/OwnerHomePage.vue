@@ -42,7 +42,7 @@
 
         <template v-else-if="dash?.properties.length">
           <div class="grid2">
-            <DlStatCard v-if="totals.collected !== null" label="Collected this month" :value="short(totals.collected)" dark />
+            <DlStatCard v-if="totals.collected !== null" label="Collected this month" :value="short(totals.collected)" dark to="/insights" />
             <DlStatCard label="Occupancy" :value="`${totals.occupied}/${totals.places}`" :caption="`${totals.available} available`" />
             <DlStatCard
               v-if="totals.due"
@@ -59,6 +59,10 @@
               tone="coral"
             />
           </div>
+
+          <DlCard padding="4px 16px">
+            <DlListRow :icon="ChartColumn" title="Insights" subtitle="Charts of billed, collected and unpaid, against the period before" to="/insights" />
+          </DlCard>
 
           <todo-list :items="todo" :show-where="dash.properties.length > 1" />
 
@@ -89,6 +93,7 @@
             >
               <template v-if="!hasPaymentDetails" #trailing><DlStatusTag tone="warning">To do</DlStatusTag></template>
             </DlListRow>
+            <DlListRow :icon="HandCoins" title="Collections" subtitle="Who is behind, what is due and what came in this week" to="/collections" divider />
             <DlListRow :icon="Users" title="Caretakers" subtitle="Invite people to help run your place" to="/owner/caretakers" divider />
             <DlListRow :icon="Download" title="Reports" subtitle="Spreadsheets of bills, payments and more" to="/reports" divider />
           </DlCard>
@@ -112,7 +117,7 @@
 
 <script setup lang="ts">
 import { IonButton, IonButtons, IonContent, IonHeader, IonPage, IonToolbar, onIonViewWillEnter } from '@ionic/vue'
-import { Building2, Download, FileText, Users, Wallet } from 'lucide-vue-next'
+import { Building2, ChartColumn, Download, FileText, HandCoins, Users, Wallet } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import BrandLogo from '@/components/BrandLogo.vue'
 import NotificationBell from '@/components/NotificationBell.vue'

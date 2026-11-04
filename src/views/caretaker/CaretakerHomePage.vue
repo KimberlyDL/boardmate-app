@@ -44,7 +44,17 @@
               <property-glance v-for="d in dash.properties" :key="d.property.id" :d="d" />
             </DlSection>
             <DlCard padding="4px 16px">
-              <DlListRow :icon="Download" title="Reports" subtitle="Spreadsheets of bills, payments and more" to="/reports" />
+              <DlListRow :icon="HandCoins" title="Collections" subtitle="Who is behind, what is due and what came in this week" to="/collections" />
+              <!-- Managers only: a Collector's dashboard has no "collected this month". -->
+              <DlListRow
+                v-if="seesFinances"
+                :icon="ChartColumn"
+                title="Insights"
+                subtitle="Charts of billed, collected and unpaid"
+                to="/insights"
+                divider
+              />
+              <DlListRow :icon="Download" title="Reports" subtitle="Spreadsheets of bills, payments and more" to="/reports" divider />
             </DlCard>
           </template>
           <DlBanner v-else-if="owners.length" tone="info">
@@ -58,7 +68,7 @@
 
 <script setup lang="ts">
 import { IonButtons, IonContent, IonHeader, IonPage, IonToolbar, onIonViewWillEnter } from '@ionic/vue'
-import { Download, Users } from 'lucide-vue-next'
+import { ChartColumn, Download, HandCoins, Users } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import BrandLogo from '@/components/BrandLogo.vue'
 import NotificationBell from '@/components/NotificationBell.vue'
@@ -93,6 +103,8 @@ const owners = ref<CaretakerLink[]>([])
 const loaded = ref(false)
 const dash = ref<MyDashboard | null>(null)
 const todo = computed(() => todoItems(dash.value?.properties ?? [], '/caretaker/applications'))
+/** A Manager somewhere: the dashboard shows "collected this month" only where finances may be seen. */
+const seesFinances = computed(() => !!dash.value?.properties.some((p) => p.collected_this_month !== null))
 
 const firstName = computed(() => auth.user?.name.split(' ')[0] ?? '')
 const greeting = computed(() => {

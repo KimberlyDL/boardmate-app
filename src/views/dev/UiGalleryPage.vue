@@ -53,6 +53,29 @@
           </DlCard>
         </DlSection>
 
+        <DlSection title="Charts">
+          <DlCard>
+            <DlChart kind="bar" format="money" :labels="months" label="Billed and collected, last 6 months" :series="[
+              { label: 'Billed', data: [3450000, 3620000, 3500000, 3810000, 3900000, 4120000], tone: 'muted' },
+              { label: 'Collected', data: [3200000, 3480000, 3390000, 3500000, 3810000, 3845000], tone: 'pine' },
+            ]" />
+          </DlCard>
+          <div class="gap" />
+          <DlCard>
+            <DlChart kind="line" format="percent" :labels="months" label="Collection rate" :series="[{ label: 'Collection rate', data: [0.93, 0.96, 0.97, 0.92, 0.98, 0.93], tone: 'sky' }]" :height="180" />
+          </DlCard>
+          <div class="gap" />
+          <div class="grid2">
+            <DlCard>
+              <DlChart kind="doughnut" format="money" :labels="['Rent', 'Utilities', 'Charges']" label="What was billed" :series="[{ label: 'Billed', data: [3600000, 420000, 100000] }]" :height="200" />
+            </DlCard>
+            <DlCard>
+              <DlChart kind="bar" format="money" horizontal :labels="['1–30 days', '31–60', '61–90', 'Over 90']" label="Unpaid by age"
+                :series="[{ label: 'Unpaid', data: [249000, 100000, 0, 0], tone: 'coral' }]" :height="200" />
+            </DlCard>
+          </div>
+        </DlSection>
+
         <DlSection title="Chips, tags, stickers">
           <div class="wrap">
             <DlChip :selected="chip === 'all'" @click="chip = 'all'">All</DlChip>
@@ -185,6 +208,7 @@ import {
   DlStatusTag,
   DlSticker,
 } from '@/components/dl'
+import DlChart from '@/components/dl/DlChart.vue'
 import { useTheme } from '@/composables/useTheme'
 import { useToast } from '@/composables/useToast'
 
@@ -194,6 +218,7 @@ const toast = useToast()
 const chip = ref('all')
 const seg = ref('unpaid')
 const wait = () => new Promise((resolve) => setTimeout(resolve, 800))
+const months = ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct']
 </script>
 
 <style scoped>

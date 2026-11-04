@@ -50,6 +50,10 @@
 
         <ion-button v-if="places.length" expand="block" class="dl-accent" @click="reporting = true">I paid: tell the owner</ion-button>
 
+        <DlCard v-if="places.length" padding="4px 16px">
+          <DlListRow :icon="ChartColumn" title="My spending" subtitle="Your last 12 months: rent, utilities and room costs" to="/spending" />
+        </DlCard>
+
         <template v-if="loading">
           <DlCard v-for="n in 3" :key="n" class="skeleton-row">
             <DlSkeleton :width="40" :height="40" :radius="12" />
@@ -129,11 +133,11 @@ import {
   IonToolbar,
   onIonViewWillEnter,
 } from '@ionic/vue'
-import { CircleCheck, Landmark, Receipt, Smartphone, Wallet } from 'lucide-vue-next'
+import { ChartColumn, CircleCheck, Landmark, Receipt, Smartphone, Wallet } from 'lucide-vue-next'
 import { ref } from 'vue'
 import NotificationBell from '@/components/NotificationBell.vue'
 import BillModal from '@/components/billing/BillModal.vue'
-import { DlCard, DlEmptyState, DlIconTile, DlRefresher, DlSkeleton, DlStatusTag } from '@/components/dl'
+import { DlCard, DlEmptyState, DlIconTile, DlListRow, DlRefresher, DlSkeleton, DlStatusTag } from '@/components/dl'
 import ReportPaymentModal from '@/components/billing/ReportPaymentModal.vue'
 import { billStatus, paymentColor } from '@/lib/billing'
 import { manilaDate } from '@/lib/dayjs'

@@ -3,10 +3,17 @@ import type { ApiEnvelope } from '@/types/api'
 import type { AdminUser, PageMeta } from '@/types/roles'
 import type { OwnerVerificationStatus } from '@/types/enums'
 import type { Campus } from '@/types/booking'
+import type { PlatformStats } from '@/types/dashboard'
 
 export type OwnerCounts = Record<OwnerVerificationStatus, number>
 
 export const adminService = {
+  /** Counts across the platform: accounts, owners, listings, stays and monthly activity. */
+  async stats(): Promise<PlatformStats> {
+    const { data } = await api.get<ApiEnvelope<PlatformStats>>('/admin/stats')
+    return data.data
+  },
+
   async owners(status: OwnerVerificationStatus, search = '', page = 1) {
     const { data } = await api.get<ApiEnvelope<AdminUser[], PageMeta & { counts: OwnerCounts }>>('/admin/owners', {
       params: { status, search: search || undefined, page },

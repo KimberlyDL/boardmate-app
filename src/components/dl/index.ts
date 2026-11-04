@@ -6,6 +6,7 @@
 export { default as DlAvatar } from './DlAvatar.vue'
 export { default as DlBanner } from './DlBanner.vue'
 export { default as DlCard } from './DlCard.vue'
+// DlChart is left out on purpose: import it from './DlChart.vue' so Chart.js loads only on screens with charts.
 export { default as DlChip } from './DlChip.vue'
 export { default as DlEmptyState } from './DlEmptyState.vue'
 export { default as DlGradientText } from './DlGradientText.vue'
