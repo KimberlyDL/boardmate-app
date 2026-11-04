@@ -27,7 +27,8 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         display: 'standalone',
-        orientation: 'portrait',
+        // Any way round: tablets and computers (W1); phones still follow their own rotation setting.
+        orientation: 'any',
         background_color: '#f7f6f1',
         theme_color: '#e9f8f0',
         categories: ['lifestyle', 'productivity'],
