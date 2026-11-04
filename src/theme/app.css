@@ -1,9 +1,77 @@
-/* App-wide layout helpers. Colors live in variables.css. */
+/* App-wide layout helpers. Colors live in variables.css.
+ *
+ * Screen sizes (W1, also in lib/layout.ts): phone below 768px, tablet 768–991px, desktop from 992px.
+ * The phone layout is the default; wider rules only ever sit inside a min-width media query,
+ * so phones and the Android app never see them.
+ */
 
 /* Keeps forms and text readable on wide screens; full width on phones. */
 .narrow {
-  max-width: 480px;
+  max-width: var(--content-narrow);
   margin: 0 auto;
+}
+
+/* Pages that mix forms and lists (a property): up to --content-medium. */
+.medium {
+  max-width: var(--content-medium);
+  margin: 0 auto;
+}
+
+/* Dashboards, lists and charts: full width on phones, up to --content-wide on bigger screens. */
+.wide {
+  max-width: var(--content-wide);
+  margin: 0 auto;
+}
+
+/* Desktop: more room around the content. */
+@media (min-width: 992px) {
+  :root {
+    --screen-pad: 24px;
+    --ion-padding: 24px;
+  }
+}
+
+/*
+ * Two columns on desktop: the main column (wider) and a side column, each a `.col`.
+ * Below 992px they stack with the same gap as a single column, so phones look as before.
+ */
+.desk-cols,
+.desk-cols > .col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--card-gap);
+  min-width: 0;
+}
+@media (min-width: 992px) {
+  .desk-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+    gap: var(--section-gap);
+  }
+}
+
+/*
+ * Cards side by side from tablet width; one under the other on phones.
+ * `!important` because pages give their container a scoped `display: flex` for phones.
+ */
+@media (min-width: 768px) {
+  .card-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    align-items: start;
+    gap: var(--card-gap);
+  }
+  /* An empty state or a note that should run across the whole row. */
+  .card-grid > .span-all {
+    grid-column: 1 / -1;
+  }
+}
+
+/* With the desktop sidebar, page headers drop what the sidebar already shows (wordmark, bell). */
+ion-app.with-sidebar ion-toolbar .wordmark,
+ion-app.with-sidebar ion-toolbar .notification-bell {
+  display: none;
 }
 
 .form-actions {

@@ -167,7 +167,6 @@
 </template>
 
 <script setup lang="ts">
-import { Capacitor } from '@capacitor/core'
 import { Preferences } from '@capacitor/preferences'
 import { IonButton, IonContent, IonPage } from '@ionic/vue'
 import {
@@ -191,6 +190,7 @@ import BrandLogo from '@/components/BrandLogo.vue'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 import { DlAvatar, DlGradientText, DlIconButton, DlIconTile, DlStatusTag, DlSticker, type PaletteTone } from '@/components/dl'
 import { useTheme } from '@/composables/useTheme'
+import { isInstalledApp } from '@/lib/platform'
 
 /** Splits a heading so its last word carries the screen's one gradient phrase. */
 function slide(key: string, tone: PaletteTone, heading: string, text: string, tagline: string) {
@@ -276,7 +276,7 @@ function goTo(i: number, instant = false) {
  * reached the get-started screen, it opens there. In a browser tab the slides always show.
  */
 const SEEN_KEY = 'dormlink.onboarding_seen'
-const installed = () => Capacitor.isNativePlatform() || !!window.matchMedia?.('(display-mode: standalone)').matches
+const installed = isInstalledApp
 
 watch(onAuth, (reached) => {
   if (reached) Preferences.set({ key: SEEN_KEY, value: '1' }).catch(() => undefined)

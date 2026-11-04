@@ -10,7 +10,7 @@
     <ion-content class="ion-padding">
       <DlRefresher :refresh="reload" />
 
-      <div class="narrow page">
+      <div class="wide page">
         <header class="greet">
           <p class="dl-eyebrow">{{ eyebrow }}</p>
           <h1 class="dl-h1">{{ greeting }}, <DlGradientText>{{ firstName }}</DlGradientText></h1>
@@ -31,85 +31,92 @@
           </ion-button>
         </div>
 
-        <!-- Dashboard (A10): totals, what waits, each property at a glance, latest activity -->
-        <template v-if="!dashTried">
-          <div class="grid2">
-            <DlSkeleton :height="100" :radius="18" />
-            <DlSkeleton :height="100" :radius="18" tone="brand" />
+        <!-- Desktop: the dashboard on the left, Manage and activity on the right; stacked on phones. -->
+        <div class="desk-cols">
+          <div class="col">
+            <!-- Dashboard (A10): totals, what waits, each property at a glance, latest activity -->
+            <template v-if="!dashTried">
+              <div class="grid2">
+                <DlSkeleton :height="100" :radius="18" />
+                <DlSkeleton :height="100" :radius="18" tone="brand" />
+              </div>
+              <DlSkeleton :height="160" :radius="18" />
+            </template>
+
+            <template v-else-if="dash?.properties.length">
+              <div class="grid2">
+                <DlStatCard v-if="totals.collected !== null" label="Collected this month" :value="short(totals.collected)" dark to="/insights" />
+                <DlStatCard label="Occupancy" :value="`${totals.occupied}/${totals.places}`" :caption="`${totals.available} available`" />
+                <DlStatCard
+                  v-if="totals.due"
+                  label="Due this week"
+                  :value="short(totals.due.centavos)"
+                  :caption="`${totals.due.bills} bill${totals.due.bills === 1 ? '' : 's'}`"
+                  tone="butter"
+                />
+                <DlStatCard
+                  v-if="totals.overdue"
+                  label="Overdue"
+                  :value="short(totals.overdue.centavos)"
+                  :caption="`${totals.overdue.payers} boarder${totals.overdue.payers === 1 ? '' : 's'}`"
+                  tone="coral"
+                />
+              </div>
+
+              <DlCard padding="4px 16px">
+                <DlListRow :icon="ChartColumn" title="Insights" subtitle="Charts of billed, collected and unpaid, against the period before" to="/insights" />
+              </DlCard>
+
+              <todo-list :items="todo" :show-where="dash.properties.length > 1" />
+
+              <DlSection title="Your places" link-label="All properties" to="/owner/properties">
+                <property-glance v-for="d in dash.properties" :key="d.property.id" :d="d" />
+              </DlSection>
+            </template>
+
+            <DlCard v-else-if="dash">
+              <DlEmptyState note="let's get you set up" :icon="Building2" action-label="Add a property" to="/owner/properties/new">
+                Add your first property: set up its rooms and prices, then publish the listing to take bookings.
+              </DlEmptyState>
+            </DlCard>
           </div>
-          <DlSkeleton :height="160" :radius="18" />
-        </template>
 
-        <template v-else-if="dash?.properties.length">
-          <div class="grid2">
-            <DlStatCard v-if="totals.collected !== null" label="Collected this month" :value="short(totals.collected)" dark to="/insights" />
-            <DlStatCard label="Occupancy" :value="`${totals.occupied}/${totals.places}`" :caption="`${totals.available} available`" />
-            <DlStatCard
-              v-if="totals.due"
-              label="Due this week"
-              :value="short(totals.due.centavos)"
-              :caption="`${totals.due.bills} bill${totals.due.bills === 1 ? '' : 's'}`"
-              tone="butter"
-            />
-            <DlStatCard
-              v-if="totals.overdue"
-              label="Overdue"
-              :value="short(totals.overdue.centavos)"
-              :caption="`${totals.overdue.payers} boarder${totals.overdue.payers === 1 ? '' : 's'}`"
-              tone="coral"
-            />
+          <div class="col">
+            <DlSection title="Manage">
+              <DlCard padding="4px 16px">
+                <DlListRow :icon="FileText" title="Pending applications" to="/owner/applications">
+                  <template #trailing>
+                    <DlStatusTag :tone="bookings.pendingCount ? 'brand' : 'neutral'">{{ bookings.pendingCount }}</DlStatusTag>
+                  </template>
+                </DlListRow>
+                <DlListRow
+                  :icon="Wallet"
+                  title="Business and payment details"
+                  :subtitle="hasPaymentDetails ? 'GCash / bank details saved' : 'Add how boarders should pay you'"
+                  to="/owner/business"
+                  divider
+                >
+                  <template v-if="!hasPaymentDetails" #trailing><DlStatusTag tone="warning">To do</DlStatusTag></template>
+                </DlListRow>
+                <DlListRow :icon="HandCoins" title="Collections" subtitle="Who is behind, what is due and what came in this week" to="/collections" divider />
+                <DlListRow :icon="Users" title="Caretakers" subtitle="Invite people to help run your place" to="/owner/caretakers" divider />
+                <DlListRow :icon="Download" title="Reports" subtitle="Spreadsheets of bills, payments and more" to="/reports" divider />
+              </DlCard>
+            </DlSection>
+
+            <DlSection v-if="dash?.recent_activity?.length" title="Recent activity" link-label="All activity" to="/owner/activity">
+              <DlCard class="activity">
+                <div v-for="a in dash.recent_activity" :key="a.id" class="event">
+                  <span class="dl-data when">{{ a.created_at ? when(a.created_at) : '' }}</span>
+                  <span class="what">
+                    <span class="dl-small strong">{{ a.description }}</span>
+                    <span class="dl-small">{{ a.actor.name }}<template v-if="a.note"> · {{ a.note }}</template></span>
+                  </span>
+                </div>
+              </DlCard>
+            </DlSection>
           </div>
-
-          <DlCard padding="4px 16px">
-            <DlListRow :icon="ChartColumn" title="Insights" subtitle="Charts of billed, collected and unpaid, against the period before" to="/insights" />
-          </DlCard>
-
-          <todo-list :items="todo" :show-where="dash.properties.length > 1" />
-
-          <DlSection title="Your places" link-label="All properties" to="/owner/properties">
-            <property-glance v-for="d in dash.properties" :key="d.property.id" :d="d" />
-          </DlSection>
-        </template>
-
-        <DlCard v-else-if="dash">
-          <DlEmptyState note="let's get you set up" :icon="Building2" action-label="Add a property" to="/owner/properties/new">
-            Add your first property: set up its rooms and prices, then publish the listing to take bookings.
-          </DlEmptyState>
-        </DlCard>
-
-        <DlSection title="Manage">
-          <DlCard padding="4px 16px">
-            <DlListRow :icon="FileText" title="Pending applications" to="/owner/applications">
-              <template #trailing>
-                <DlStatusTag :tone="bookings.pendingCount ? 'brand' : 'neutral'">{{ bookings.pendingCount }}</DlStatusTag>
-              </template>
-            </DlListRow>
-            <DlListRow
-              :icon="Wallet"
-              title="Business and payment details"
-              :subtitle="hasPaymentDetails ? 'GCash / bank details saved' : 'Add how boarders should pay you'"
-              to="/owner/business"
-              divider
-            >
-              <template v-if="!hasPaymentDetails" #trailing><DlStatusTag tone="warning">To do</DlStatusTag></template>
-            </DlListRow>
-            <DlListRow :icon="HandCoins" title="Collections" subtitle="Who is behind, what is due and what came in this week" to="/collections" divider />
-            <DlListRow :icon="Users" title="Caretakers" subtitle="Invite people to help run your place" to="/owner/caretakers" divider />
-            <DlListRow :icon="Download" title="Reports" subtitle="Spreadsheets of bills, payments and more" to="/reports" divider />
-          </DlCard>
-        </DlSection>
-
-        <DlSection v-if="dash?.recent_activity?.length" title="Recent activity" link-label="All activity" to="/owner/activity">
-          <DlCard class="activity">
-            <div v-for="a in dash.recent_activity" :key="a.id" class="event">
-              <span class="dl-data when">{{ a.created_at ? when(a.created_at) : '' }}</span>
-              <span class="what">
-                <span class="dl-small strong">{{ a.description }}</span>
-                <span class="dl-small">{{ a.actor.name }}<template v-if="a.note"> · {{ a.note }}</template></span>
-              </span>
-            </div>
-          </DlCard>
-        </DlSection>
+        </div>
       </div>
     </ion-content>
   </ion-page>

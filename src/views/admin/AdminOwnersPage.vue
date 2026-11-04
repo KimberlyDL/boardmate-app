@@ -20,8 +20,8 @@
     <ion-content class="ion-padding">
       <DlRefresher :refresh="load" />
 
-      <div class="narrow">
-        <DlCard v-if="!loading && !owners.length">
+      <div class="wide card-grid">
+        <DlCard v-if="!loading && !owners.length" class="span-all">
           <DlEmptyState note="nothing here" :icon="ShieldCheck">No owners in this list.</DlEmptyState>
         </DlCard>
 
@@ -76,7 +76,7 @@
           </ion-card-content>
         </ion-card>
 
-        <ion-infinite-scroll :disabled="page >= lastPage" @ion-infinite="loadMore">
+        <ion-infinite-scroll class="span-all" :disabled="page >= lastPage" @ion-infinite="loadMore">
           <ion-infinite-scroll-content />
         </ion-infinite-scroll>
       </div>

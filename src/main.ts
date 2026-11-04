@@ -3,6 +3,8 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router';
 import './lib/dayjs';
+// Listens for the browser's install offer from the start (the website's "Install the app" button).
+import './lib/installPrompt';
 import { initTheme } from './composables/useTheme';
 
 import { IonicVue } from '@ionic/vue';

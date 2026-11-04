@@ -13,12 +13,12 @@
     <ion-content class="ion-padding">
       <DlRefresher :refresh="load" />
 
-      <div class="narrow page">
+      <div class="wide page card-grid">
         <template v-if="loading && !items.length">
           <DlSkeleton v-for="n in 2" :key="n" :height="150" :radius="18" />
         </template>
 
-        <DlCard v-else-if="!items.length">
+        <DlCard v-else-if="!items.length" class="span-all">
           <DlEmptyState note="no applications yet" :icon="Bookmark" action-label="Find a place" to="/find">
             Apply to a place and you can follow it here.
           </DlEmptyState>

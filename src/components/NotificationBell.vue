@@ -1,5 +1,5 @@
 <template>
-  <DlIconButton :icon="Bell" label="Notifications" :badge="notifications.unreadCount" :variant="variant" :to="`${auth.homePath}/notifications`" />
+  <DlIconButton class="notification-bell" :icon="Bell" label="Notifications" :badge="notifications.unreadCount" :variant="variant" :to="`${auth.homePath}/notifications`" />
 </template>
 
 <script setup lang="ts">

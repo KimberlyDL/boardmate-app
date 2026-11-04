@@ -10,7 +10,7 @@
     <ion-content class="ion-padding">
       <DlRefresher :refresh="load" />
 
-      <div class="narrow page">
+      <div class="wide page">
         <header class="greet">
           <p class="dl-eyebrow">{{ eyebrow }}</p>
           <h1 class="dl-h1">{{ greeting }}, <DlGradientText>{{ firstName }}</DlGradientText></h1>
@@ -23,103 +23,108 @@
           <DlSkeleton :height="120" :radius="18" />
         </template>
 
-        <template v-else-if="home?.stay">
-          <!-- Money: the one ink card -->
-          <DlCard v-if="home.money" tone="ink" :padding="20" class="bill" to="/boarder/bills">
-            <div class="row">
-              <span class="dl-eyebrow on-ink">{{ home.money.next_bill ? `BILL ${home.money.next_bill.number}` : 'MY BILLS' }}</span>
-              <DlStatusTag v-if="home.money.overdue_centavos" status="overdue" />
-              <DlStatusTag v-else-if="home.money.next_bill" status="due">Due {{ manilaDate(home.money.next_bill.due_on).format('D MMM') }}</DlStatusTag>
-              <DlStatusTag v-else status="paid">All paid</DlStatusTag>
-            </div>
-            <template v-if="home.money.owed_centavos > 0">
-              <span class="dl-small on-ink">Amount due</span>
-              <span class="big">{{ peso(home.money.next_bill?.balance_centavos ?? home.money.owed_centavos) }}</span>
-              <span class="dl-small on-ink-strong">
-                You owe {{ peso(home.money.owed_centavos) }} in total<template v-if="home.money.overdue_centavos"> · {{ peso(home.money.overdue_centavos) }} is overdue</template>.
-              </span>
-            </template>
-            <template v-else>
-              <span class="big">All paid</span>
-              <span class="dl-small on-ink-strong">Nothing to pay right now.</span>
-            </template>
-          </DlCard>
+        <!-- Desktop: the bill and what needs me on the left, my unit and room group on the right. -->
+        <div v-else-if="home?.stay" class="desk-cols">
+          <div class="col">
+              <!-- Money: the one ink card -->
+              <DlCard v-if="home.money" tone="ink" :padding="20" class="bill" to="/boarder/bills">
+                <div class="row">
+                  <span class="dl-eyebrow on-ink">{{ home.money.next_bill ? `BILL ${home.money.next_bill.number}` : 'MY BILLS' }}</span>
+                  <DlStatusTag v-if="home.money.overdue_centavos" status="overdue" />
+                  <DlStatusTag v-else-if="home.money.next_bill" status="due">Due {{ manilaDate(home.money.next_bill.due_on).format('D MMM') }}</DlStatusTag>
+                  <DlStatusTag v-else status="paid">All paid</DlStatusTag>
+                </div>
+                <template v-if="home.money.owed_centavos > 0">
+                  <span class="dl-small on-ink">Amount due</span>
+                  <span class="big">{{ peso(home.money.next_bill?.balance_centavos ?? home.money.owed_centavos) }}</span>
+                  <span class="dl-small on-ink-strong">
+                    You owe {{ peso(home.money.owed_centavos) }} in total<template v-if="home.money.overdue_centavos"> · {{ peso(home.money.overdue_centavos) }} is overdue</template>.
+                  </span>
+                </template>
+                <template v-else>
+                  <span class="big">All paid</span>
+                  <span class="dl-small on-ink-strong">Nothing to pay right now.</span>
+                </template>
+              </DlCard>
 
-          <div v-if="home.money?.credit_centavos || home.group" class="grid2">
-            <DlStatCard v-if="home.money" label="Credit" :value="peso(home.money.credit_centavos)" caption="Applied to your next bills" />
-            <DlStatCard
-              v-if="home.group"
-              :label="home.group.owe_centavos ? 'Group · you owe' : 'Group · owed to you'"
-              :value="peso(home.group.owe_centavos || home.group.owed_to_me_centavos)"
-              :caption="home.group.owe_centavos || home.group.owed_to_me_centavos ? 'In your room group' : 'Everyone is even'"
-              tone="butter"
-              :to="`/groups/${home.group.id}`"
-            />
+              <div v-if="home.money?.credit_centavos || home.group" class="grid2">
+                <DlStatCard v-if="home.money" label="Credit" :value="peso(home.money.credit_centavos)" caption="Applied to your next bills" />
+                <DlStatCard
+                  v-if="home.group"
+                  :label="home.group.owe_centavos ? 'Group · you owe' : 'Group · owed to you'"
+                  :value="peso(home.group.owe_centavos || home.group.owed_to_me_centavos)"
+                  :caption="home.group.owe_centavos || home.group.owed_to_me_centavos ? 'In your room group' : 'Everyone is even'"
+                  tone="butter"
+                  :to="`/groups/${home.group.id}`"
+                />
+              </div>
+
+              <!-- Quick actions -->
+              <nav class="quick" aria-label="Quick actions">
+                <router-link v-for="a in quickActions" :key="a.label" :to="a.to" class="quick-item">
+                  <DlIconTile :icon="a.icon" />
+                  <span>{{ a.label }}</span>
+                </router-link>
+              </nav>
+
+              <!-- What needs me -->
+              <DlSection v-if="needs.length" title="Needs your attention">
+                <DlCard padding="4px 16px" class="needs">
+                  <DlListRow
+                    v-for="(n, i) in needs"
+                    :key="n.text"
+                    :icon="n.icon"
+                    :title="n.text"
+                    :to="n.link"
+                    :divider="i > 0"
+                    :class="{ urgent: n.urgent }"
+                  />
+                </DlCard>
+              </DlSection>
           </div>
 
-          <!-- Quick actions -->
-          <nav class="quick" aria-label="Quick actions">
-            <router-link v-for="a in quickActions" :key="a.label" :to="a.to" class="quick-item">
-              <DlIconTile :icon="a.icon" />
-              <span>{{ a.label }}</span>
-            </router-link>
-          </nav>
+          <div class="col">
+              <!-- My stay -->
+              <DlSection title="My unit" link-label="Details" to="/stay">
+                <DlCard tone="pine" class="unit">
+                  <div class="row top">
+                    <div class="stack">
+                      <span class="dl-title">Room {{ home.stay.room_label }}<template v-if="home.stay.unit_label"> · {{ home.stay.unit_label }}</template></span>
+                      <span class="dl-data upper">{{ home.stay.property.name }}</span>
+                      <span v-if="home.stay.leaving" class="dl-small leaving">
+                        Last day {{ manilaDate(home.stay.leaving.end_on).format('MMM D, YYYY') }}{{ home.stay.leaving.approved ? '' : ' (waiting for approval)' }}
+                      </span>
+                    </div>
+                    <DlIconTile :icon="BedSingle" tone="pine" :size="40" />
+                  </div>
+                  <div v-if="home.stay.emergency_numbers" class="emergency">
+                    <span class="dl-eyebrow">EMERGENCY NUMBERS</span>
+                    <p class="pre">{{ home.stay.emergency_numbers }}</p>
+                  </div>
+                </DlCard>
+              </DlSection>
 
-          <!-- What needs me -->
-          <DlSection v-if="needs.length" title="Needs your attention">
-            <DlCard padding="4px 16px" class="needs">
-              <DlListRow
-                v-for="(n, i) in needs"
-                :key="n.text"
-                :icon="n.icon"
-                :title="n.text"
-                :to="n.link"
-                :divider="i > 0"
-                :class="{ urgent: n.urgent }"
-              />
-            </DlCard>
-          </DlSection>
-
-          <!-- My stay -->
-          <DlSection title="My unit" link-label="Details" to="/stay">
-            <DlCard tone="pine" class="unit">
-              <div class="row top">
-                <div class="stack">
-                  <span class="dl-title">Room {{ home.stay.room_label }}<template v-if="home.stay.unit_label"> · {{ home.stay.unit_label }}</template></span>
-                  <span class="dl-data upper">{{ home.stay.property.name }}</span>
-                  <span v-if="home.stay.leaving" class="dl-small leaving">
-                    Last day {{ manilaDate(home.stay.leaving.end_on).format('MMM D, YYYY') }}{{ home.stay.leaving.approved ? '' : ' (waiting for approval)' }}
-                  </span>
-                </div>
-                <DlIconTile :icon="BedSingle" tone="pine" :size="40" />
-              </div>
-              <div v-if="home.stay.emergency_numbers" class="emergency">
-                <span class="dl-eyebrow">EMERGENCY NUMBERS</span>
-                <p class="pre">{{ home.stay.emergency_numbers }}</p>
-              </div>
-            </DlCard>
-          </DlSection>
-
-          <!-- Room group (D5) -->
-          <DlSection v-if="home.group" :title="home.group.is_leader ? 'My room group · leader' : 'My room group'" link-label="Open group" :to="`/groups/${home.group.id}`">
-            <DlCard class="group">
-              <p class="dl-body">
-                <template v-if="home.group.owe_centavos">You owe {{ peso(home.group.owe_centavos) }}.</template>
-                <template v-if="home.group.owed_to_me_centavos"> Others owe you {{ peso(home.group.owed_to_me_centavos) }}.</template>
-                <template v-if="!home.group.owe_centavos && !home.group.owed_to_me_centavos">Everyone is even.</template>
-              </p>
-              <div v-if="home.group.members_owing_me?.length" class="owing">
-                <div v-for="m in home.group.members_owing_me" :key="m.name ?? ''" class="owing-row">
-                  <DlAvatar :name="m.name ?? '?'" :size="32" />
-                  <span>{{ m.name }}: {{ peso(m.amount_centavos) }}</span>
-                </div>
-              </div>
-            </DlCard>
-          </DlSection>
-        </template>
+              <!-- Room group (D5) -->
+              <DlSection v-if="home.group" :title="home.group.is_leader ? 'My room group · leader' : 'My room group'" link-label="Open group" :to="`/groups/${home.group.id}`">
+                <DlCard class="group">
+                  <p class="dl-body">
+                    <template v-if="home.group.owe_centavos">You owe {{ peso(home.group.owe_centavos) }}.</template>
+                    <template v-if="home.group.owed_to_me_centavos"> Others owe you {{ peso(home.group.owed_to_me_centavos) }}.</template>
+                    <template v-if="!home.group.owe_centavos && !home.group.owed_to_me_centavos">Everyone is even.</template>
+                  </p>
+                  <div v-if="home.group.members_owing_me?.length" class="owing">
+                    <div v-for="m in home.group.members_owing_me" :key="m.name ?? ''" class="owing-row">
+                      <DlAvatar :name="m.name ?? '?'" :size="32" />
+                      <span>{{ m.name }}: {{ peso(m.amount_centavos) }}</span>
+                    </div>
+                  </div>
+                </DlCard>
+              </DlSection>
+          </div>
+        </div>
 
         <!-- Not staying anywhere: the reservation, or finding a place -->
-        <template v-else>
+        <div v-else class="narrow">
           <DlCard v-if="reservation" tone="pine" class="reserve" to="/boarder/bookings">
             <span class="dl-eyebrow">YOUR RESERVATION</span>
             <span class="dl-title">{{ reservation.property.name }}</span>
@@ -133,7 +138,7 @@
             <p v-if="pending" class="dl-small">You have {{ pending }} application{{ pending > 1 ? 's' : '' }} waiting.</p>
             <ion-button router-link="/find">Browse places</ion-button>
           </DlCard>
-        </template>
+        </div>
 
         <!-- Always: messages and the emergency contact -->
         <DlCard v-if="loaded && (home?.unread_notifications || !auth.user?.boarder_profile?.emergency_contact_phone)" padding="4px 16px">

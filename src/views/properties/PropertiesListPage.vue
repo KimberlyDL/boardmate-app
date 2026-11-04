@@ -13,12 +13,12 @@
     <ion-content class="ion-padding">
       <DlRefresher :refresh="load" />
 
-      <div class="narrow page">
+      <div class="wide page card-grid">
         <template v-if="loading && !properties.length">
           <DlSkeleton v-for="n in 2" :key="n" :height="230" :radius="18" />
         </template>
 
-        <DlCard v-else-if="!properties.length">
+        <DlCard v-else-if="!properties.length" class="span-all">
           <DlEmptyState
             v-if="isOwnerArea"
             note="no properties yet"

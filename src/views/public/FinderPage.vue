@@ -65,7 +65,23 @@
           </p>
         </div>
 
-        <template v-if="view === 'map'">
+        <!-- Desktop: the results beside the map (tap one to show it on the map); phones keep the map alone. -->
+        <div v-if="view === 'map'" class="map-layout" :class="{ split: isDesktop }">
+          <ul v-if="isDesktop" class="side-list" aria-label="Places on the map">
+            <li v-if="!items.length && !loading" class="side-empty dl-small">No places here. Try another area or fewer filters.</li>
+            <li v-for="l in items" :key="l.id">
+              <DlListingCard
+                :class="{ picked: selectedId === l.id }"
+                :title="l.name"
+                :eyebrow="placeLine(l)"
+                :price="priceOf(l)"
+                :full="l.is_full"
+                :image-src="l.cover_photo_url"
+                :meta="[distanceLine(l), l.availability.label]"
+                @click="select(l.id)"
+              />
+            </li>
+          </ul>
           <div class="map-wrap">
             <listing-map
               :listings="items"
@@ -107,7 +123,7 @@
               </DlCard>
             </aside>
           </div>
-        </template>
+        </div>
 
         <template v-else>
           <div v-if="loading && !items.length" class="card-grid">
@@ -267,6 +283,7 @@ import {
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ListingMap from '@/components/ListingMap.vue'
+import { useScreen } from '@/composables/useScreen'
 import ListingRooms from '@/components/rooms/ListingRooms.vue'
 import { DlCard, DlChip, DlEmptyState, DlListingCard, DlSkeleton } from '@/components/dl'
 import { useDistanceFrom } from '@/composables/useDistanceFrom'
@@ -292,6 +309,7 @@ const distance = useDistanceFrom()
 const filters = reactive<FinderFilters>({ ...emptyFilters(), sort: 'nearest', ...fromRouteQuery(route.query) })
 const items = ref<ListingSummary[]>([])
 const view = ref<'list' | 'map'>('map')
+const { isDesktop } = useScreen()
 const selectedId = ref<number | null>(null)
 const selected = computed(() => items.value.find((l) => l.id === selectedId.value) ?? null)
 /** Whether the place card is open */
@@ -661,6 +679,31 @@ function clearArea() {
   .map-wrap {
     --map-h: clamp(420px, calc(100vh - 230px), 860px);
   }
+}
+/* Desktop: results on the left, the map on the right, both as tall as the map. */
+.map-layout.split {
+  --map-h: clamp(420px, calc(100vh - 230px), 860px);
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: var(--card-gap);
+}
+.side-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: var(--map-h);
+  margin: 0;
+  padding: 0 4px 0 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.side-list .picked {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: -2px;
+}
+.side-empty {
+  padding: 16px;
+  color: var(--text-muted);
 }
 .pin-panel {
   position: absolute;

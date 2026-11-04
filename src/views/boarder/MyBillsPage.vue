@@ -17,100 +17,107 @@
     <ion-content class="ion-padding">
       <DlRefresher :refresh="() => load()" />
 
-      <div class="narrow page">
-        <DlCard v-if="!loading && !places.length">
-          <DlEmptyState note="no bills yet" :icon="Receipt">Your bills start after you move in somewhere.</DlEmptyState>
-        </DlCard>
+      <div class="wide page">
+        <!-- Desktop: what I owe and how to pay on the left, the bills on the right; stacked on phones. -->
+        <div class="desk-cols">
+          <div class="col">
+            <DlCard v-if="!loading && !places.length">
+              <DlEmptyState note="no bills yet" :icon="Receipt">Your bills start after you move in somewhere.</DlEmptyState>
+            </DlCard>
 
-        <!-- Each place: what is owed, and how to pay -->
-        <DlCard v-for="p in places" :key="p.property_id" :tone="p.owed_centavos > 0 ? 'ink' : 'pine'" :padding="20" class="place">
-          <span class="dl-eyebrow eyebrow">{{ p.property_name }}</span>
-          <span class="big">{{ p.owed_centavos > 0 ? `You owe ${peso(p.owed_centavos)}` : 'All paid' }}</span>
-          <p v-if="p.credit_centavos" class="dl-small soft">You have {{ peso(p.credit_centavos) }} credit. It is used on your next bills.</p>
+            <!-- Each place: what is owed, and how to pay -->
+            <DlCard v-for="p in places" :key="p.property_id" :tone="p.owed_centavos > 0 ? 'ink' : 'pine'" :padding="20" class="place">
+              <span class="dl-eyebrow eyebrow">{{ p.property_name }}</span>
+              <span class="big">{{ p.owed_centavos > 0 ? `You owe ${peso(p.owed_centavos)}` : 'All paid' }}</span>
+              <p v-if="p.credit_centavos" class="dl-small soft">You have {{ peso(p.credit_centavos) }} credit. It is used on your next bills.</p>
 
-          <div class="how">
-            <span class="dl-eyebrow eyebrow">HOW TO PAY</span>
-            <template v-if="p.pay_to">
-              <p v-if="p.pay_to.gcash_number" class="pay-line">
-                <Smartphone :size="16" aria-hidden="true" />
-                <span>GCash {{ p.pay_to.gcash_number }}<template v-if="p.pay_to.gcash_name"> ({{ p.pay_to.gcash_name }})</template></span>
-              </p>
-              <p v-if="p.pay_to.bank_account_number" class="pay-line">
-                <Landmark :size="16" aria-hidden="true" />
-                <span>
-                  {{ p.pay_to.bank_name ?? 'Bank' }} {{ p.pay_to.bank_account_number }}<template v-if="p.pay_to.bank_account_name"> ({{ p.pay_to.bank_account_name }})</template>
-                </span>
-              </p>
-            </template>
-            <p v-else class="dl-small soft">Ask the owner how to pay, or pay in cash and get a receipt.</p>
+              <div class="how">
+                <span class="dl-eyebrow eyebrow">HOW TO PAY</span>
+                <template v-if="p.pay_to">
+                  <p v-if="p.pay_to.gcash_number" class="pay-line">
+                    <Smartphone :size="16" aria-hidden="true" />
+                    <span>GCash {{ p.pay_to.gcash_number }}<template v-if="p.pay_to.gcash_name"> ({{ p.pay_to.gcash_name }})</template></span>
+                  </p>
+                  <p v-if="p.pay_to.bank_account_number" class="pay-line">
+                    <Landmark :size="16" aria-hidden="true" />
+                    <span>
+                      {{ p.pay_to.bank_name ?? 'Bank' }} {{ p.pay_to.bank_account_number }}<template v-if="p.pay_to.bank_account_name"> ({{ p.pay_to.bank_account_name }})</template>
+                    </span>
+                  </p>
+                </template>
+                <p v-else class="dl-small soft">Ask the owner how to pay, or pay in cash and get a receipt.</p>
+              </div>
+
+              <ion-button size="small" class="dl-tonal statement" @click="statement(p)">Statement (PDF)</ion-button>
+            </DlCard>
+
+            <ion-button v-if="places.length" expand="block" class="dl-accent" @click="reporting = true">I paid: tell the owner</ion-button>
+
+            <DlCard v-if="places.length" padding="4px 16px">
+              <DlListRow :icon="ChartColumn" title="My spending" subtitle="Your last 12 months: rent, utilities and room costs" to="/spending" />
+            </DlCard>
           </div>
 
-          <ion-button size="small" class="dl-tonal statement" @click="statement(p)">Statement (PDF)</ion-button>
-        </DlCard>
+          <div class="col">
+            <template v-if="loading">
+              <DlCard v-for="n in 3" :key="n" class="skeleton-row">
+                <DlSkeleton :width="40" :height="40" :radius="12" />
+                <div class="skeleton-lines"><DlSkeleton width="60%" :height="14" /><DlSkeleton width="45%" :height="10" /></div>
+              </DlCard>
+            </template>
 
-        <ion-button v-if="places.length" expand="block" class="dl-accent" @click="reporting = true">I paid: tell the owner</ion-button>
+            <!-- Bills -->
+            <template v-else-if="view !== 'payments'">
+              <DlCard v-if="places.length && !bills.length">
+                <DlEmptyState :note="view === 'unpaid' ? 'nothing to pay!' : 'no paid bills yet'" :icon="CircleCheck">
+                  {{ view === 'unpaid' ? 'Nothing to pay right now.' : 'Paid bills show up here.' }}
+                </DlEmptyState>
+              </DlCard>
+              <DlCard v-else-if="bills.length" padding="4px 16px">
+                <button v-for="(b, i) in bills" :key="b.id" type="button" class="row-btn" :class="{ divider: i > 0 }" data-dl-focus @click="openBill = b">
+                  <DlIconTile :icon="Receipt" />
+                  <span class="row-text">
+                    <span class="row-title">{{ b.kind_label }} · {{ peso(b.total_centavos) }}</span>
+                    <span class="row-mono">{{ b.number }} · {{ b.property_name }}</span>
+                    <span class="row-line">
+                      Due {{ manilaDate(b.due_on).format('MMM D, YYYY') }}<template v-if="b.status !== 'paid'"> · <strong>{{ peso(b.balance_centavos) }} to pay</strong></template>
+                    </span>
+                  </span>
+                  <span class="row-tags">
+                    <DlStatusTag :tone="toneOf(billStatus(b).color)">{{ billStatus(b).label }}</DlStatusTag>
+                    <DlStatusTag v-if="b.is_late" tone="danger">Late</DlStatusTag>
+                    <DlStatusTag v-if="b.under_review" tone="info">Being checked</DlStatusTag>
+                  </span>
+                </button>
+              </DlCard>
+            </template>
 
-        <DlCard v-if="places.length" padding="4px 16px">
-          <DlListRow :icon="ChartColumn" title="My spending" subtitle="Your last 12 months: rent, utilities and room costs" to="/spending" />
-        </DlCard>
+            <!-- Payments -->
+            <template v-else>
+              <DlCard v-if="!payments.length">
+                <DlEmptyState note="no payments yet" :icon="Wallet">Payments you make or report show up here.</DlEmptyState>
+              </DlCard>
+              <DlCard v-else padding="4px 16px">
+                <div v-for="(p, i) in payments" :key="p.id" class="payment" :class="{ divider: i > 0 }">
+                  <div class="pay-head">
+                    <span class="row-text">
+                      <span class="row-title">{{ peso(p.amount_centavos) }}</span>
+                      <span class="row-mono">{{ p.property_name }} · {{ p.method_label }} · {{ manilaDate(p.paid_on).format('D MMM YYYY') }}</span>
+                    </span>
+                    <DlStatusTag :tone="toneOf(paymentColor[p.status])">{{ p.status_label }}</DlStatusTag>
+                  </div>
+                  <p v-if="p.receipt_number" class="row-line">Receipt {{ p.receipt_number }}</p>
+                  <p v-if="p.reference" class="row-line">Ref {{ p.reference }}</p>
+                  <p v-if="p.reject_reason" class="row-line danger">Not confirmed: {{ p.reject_reason }}</p>
+                  <p v-if="p.reversal" class="row-line danger">Reversed: {{ p.reversal.reason }}</p>
+                  <ion-button v-if="p.receipt_number" size="small" class="dl-tonal" @click="receipt(p)">Receipt (PDF)</ion-button>
+                </div>
+              </DlCard>
+            </template>
 
-        <template v-if="loading">
-          <DlCard v-for="n in 3" :key="n" class="skeleton-row">
-            <DlSkeleton :width="40" :height="40" :radius="12" />
-            <div class="skeleton-lines"><DlSkeleton width="60%" :height="14" /><DlSkeleton width="45%" :height="10" /></div>
-          </DlCard>
-        </template>
-
-        <!-- Bills -->
-        <template v-else-if="view !== 'payments'">
-          <DlCard v-if="places.length && !bills.length">
-            <DlEmptyState :note="view === 'unpaid' ? 'nothing to pay!' : 'no paid bills yet'" :icon="CircleCheck">
-              {{ view === 'unpaid' ? 'Nothing to pay right now.' : 'Paid bills show up here.' }}
-            </DlEmptyState>
-          </DlCard>
-          <DlCard v-else-if="bills.length" padding="4px 16px">
-            <button v-for="(b, i) in bills" :key="b.id" type="button" class="row-btn" :class="{ divider: i > 0 }" data-dl-focus @click="openBill = b">
-              <DlIconTile :icon="Receipt" />
-              <span class="row-text">
-                <span class="row-title">{{ b.kind_label }} · {{ peso(b.total_centavos) }}</span>
-                <span class="row-mono">{{ b.number }} · {{ b.property_name }}</span>
-                <span class="row-line">
-                  Due {{ manilaDate(b.due_on).format('MMM D, YYYY') }}<template v-if="b.status !== 'paid'"> · <strong>{{ peso(b.balance_centavos) }} to pay</strong></template>
-                </span>
-              </span>
-              <span class="row-tags">
-                <DlStatusTag :tone="toneOf(billStatus(b).color)">{{ billStatus(b).label }}</DlStatusTag>
-                <DlStatusTag v-if="b.is_late" tone="danger">Late</DlStatusTag>
-                <DlStatusTag v-if="b.under_review" tone="info">Being checked</DlStatusTag>
-              </span>
-            </button>
-          </DlCard>
-        </template>
-
-        <!-- Payments -->
-        <template v-else>
-          <DlCard v-if="!payments.length">
-            <DlEmptyState note="no payments yet" :icon="Wallet">Payments you make or report show up here.</DlEmptyState>
-          </DlCard>
-          <DlCard v-else padding="4px 16px">
-            <div v-for="(p, i) in payments" :key="p.id" class="payment" :class="{ divider: i > 0 }">
-              <div class="pay-head">
-                <span class="row-text">
-                  <span class="row-title">{{ peso(p.amount_centavos) }}</span>
-                  <span class="row-mono">{{ p.property_name }} · {{ p.method_label }} · {{ manilaDate(p.paid_on).format('D MMM YYYY') }}</span>
-                </span>
-                <DlStatusTag :tone="toneOf(paymentColor[p.status])">{{ p.status_label }}</DlStatusTag>
-              </div>
-              <p v-if="p.receipt_number" class="row-line">Receipt {{ p.receipt_number }}</p>
-              <p v-if="p.reference" class="row-line">Ref {{ p.reference }}</p>
-              <p v-if="p.reject_reason" class="row-line danger">Not confirmed: {{ p.reject_reason }}</p>
-              <p v-if="p.reversal" class="row-line danger">Reversed: {{ p.reversal.reason }}</p>
-              <ion-button v-if="p.receipt_number" size="small" class="dl-tonal" @click="receipt(p)">Receipt (PDF)</ion-button>
-            </div>
-          </DlCard>
-        </template>
-
-        <ion-button v-if="page < lastPage" expand="block" fill="clear" @click="load(false)">Show more</ion-button>
+            <ion-button v-if="page < lastPage" expand="block" fill="clear" @click="load(false)">Show more</ion-button>
+          </div>
+        </div>
       </div>
 
       <report-payment-modal :open="reporting" :places="places" @close="reporting = false" @done="reported" />

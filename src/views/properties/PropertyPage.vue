@@ -20,15 +20,15 @@
     </ion-header>
 
     <ion-content class="ion-padding">
-      <div v-if="loading" class="narrow skeletons">
+      <div v-if="loading" class="medium skeletons">
         <DlSkeleton :height="100" :radius="18" />
         <DlSkeleton :height="200" :radius="18" />
       </div>
-      <DlCard v-else-if="loadError" class="narrow">
+      <DlCard v-else-if="loadError" class="medium">
         <DlEmptyState note="can't open this one" :icon="Building2">{{ loadError }}</DlEmptyState>
       </DlCard>
 
-      <div v-else-if="property" class="narrow">
+      <div v-else-if="property" class="medium">
         <DlBanner v-if="roleNote" tone="info" class="role-note">{{ roleNote }}</DlBanner>
 
         <template v-if="tab === 'overview'">

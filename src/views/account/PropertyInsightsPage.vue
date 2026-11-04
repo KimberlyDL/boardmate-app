@@ -121,7 +121,7 @@ onIonViewWillEnter(load)
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-width: 960px;
+  max-width: var(--content-wide);
   margin: 0 auto;
 }
 .period {

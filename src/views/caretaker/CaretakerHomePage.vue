@@ -10,7 +10,7 @@
     <ion-content class="ion-padding">
       <DlRefresher :refresh="load" />
 
-      <div class="narrow page">
+      <div class="wide page">
         <header class="greet">
           <p class="dl-eyebrow">{{ eyebrow }}</p>
           <h1 class="dl-h1">{{ greeting }}, <DlGradientText>{{ firstName }}</DlGradientText></h1>
@@ -21,46 +21,52 @@
           <DlSkeleton :height="160" :radius="18" />
         </template>
 
-        <template v-else>
-          <DlSection title="You work for">
-            <DlCard v-if="!owners.length">
-              <DlEmptyState note="no owners yet" :icon="Users">No owners yet. Accept an invitation from an owner to start.</DlEmptyState>
-            </DlCard>
-            <DlCard v-for="link in owners" :key="link.id" class="owner">
-              <DlAvatar :name="link.person.name" :size="44" />
-              <span class="who">
-                <span class="dl-title">{{ link.person.business_name || link.person.name }}</span>
-                <span class="dl-small">{{ link.person.name }} · {{ link.person.phone || link.person.email }}</span>
-                <span class="dl-data upper">Since {{ manila(link.since).format('D MMM YYYY') }}</span>
-              </span>
-              <DlStatusTag tone="brand">{{ link.access_level_label }}</DlStatusTag>
-            </DlCard>
-          </DlSection>
-
-          <!-- Dashboard (A10): what waits at the properties assigned to me -->
-          <template v-if="dash?.properties.length">
-            <todo-list :items="todo" :show-where="dash.properties.length > 1" />
-            <DlSection title="Places you look after">
-              <property-glance v-for="d in dash.properties" :key="d.property.id" :d="d" />
+        <!-- Desktop: who I work for and what waits on the left, my places and links on the right. -->
+        <div v-else class="desk-cols">
+          <div class="col">
+            <DlSection title="You work for">
+              <DlCard v-if="!owners.length">
+                <DlEmptyState note="no owners yet" :icon="Users">No owners yet. Accept an invitation from an owner to start.</DlEmptyState>
+              </DlCard>
+              <DlCard v-for="link in owners" :key="link.id" class="owner">
+                <DlAvatar :name="link.person.name" :size="44" />
+                <span class="who">
+                  <span class="dl-title">{{ link.person.business_name || link.person.name }}</span>
+                  <span class="dl-small">{{ link.person.name }} · {{ link.person.phone || link.person.email }}</span>
+                  <span class="dl-data upper">Since {{ manila(link.since).format('D MMM YYYY') }}</span>
+                </span>
+                <DlStatusTag tone="brand">{{ link.access_level_label }}</DlStatusTag>
+              </DlCard>
             </DlSection>
-            <DlCard padding="4px 16px">
-              <DlListRow :icon="HandCoins" title="Collections" subtitle="Who is behind, what is due and what came in this week" to="/collections" />
-              <!-- Managers only: a Collector's dashboard has no "collected this month". -->
-              <DlListRow
-                v-if="seesFinances"
-                :icon="ChartColumn"
-                title="Insights"
-                subtitle="Charts of billed, collected and unpaid"
-                to="/insights"
-                divider
-              />
-              <DlListRow :icon="Download" title="Reports" subtitle="Spreadsheets of bills, payments and more" to="/reports" divider />
-            </DlCard>
-          </template>
-          <DlBanner v-else-if="owners.length" tone="info">
-            No properties are assigned to you yet. The owner chooses which places you look after.
-          </DlBanner>
-        </template>
+
+            <!-- Dashboard (A10): what waits at the properties assigned to me -->
+            <todo-list v-if="dash?.properties.length" :items="todo" :show-where="dash.properties.length > 1" />
+          </div>
+
+          <div class="col">
+            <template v-if="dash?.properties.length">
+              <DlSection title="Places you look after">
+                <property-glance v-for="d in dash.properties" :key="d.property.id" :d="d" />
+              </DlSection>
+              <DlCard padding="4px 16px">
+                <DlListRow :icon="HandCoins" title="Collections" subtitle="Who is behind, what is due and what came in this week" to="/collections" />
+                <!-- Managers only: a Collector's dashboard has no "collected this month". -->
+                <DlListRow
+                  v-if="seesFinances"
+                  :icon="ChartColumn"
+                  title="Insights"
+                  subtitle="Charts of billed, collected and unpaid"
+                  to="/insights"
+                  divider
+                />
+                <DlListRow :icon="Download" title="Reports" subtitle="Spreadsheets of bills, payments and more" to="/reports" divider />
+              </DlCard>
+            </template>
+            <DlBanner v-else-if="owners.length" tone="info">
+              No properties are assigned to you yet. The owner chooses which places you look after.
+            </DlBanner>
+          </div>
+        </div>
       </div>
     </ion-content>
   </ion-page>
