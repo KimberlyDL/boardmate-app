@@ -85,3 +85,18 @@ describe('PropertyDashboardView', () => {
     expect(wrapper.emitted('open')).toEqual([['billing']])
   })
 })
+
+describe('PropertyDashboardView finances shortcut', () => {
+  test('offers the property finances to those who may see them, and hides it from Collectors', async () => {
+    vi.mocked(dashboardService.property).mockResolvedValue(santos)
+    mount(PropertyDashboardView, { props: { propertyId: 3 }, global: { plugins: [IonicVue] }, attachTo: document.body })
+    await flushPromises()
+    expect(text()).toContain('Finances')
+    document.body.innerHTML = ''
+
+    vi.mocked(dashboardService.property).mockResolvedValue({ ...santos, collected_this_month: null })
+    mount(PropertyDashboardView, { props: { propertyId: 3 }, global: { plugins: [IonicVue] }, attachTo: document.body })
+    await flushPromises()
+    expect(text()).not.toContain('Finances')
+  })
+})

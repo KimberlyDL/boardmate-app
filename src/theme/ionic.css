@@ -37,7 +37,9 @@ ion-toolbar ion-title {
   font-weight: 700;
   letter-spacing: -0.01em;
 }
+/* Ionic makes a segment 100% wide; take the side margins off so it does not run past the right edge. */
 ion-toolbar ion-segment {
+  width: calc(100% - 2 * var(--screen-pad));
   margin: 0 var(--screen-pad);
 }
 ion-back-button {

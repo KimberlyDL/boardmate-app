@@ -7,7 +7,7 @@
         <a :href="item.href" class="item" :class="{ on: isActive(item, route.path) }" :aria-current="isActive(item, route.path) ? 'page' : undefined" @click.prevent="go(item.href)">
           <component :is="item.icon" :size="20" aria-hidden="true" />
           <span class="label">{{ item.label }}</span>
-          <span v-if="item.badge === 'applications' && bookings.pendingCount" class="count">{{ bookings.pendingCount }}</span>
+          <span v-if="item.badge === 'applications' && bookings.pendingCount" class="count"><span class="sr-only">, </span>{{ bookings.pendingCount }}<span class="sr-only"> waiting</span></span>
         </a>
       </li>
     </ul>
@@ -28,10 +28,10 @@
       <a :href="`${home}/notifications`" class="item" :class="{ on: route.path === `${home}/notifications` }" @click.prevent="go(`${home}/notifications`)">
         <Bell :size="20" aria-hidden="true" />
         <span class="label">Notifications</span>
-        <span v-if="notifications.unreadCount" class="count">{{ notifications.unreadCount }}</span>
+        <span v-if="notifications.unreadCount" class="count"><span class="sr-only">, </span>{{ notifications.unreadCount }}<span class="sr-only"> unread</span></span>
       </a>
       <a :href="`${home}/account`" class="me" :class="{ on: route.path === `${home}/account` }" @click.prevent="go(`${home}/account`)">
-        <DlAvatar :name="auth.user?.name ?? '?'" :src="auth.user?.photo_url" :size="36" />
+        <DlAvatar :name="auth.user?.name ?? '?'" :src="auth.user?.photo_url" :size="36" aria-hidden="true" />
         <span class="who">
           <span class="name">{{ auth.user?.name }}</span>
           <span class="role">{{ roleLabel }}</span>

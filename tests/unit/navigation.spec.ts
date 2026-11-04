@@ -58,7 +58,7 @@ describe('desktop sidebar', () => {
     await flushPromises()
     const links = [...document.querySelectorAll('.app-sidebar a')].map((a) => a.textContent?.replace(/\s+/g, ' ').trim())
 
-    expect(links).toEqual(['DormLink', 'Home', 'Properties', 'Applications2', 'Caretakers', 'Insights', 'Collections', 'Reports', 'Notifications3', 'LCLeynard ChequitoOwner'])
+    expect(links).toEqual(['DormLink', 'Home', 'Properties', 'Applications, 2 waiting', 'Caretakers', 'Insights', 'Collections', 'Reports', 'Notifications, 3 unread', 'LCLeynard ChequitoOwner'])
     expect(document.querySelector('.app-sidebar a.on')?.textContent?.trim()).toBe('Home')
     expect(document.querySelector('.app-sidebar a.on')?.getAttribute('aria-current')).toBe('page')
   })

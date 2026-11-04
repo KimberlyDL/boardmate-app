@@ -29,6 +29,11 @@
     --screen-pad: 24px;
     --ion-padding: 24px;
   }
+  /* A switch in a page header lines up with the wide content below it (its width is set in ionic.css). */
+  ion-toolbar ion-segment {
+    max-width: var(--content-wide);
+    margin: 0 auto;
+  }
 }
 
 /*
@@ -81,6 +86,16 @@ ion-app.with-sidebar ion-toolbar .notification-bell {
 .muted {
   color: var(--text-muted);
   font-size: 13px;
+}
+
+/* Read by screen readers, not shown (e.g. ", 2 waiting" after a count). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .center {

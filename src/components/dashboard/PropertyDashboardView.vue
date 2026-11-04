@@ -21,8 +21,19 @@
         :caption="`${d.due_this_week.bills} bill${d.due_this_week.bills === 1 ? '' : 's'}`"
         tone="butter"
       />
-      <DlStatCard v-if="d.collected_this_month !== null" label="Collected this month" :value="peso(d.collected_this_month)" dark />
+      <DlStatCard
+        v-if="d.collected_this_month !== null"
+        label="Collected this month"
+        :value="peso(d.collected_this_month)"
+        dark
+        :to="financesLink"
+      />
     </div>
+
+    <!-- Owner and Managers only: "collected this month" is shown only to those who may see finances. -->
+    <DlCard v-if="d.collected_this_month !== null" padding="4px 16px" class="finances">
+      <DlListRow :icon="ChartColumn" title="Finances" subtitle="Charts for this property, then each room and stay" :to="financesLink" />
+    </DlCard>
 
     <ion-list v-if="waiting.length" inset>
       <ion-item v-for="w in waiting" :key="w.tab + w.text" button detail @click="emit('open', w.tab)">
@@ -49,7 +60,10 @@
 
 <script setup lang="ts">
 import { IonItem, IonLabel, IonList, IonNote } from '@ionic/vue'
+import { ChartColumn } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
+import DlCard from '@/components/dl/DlCard.vue'
+import DlListRow from '@/components/dl/DlListRow.vue'
 import DlStatCard from '@/components/dl/DlStatCard.vue'
 import { peso } from '@/lib/money'
 import { dashboardService } from '@/services/dashboard'
@@ -60,6 +74,8 @@ const props = defineProps<{ propertyId: number }>()
 const emit = defineEmits<{ open: [tab: string] }>()
 
 const d = ref<PropertyDashboard | null>(null)
+/** This property's Insights (A11), with its rooms and stays. */
+const financesLink = computed(() => `/insights/properties/${props.propertyId}`)
 
 onMounted(async () => {
   try {
@@ -99,6 +115,9 @@ const waiting = computed(() => {
 }
 .sub {
   margin: 20px 0 12px;
+}
+.finances {
+  margin-bottom: var(--card-gap);
 }
 .warn {
   color: var(--danger-text);
