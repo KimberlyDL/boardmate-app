@@ -5,8 +5,8 @@
       "namespace": "android_app",
       "package_name": "com.dormlink.app",
       "sha256_cert_fingerprints": [
-        "PASTE_DEBUG_SHA256_HERE",
-        "PASTE_RELEASE_SHA256_HERE"
+        "69:DB:45:B2:41:AB:EE:DB:3C:55:2D:3F:29:7B:93:F8:97:46:87:C5:D2:6C:DC:CD:E3:B1:6F:0E:E1:87:15:0B",
+        "8F:96:87:DD:91:3D:FC:FF:DE:2A:C7:B1:D7:8C:0D:1C:06:D5:B0:60:B5:85:68:8C:52:99:D9:B4:D8:9F:CB:DF"
       ]
     }
   }
