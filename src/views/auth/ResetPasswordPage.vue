@@ -15,7 +15,7 @@
       />
       <auth-field v-model="passwordConfirmation" label="Confirm new password" type="password" autocomplete="new-password" />
       <ion-button expand="block" type="submit" :disabled="busy">
-        <ion-spinner v-if="busy" name="crescent" />
+        <DlLoader v-if="busy" variant="ring" :size="20" />
         <span v-else>Save new password</span>
       </ion-button>
       <router-link v-if="errors.email" to="/forgot-password" class="again">Request a new link</router-link>
@@ -24,7 +24,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonSpinner } from '@ionic/vue'
+import { IonButton } from '@ionic/vue'
+import DlLoader from '@/components/dl/DlLoader.vue'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AuthField from '@/components/AuthField.vue'

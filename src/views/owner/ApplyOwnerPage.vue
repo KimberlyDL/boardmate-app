@@ -114,7 +114,7 @@
         <ion-note v-if="errors.documents" color="danger" class="block">{{ errors.documents[0] }}</ion-note>
 
         <ion-button expand="block" type="submit" class="form-actions" :disabled="busy">
-          <ion-spinner v-if="busy" name="crescent" />
+          <DlLoader v-if="busy" variant="ring" :size="20" />
           <span v-else>Send application</span>
         </ion-button>
       </form>
@@ -137,11 +137,11 @@ import {
   IonPage,
   IonSelect,
   IonSelectOption,
-  IonSpinner,
   IonTextarea,
   IonTitle,
   IonToolbar,
 } from '@ionic/vue'
+import DlLoader from '@/components/dl/DlLoader.vue'
 import { Circle, CircleCheck, FileText, Image as ImageIcon, Paperclip, Trash2 } from 'lucide-vue-next'
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'

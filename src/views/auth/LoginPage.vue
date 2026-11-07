@@ -20,7 +20,7 @@
       <router-link to="/forgot-password" class="forgot">Forgot password?</router-link>
 
       <ion-button expand="block" type="submit" :disabled="busy">
-        <ion-spinner v-if="busy" name="crescent" />
+        <DlLoader v-if="busy" variant="ring" :size="20" />
         <span v-else>Sign in</span>
       </ion-button>
     </form>
@@ -36,7 +36,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonSpinner } from '@ionic/vue'
+import { IonButton } from '@ionic/vue'
+import DlLoader from '@/components/dl/DlLoader.vue'
 import { Mail } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'

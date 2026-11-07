@@ -10,7 +10,7 @@
     <ion-content class="ion-padding">
       <div class="narrow">
         <p class="muted small">Spreadsheet files (CSV) that open in Excel or Google Sheets. Amounts are in pesos.</p>
-        <p v-if="loading" class="muted">Loading…</p>
+        <DlLoader v-if="loading" label="Loading reports" />
         <p v-else-if="!reports.length" class="muted center">No reports for you yet. They come with the properties you own or look after.</p>
         <ion-list v-else lines="full">
           <ion-item v-for="r in reports" :key="r.key" button :detail="true" @click="choose(r)">
@@ -74,6 +74,7 @@ import {
   onIonViewWillEnter,
 } from '@ionic/vue'
 import { computed, ref } from 'vue'
+import DlLoader from '@/components/dl/DlLoader.vue'
 import { openDocument } from '@/lib/documents'
 import { firstError } from '@/services/api'
 import { reportService, type ReportInfo } from '@/services/reports'

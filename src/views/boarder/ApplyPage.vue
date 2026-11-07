@@ -126,7 +126,7 @@
     <ion-footer class="action-footer">
       <div class="footer-inner">
         <ion-button expand="block" :disabled="busy" @click="submit">
-          <ion-spinner v-if="busy" name="crescent" />
+          <DlLoader v-if="busy" variant="ring" :size="20" />
           <template v-else>Send application <ArrowRight slot="end" :size="20" aria-hidden="true" /></template>
         </ion-button>
         <span class="dl-small">No reservation fee.</span>
@@ -152,11 +152,11 @@ import {
   IonRadioGroup,
   IonSegment,
   IonSegmentButton,
-  IonSpinner,
   IonTextarea,
   IonTitle,
   IonToolbar,
 } from '@ionic/vue'
+import DlLoader from '@/components/dl/DlLoader.vue'
 import { ArrowRight, FileText, Upload, X } from 'lucide-vue-next'
 import { computed, defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'

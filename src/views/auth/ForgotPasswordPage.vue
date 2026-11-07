@@ -13,7 +13,7 @@
     <form v-else class="form" @submit.prevent="submit">
       <auth-field v-model="email" label="Email" type="email" inputmode="email" placeholder="you@email.com" autocomplete="email" :error="errors.email?.[0]" />
       <ion-button expand="block" type="submit" :disabled="busy">
-        <ion-spinner v-if="busy" name="crescent" />
+        <DlLoader v-if="busy" variant="ring" :size="20" />
         <span v-else>Send reset link</span>
       </ion-button>
     </form>
@@ -23,7 +23,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonSpinner } from '@ionic/vue'
+import { IonButton } from '@ionic/vue'
+import DlLoader from '@/components/dl/DlLoader.vue'
 import { ref } from 'vue'
 import AuthField from '@/components/AuthField.vue'
 import AuthLayout from '@/components/AuthLayout.vue'

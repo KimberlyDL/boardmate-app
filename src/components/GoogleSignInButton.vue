@@ -11,12 +11,13 @@
       Continue with Google
     </ion-button>
     <div v-else ref="buttonEl" class="button-slot" />
-    <ion-spinner v-if="busy" name="crescent" class="spinner" />
+    <DlLoader v-if="busy" variant="ring" :size="24" class="spinner" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { alertController, IonButton, IonSpinner } from '@ionic/vue'
+import { alertController, IonButton } from '@ionic/vue'
+import DlLoader from '@/components/dl/DlLoader.vue'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { errorCode, errorMessage, fieldErrors } from '@/services/api'

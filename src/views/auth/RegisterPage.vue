@@ -37,7 +37,7 @@
       </div>
 
       <ion-button expand="block" type="submit" :disabled="busy">
-        <ion-spinner v-if="busy" name="crescent" />
+        <DlLoader v-if="busy" variant="ring" :size="20" />
         <span v-else>Create account</span>
       </ion-button>
     </form>
@@ -49,7 +49,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonCheckbox, IonSpinner } from '@ionic/vue'
+import { IonButton, IonCheckbox } from '@ionic/vue'
+import DlLoader from '@/components/dl/DlLoader.vue'
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AuthField from '@/components/AuthField.vue'

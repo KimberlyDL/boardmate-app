@@ -162,6 +162,8 @@
 [data-dl-focus]:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
 
 @keyframes dl-spin { to { transform: rotate(360deg); } }
+@keyframes dl-trace { 0% { stroke-dashoffset: 120; } 55% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -120; } }
+@keyframes dl-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 @keyframes dl-shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
 @keyframes dl-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes dl-pop-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }

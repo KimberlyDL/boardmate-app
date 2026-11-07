@@ -6,6 +6,7 @@ import './lib/dayjs';
 // Listens for the browser's install offer from the start (the website's "Install the app" button).
 import './lib/installPrompt';
 import { initTheme } from './composables/useTheme';
+import { installBusyButtons } from './lib/busyButtons';
 
 import { IonicVue } from '@ionic/vue';
 
@@ -54,4 +55,5 @@ const app = createApp(App)
 
 Promise.all([router.isReady(), initTheme()]).then(() => {
   app.mount('#app');
+  installBusyButtons();
 });
