@@ -71,6 +71,8 @@ jobs:
 
       # Sign with the same debug key as your PC, so the APK's SHA-1 matches the Android client
       # in Google Cloud. Without it, the runner makes a new random key and Google sign-in fails.
+      # The key's path is passed to Gradle in DEBUG_KEYSTORE_PATH (android/app/build.gradle reads
+      # it), because Gradle on the runner does not reliably use ~/.android/debug.keystore.
       - name: Restore debug signing key
         env:
           ANDROID_DEBUG_KEYSTORE: ${{ secrets.ANDROID_DEBUG_KEYSTORE }}
@@ -79,15 +81,35 @@ jobs:
             echo "::warning::Secret ANDROID_DEBUG_KEYSTORE is not set; using a random key, so Google sign-in will not work in this APK."
             exit 0
           fi
-          mkdir -p ~/.android
+          KEYSTORE="$RUNNER_TEMP/debug.keystore"
           # Line breaks or spaces from copy-pasting are dropped before decoding
-          printf '%s' "$ANDROID_DEBUG_KEYSTORE" | tr -d ' \r\n' | base64 --decode > ~/.android/debug.keystore
+          printf '%s' "$ANDROID_DEBUG_KEYSTORE" | tr -d ' \r\n' | base64 --decode > "$KEYSTORE"
+          echo "DEBUG_KEYSTORE_PATH=$KEYSTORE" >> "$GITHUB_ENV"
           # The SHA-1 is public; compare it with the Android client in Google Cloud
-          keytool -list -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey | grep 'SHA1:'
+          keytool -list -v -keystore "$KEYSTORE" -storepass android -alias androiddebugkey | grep 'SHA1:'
 
       - name: Build debug APK
         working-directory: android
         run: ./gradlew --no-daemon assembleDebug
+
+      # Stop the run if the APK was not signed with the restored key, so a build that
+      # Google sign-in would reject is never uploaded.
+      - name: Check APK signing key
+        run: |
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          APKSIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -n 1)apksigner
+          APK_SHA1=$("$APKSIGNER" verify --print-certs "$APK" | grep 'SHA-1 digest' | head -n 1 | awk '{print $NF}' | tr 'a-f' 'A-F')
+          echo "APK signed with SHA-1: $APK_SHA1"
+          if [ -z "$DEBUG_KEYSTORE_PATH" ]; then
+            echo "::warning::No shared debug key, so this APK's SHA-1 is not registered in Google Cloud."
+            exit 0
+          fi
+          KEY_SHA1=$(keytool -list -v -keystore "$DEBUG_KEYSTORE_PATH" -storepass android -alias androiddebugkey | grep 'SHA1:' | awk '{print $NF}' | tr -d ':')
+          if [ "$APK_SHA1" != "$KEY_SHA1" ]; then
+            echo "::error::The APK is signed with SHA-1 $APK_SHA1, not the shared debug key ($KEY_SHA1). Google sign-in would fail."
+            exit 1
+          fi
+          echo "APK is signed with the shared debug key."
 
       - name: Name the APK
         run: cp android/app/build/outputs/apk/debug/app-debug.apk DormLink.apk
