@@ -32,6 +32,8 @@ export interface UtilityInput {
   name?: string | null
   method?: string
   billed_by?: string
+  /** A room's own setting; null or left out = the whole property */
+  room_id?: number | null
   notes?: string | null
   amount_centavos?: number | null
 }

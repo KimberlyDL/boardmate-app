@@ -220,7 +220,7 @@ import { WhoCanStayLabels } from '@/types/enums'
 import type { PriceRule, Property, Room, Unit } from '@/types/property'
 
 const props = defineProps<{ property: Property }>()
-const emit = defineEmits<{ changed: [] }>()
+const emit = defineEmits<{ changed: []; utilities: [roomId: number] }>()
 
 const toast = useToast()
 const prompt = usePrompt()
@@ -335,6 +335,7 @@ async function openRoomActions(room: Room) {
   buttons.push({ text: 'Change floor', handler: () => changeFloor(room) })
   buttons.push({ text: room.door_no ? 'Change door no.' : 'Set door no.', handler: () => changeDoor(room) })
   buttons.push({ text: 'Who can stay', handler: () => changeWho(room) })
+  if (canPrice.value) buttons.push({ text: 'Utilities for this room', handler: () => emit('utilities', room.id) })
   buttons.push({ text: room.rental_mode === 'whole' ? 'Rent by bedspace instead' : 'Rent as a whole room instead', handler: () => switchMode(room) })
   buttons.push({ text: 'Remove room', role: 'destructive', handler: () => removeRoom(room) })
   buttons.push({ text: 'Cancel', role: 'cancel' })

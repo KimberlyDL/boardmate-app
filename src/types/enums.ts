@@ -888,7 +888,7 @@ export const UtilityMethod = {
 export type UtilityMethod = (typeof UtilityMethod)[keyof typeof UtilityMethod]
 export const UtilityMethodLabels: Record<UtilityMethod, string> = {
   'fixed_per_bedspace': 'Fixed per bedspace',
-  'fixed_per_property': 'Fixed per property',
+  'fixed_per_property': 'Fixed per whole room',
   'actual_bill': 'Actual bill',
   'included': 'Included in rent',
   'opt_in': 'Opt-in',

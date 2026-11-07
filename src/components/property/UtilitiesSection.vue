@@ -2,14 +2,19 @@
   <div>
     <p class="muted">
       Any method works for any utility. "Handled by the boarders" means it never appears on your bill; boarders share it
-      among themselves.
+      among themselves. A room can have its own setting for a utility; that room then follows it instead of the
+      property's.
     </p>
 
     <p v-if="!property.utility_accounts.length" class="muted center">No utilities yet.</p>
     <ion-list>
-      <ion-item v-for="account in property.utility_accounts" :key="account.id">
+      <ion-item v-for="account in sortedAccounts" :key="account.id">
         <ion-label class="ion-text-wrap">
-          <h2>{{ account.name }}</h2>
+          <h2>
+            {{ account.name }}
+            <ion-badge v-if="account.room" color="tertiary" class="gap">Room {{ account.room.label }} only</ion-badge>
+          </h2>
+          <p v-if="account.room" class="muted">{{ roomNote(account) }}</p>
           <p>
             {{ account.method_label }}
             <span v-if="account.has_fixed_amount"> · <strong>{{ peso(account.amount_centavos) }}</strong></span>
@@ -50,9 +55,22 @@
 
     <utility-bill-modal :account="entering" :property-id="property.id" @close="entering = null" @done="entered" />
 
-    <ion-card v-if="canEdit">
+    <ion-card v-if="canEdit" ref="formCard">
       <ion-card-content>
         <strong>Add a utility</strong>
+        <ion-select
+          v-if="property.rooms.length"
+          v-model="form.room_id"
+          label="Applies to"
+          label-placement="stacked"
+          fill="outline"
+          interface="popover"
+          class="ion-margin-top"
+        >
+          <ion-select-option :value="0">The whole property</ion-select-option>
+          <ion-select-option v-for="room in property.rooms" :key="room.id" :value="room.id">Room {{ room.label }} only</ion-select-option>
+        </ion-select>
+        <p v-if="formHint" class="muted hint">{{ formHint }}</p>
         <div class="presets">
           <ion-chip v-for="t in ['electricity', 'water', 'internet', 'other']" :key="t" :outline="form.type !== t" @click="form.type = t">
             {{ UtilityTypeLabels[t as keyof typeof UtilityTypeLabels] }}
@@ -73,7 +91,7 @@
           v-if="fixed"
           v-model="form.amount"
           inputmode="decimal"
-          :label="form.method === 'fixed_per_property' ? 'Amount for the property (₱ / month)' : 'Amount per boarder (₱ / month)'"
+          :label="form.method === 'fixed_per_property' ? 'Amount per whole room (₱ / month)' : 'Amount per boarder (₱ / month)'"
           label-placement="stacked"
           fill="outline"
           class="ion-margin-top"
@@ -91,6 +109,7 @@
 <script setup lang="ts">
 import {
   alertController,
+  IonBadge,
   IonButton,
   IonCard,
   IonCardContent,
@@ -103,7 +122,7 @@ import {
   IonSelectOption,
 } from '@ionic/vue'
 import { Trash2 } from 'lucide-vue-next'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import UtilityBillModal from '@/components/billing/UtilityBillModal.vue'
 import { billingService } from '@/services/billing'
 import type { UtilityBill } from '@/types/billing'
@@ -116,7 +135,8 @@ import { useToast } from '@/composables/useToast'
 import { UtilityMethodLabels, UtilityTypeLabels } from '@/types/enums'
 import type { Property, UtilityAccount } from '@/types/property'
 
-const props = defineProps<{ property: Property }>()
+/** `roomId`: opened from a room's menu, so the form starts on that room. */
+const props = defineProps<{ property: Property; roomId?: number | null }>()
 const emit = defineEmits<{ changed: [] }>()
 
 const toast = useToast()
@@ -167,8 +187,52 @@ async function correctTotal(u: UtilityBill) {
   }, 'Total corrected.')
 }
 const busy = ref(false)
-const form = reactive({ type: 'electricity', name: '', method: 'actual_bill', amount: '', billed_by: 'owner' })
+const form = reactive({ type: 'electricity', name: '', method: 'actual_bill', amount: '', billed_by: 'owner', room_id: 0 })
 const fixed = computed(() => ['fixed_per_bedspace', 'fixed_per_property', 'opt_in'].includes(form.method))
+const formCard = ref<{ $el: HTMLElement } | null>(null)
+
+/** What makes two accounts "the same utility" (as the server decides): the type, or the name for "other". */
+const utilityKey = (type: string, name: string) => (type === 'other' ? `other:${name.trim().toLowerCase()}` : type)
+const utilityLabel = (type: string, name: string) =>
+  type === 'other' ? name.trim() || 'utility' : UtilityTypeLabels[type as keyof typeof UtilityTypeLabels]
+const propertyAccountFor = (key: string) =>
+  props.property.utility_accounts.find((a) => !a.room && utilityKey(a.type, a.name) === key)
+
+/** The property's accounts first, then each room's own, by room. */
+const sortedAccounts = computed(() =>
+  [...props.property.utility_accounts].sort((a, b) => {
+    if (!a.room !== !b.room) return a.room ? 1 : -1
+    return (a.room?.label ?? '').localeCompare(b.room?.label ?? '', undefined, { numeric: true }) || a.id - b.id
+  }),
+)
+
+function roomNote(account: UtilityAccount): string {
+  const replaced = propertyAccountFor(utilityKey(account.type, account.name))
+  return replaced
+    ? `Room ${account.room!.label} follows this instead of the property's ${replaced.name}.`
+    : `Only room ${account.room!.label} has this.`
+}
+
+const formHint = computed(() => {
+  const room = props.property.rooms.find((r) => r.id === form.room_id)
+  if (!room) return ''
+  const replaced = propertyAccountFor(utilityKey(form.type, form.name))
+  return replaced
+    ? `Room ${room.label} will follow this instead of the property's ${replaced.name}. Other rooms keep the property's setting.`
+    : `Only room ${room.label} gets this ${utilityLabel(form.type, form.name).toLowerCase()}.`
+})
+
+/** Opened from a room's menu: start the form on that room. */
+watch(
+  () => props.roomId,
+  async (roomId) => {
+    if (!roomId) return
+    form.room_id = roomId
+    await nextTick()
+    formCard.value?.$el?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
+  },
+  { immediate: true },
+)
 
 async function run(action: () => Promise<unknown>, success?: string) {
   busy.value = true
@@ -192,6 +256,7 @@ async function addUtility() {
       name: form.type === 'other' ? form.name : undefined,
       method: form.method,
       billed_by: form.billed_by,
+      room_id: form.room_id || null,
       amount_centavos: amount,
     })
     form.amount = ''
@@ -233,5 +298,13 @@ async function remove(account: UtilityAccount) {
 }
 .upcoming {
   color: var(--ion-color-primary);
+}
+.gap {
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.hint {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
 }
 </style>

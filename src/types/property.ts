@@ -70,6 +70,8 @@ export interface UtilityAccount {
   method_label: string
   billed_by: BilledBy
   billed_by_label: string
+  /** null = the whole property; otherwise this room's own setting, used instead of the property's for the same utility */
+  room: { id: number; label: string } | null
   notes: string | null
   has_fixed_amount: boolean
   amount_centavos: number | null

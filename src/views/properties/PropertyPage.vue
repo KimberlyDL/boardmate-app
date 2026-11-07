@@ -38,10 +38,10 @@
           <ion-button v-if="canEditDetails" expand="block" class="form-actions" :disabled="busy" @click="saveDetails">Save details</ion-button>
         </template>
 
-        <units-section v-else-if="tab === 'units'" :property="property" @changed="reload" />
+        <units-section v-else-if="tab === 'units'" :property="property" @changed="reload" @utilities="openRoomUtilities" />
         <tenants-section v-else-if="tab === 'tenants'" :property="property" @changed="reload" />
         <billing-section v-else-if="tab === 'billing'" :property="property" />
-        <utilities-section v-else-if="tab === 'utilities'" :property="property" @changed="reload" />
+        <utilities-section v-else-if="tab === 'utilities'" :property="property" :room-id="utilitiesRoomId" @changed="reload" />
         <settings-section v-else-if="tab === 'settings'" :property="property" />
         <house-rules-section v-else-if="tab === 'rules'" :property="property" />
         <maintenance-section v-else-if="tab === 'maintenance'" :property="property" />
@@ -103,6 +103,16 @@ const loading = ref(true)
 const loadError = ref('')
 const busy = ref(false)
 const tab = ref(typeof route.query.tab === 'string' ? route.query.tab : 'overview')
+/** Set when a room's menu opens the Utilities tab, so its form starts on that room. */
+const utilitiesRoomId = ref<number | null>(null)
+
+function openRoomUtilities(roomId: number) {
+  utilitiesRoomId.value = roomId
+  tab.value = 'utilities'
+}
+watch(tab, (t) => {
+  if (t !== 'utilities') utilitiesRoomId.value = null
+})
 
 const can = (ability: string) => property.value?.abilities.includes(ability as never) ?? false
 const canEditDetails = computed(() => can('edit_details'))
