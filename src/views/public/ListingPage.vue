@@ -4,7 +4,7 @@
       <!-- Photos, with the back button floating on top -->
       <div class="hero">
         <div v-if="listing?.photos.length" class="gallery">
-          <img v-for="(url, i) in listing.photos" :key="url" :src="url" :alt="`Photo ${i + 1} of ${listing.photos.length}`" :loading="i === 0 ? 'eager' : 'lazy'" />
+          <img v-for="(url, i) in listing.photos" :key="url" :src="url" :alt="`Photo ${i + 1} of ${listing.photos.length}`" :loading="i === 0 ? 'eager' : 'lazy'" @click="viewImages(listing.photos, i)" />
         </div>
         <div v-else class="placeholder"><ImageIcon :size="28" aria-hidden="true" /><span class="dl-eyebrow">No photos yet</span></div>
         <DlIconButton class="back" :icon="ChevronLeft" label="Back" @click="goBack" />
@@ -121,6 +121,7 @@
 </template>
 
 <script setup lang="ts">
+import { useImageViewer } from '@/composables/useImageViewer'
 import { IonButton, IonContent, IonFooter, IonPage, onIonViewWillEnter, useIonRouter } from '@ionic/vue'
 import { ChevronLeft, Clock, Droplets, House, Image as ImageIcon, Info, Receipt, UserRound, Wallet, Wifi, Zap } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
@@ -180,6 +181,9 @@ onIonViewWillEnter(async () => {
     loading.value = false
   }
 })
+
+/** Photos and proofs open in the in-app viewer (components/ImageViewer.vue), not a new tab. */
+const { open: viewImages } = useImageViewer()
 </script>
 
 <style scoped>
@@ -199,6 +203,7 @@ onIonViewWillEnter(async () => {
   display: none;
 }
 .gallery img {
+  cursor: zoom-in;
   flex: 0 0 100%;
   height: 100%;
   object-fit: cover;

@@ -51,7 +51,7 @@
           </div>
 
           <p v-if="a.message" class="message">“{{ a.message }}”</p>
-          <a v-if="a.id_document_url" :href="a.id_document_url" target="_blank" rel="noopener" class="id-link"><FileText :size="16" aria-hidden="true" /> View ID</a>
+          <a v-if="a.id_document_url" :href="a.id_document_url" target="_blank" rel="noopener" class="id-link" @click.prevent="viewImages([a.id_document_url])"><FileText :size="16" aria-hidden="true" /> View ID</a>
           <p v-else-if="a.id_document_purged" class="dl-small">ID deleted (30 days after closing)</p>
 
           <p v-if="a.status === 'approved'" class="line">
@@ -94,6 +94,7 @@
 </template>
 
 <script setup lang="ts">
+import { useImageViewer } from '@/composables/useImageViewer'
 import {
   type InfiniteScrollCustomEvent,
   alertController,
@@ -228,6 +229,9 @@ async function cancel(a: BookingApplication) {
     toast.error(errorMessage(e))
   }
 }
+
+/** Photos and proofs open in the in-app viewer (components/ImageViewer.vue), not a new tab. */
+const { open: viewImages } = useImageViewer()
 </script>
 
 <style scoped>

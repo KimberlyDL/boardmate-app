@@ -15,7 +15,7 @@
         </p>
         <ion-badge v-if="line.is_locked" color="medium">Owner bill: the amount is fixed</ion-badge>
         <p v-if="line.reason" class="muted small">{{ line.reason }}</p>
-        <a v-if="line.proof_url" :href="line.proof_url" target="_blank" rel="noopener" class="link">See proof</a>
+        <a v-if="line.proof_url" :href="line.proof_url" target="_blank" rel="noopener" class="link" @click.prevent="viewImages([line.proof_url])">See proof</a>
 
         <template v-if="line.shares">
           <h3>Shares <span class="muted small">({{ line.split_label }})</span></h3>
@@ -92,6 +92,7 @@
 </template>
 
 <script setup lang="ts">
+import { useImageViewer } from '@/composables/useImageViewer'
 import {
   IonBadge,
   IonButton,
@@ -189,6 +190,9 @@ async function remove() {
   if (!(await prompt.confirm('Delete this expense?', `${line.description}, ${peso(line.amount_centavos)}. Everyone's share of it goes away.`, 'Delete'))) return
   await act(() => groupService.deleteExpense(props.group.id, line.id))
 }
+
+/** Photos and proofs open in the in-app viewer (components/ImageViewer.vue), not a new tab. */
+const { open: viewImages } = useImageViewer()
 </script>
 
 <style scoped>

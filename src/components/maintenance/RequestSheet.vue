@@ -29,7 +29,7 @@
           <p v-if="item.unit?.not_ready" class="small warn">{{ item.unit.label }} is Not ready. Set it ready again once the repair is done.</p>
 
           <div v-if="item.photos?.length" class="photos">
-            <a v-for="(url, i) in item.photos" :key="i" :href="url" target="_blank" rel="noopener"><img :src="url" :alt="`Photo ${i + 1}`" /></a>
+            <a v-for="(url, i) in item.photos" :key="i" :href="url" target="_blank" rel="noopener" @click.prevent="viewImages(item.photos, i)"><img :src="url" :alt="`Photo ${i + 1}`" /></a>
           </div>
 
           <!-- The boarder, once it is marked as fixed -->
@@ -77,6 +77,7 @@
 </template>
 
 <script setup lang="ts">
+import { useImageViewer } from '@/composables/useImageViewer'
 import {
   alertController,
   IonBadge,
@@ -240,6 +241,9 @@ async function charge() {
 async function addNote() {
   if (await run(() => maintenanceService.note(item.value!.id, note.value.trim()))) note.value = ''
 }
+
+/** Photos and proofs open in the in-app viewer (components/ImageViewer.vue), not a new tab. */
+const { open: viewImages } = useImageViewer()
 </script>
 
 <style scoped>

@@ -46,7 +46,7 @@
               <template v-if="u.shares.some((s) => s.waived)"> · waived: {{ u.shares.filter((s) => s.waived).map((s) => s.room_label).join(', ') }}</template>
             </p>
             <p v-if="u.correction_reason">Corrected: {{ u.correction_reason }}</p>
-            <a v-if="u.photo_url" :href="u.photo_url" target="_blank" rel="noopener" class="link">See photo</a>
+            <a v-if="u.photo_url" :href="u.photo_url" target="_blank" rel="noopener" class="link" @click.prevent="viewImages([{ src: u.photo_url, alt: `${u.account.name} bill` }])">See photo</a>
           </ion-label>
           <ion-button slot="end" size="small" fill="outline" @click="correctTotal(u)">Correct total</ion-button>
         </ion-item>
@@ -107,6 +107,7 @@
 </template>
 
 <script setup lang="ts">
+import { useImageViewer } from '@/composables/useImageViewer'
 import {
   alertController,
   IonBadge,
@@ -286,6 +287,9 @@ async function remove(account: UtilityAccount) {
   if (!(await prompt.confirm(`Remove ${account.name}?`, 'It is archived with its price history.', 'Remove'))) return
   await run(() => propertyService.removeUtility(account.id), `${account.name} removed.`)
 }
+
+/** Photos and proofs open in the in-app viewer (components/ImageViewer.vue), not a new tab. */
+const { open: viewImages } = useImageViewer()
 </script>
 
 <style scoped>

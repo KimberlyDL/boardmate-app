@@ -7,6 +7,7 @@
     <!-- Desktop only, signed in: the sidebar replaces the bottom tabs (W1). -->
     <AppSidebar v-if="sidebar" class="sidebar" />
     <ion-router-outlet />
+    <ImageViewer />
   </ion-app>
 </template>
 
@@ -15,6 +16,7 @@ import { IonApp, IonRouterOutlet } from '@ionic/vue';
 import { computed } from 'vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import GlobalProgress from '@/components/GlobalProgress.vue';
+import ImageViewer from '@/components/ImageViewer.vue';
 import OfflineNotice from '@/components/OfflineNotice.vue';
 import UpdatePrompt from '@/components/UpdatePrompt.vue';
 import { useScreen } from '@/composables/useScreen';

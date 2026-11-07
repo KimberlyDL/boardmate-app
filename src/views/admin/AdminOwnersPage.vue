@@ -44,7 +44,7 @@
             <!-- Proof documents: signed links that expire, so pull to refresh if one stops opening. -->
             <div v-if="o.owner_profile?.documents.length" class="documents" data-test="owner-documents">
               <template v-for="doc in o.owner_profile.documents" :key="doc.id">
-                <a v-if="doc.url" :href="doc.url" target="_blank" rel="noopener" class="document">
+                <a v-if="doc.url" :href="doc.url" target="_blank" rel="noopener" class="document" @click.prevent="viewImages([{ src: doc.url, alt: doc.original_name }])">
                   <strong>{{ doc.kind_label.split(' (')[0] }}</strong> · {{ doc.original_name }}
                 </a>
                 <span v-else class="document muted">{{ doc.kind_label.split(' (')[0] }} · deleted</span>
@@ -85,6 +85,7 @@
 </template>
 
 <script setup lang="ts">
+import { useImageViewer } from '@/composables/useImageViewer'
 import {
   type InfiniteScrollCustomEvent,
   IonButton,
@@ -187,6 +188,9 @@ async function act(owner: AdminUser, action: 'verify' | 'reject' | 'suspend' | '
     toast.error(errorMessage(e))
   }
 }
+
+/** Photos and proofs open in the in-app viewer (components/ImageViewer.vue), not a new tab. */
+const { open: viewImages } = useImageViewer()
 </script>
 
 <style scoped>

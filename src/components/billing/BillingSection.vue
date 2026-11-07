@@ -71,7 +71,7 @@
           <p v-if="p.reject_reason" class="small">Reason: {{ p.reject_reason }}</p>
           <p v-if="p.reversal" class="small">Reversed by {{ p.reversal.by }} on {{ manilaDate(p.reversal.on).format('MMM D, YYYY') }}: {{ p.reversal.reason }}</p>
           <ion-badge :color="paymentColor[p.status]">{{ p.status_label }}</ion-badge>
-          <a v-if="p.proof_url" :href="p.proof_url" target="_blank" rel="noopener" class="proof">See proof</a>
+          <a v-if="p.proof_url" :href="p.proof_url" target="_blank" rel="noopener" class="proof" @click.prevent="viewImages([p.proof_url])">See proof</a>
 
           <div v-if="p.status === 'pending' && canConfirm" class="actions">
             <ion-button size="small" :disabled="busy" @click="confirm(p)">Confirm</ion-button>
@@ -108,6 +108,7 @@
 </template>
 
 <script setup lang="ts">
+import { useImageViewer } from '@/composables/useImageViewer'
 import { IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonLabel, IonSegment, IonSegmentButton } from '@ionic/vue'
 import { computed, onMounted, ref } from 'vue'
 import BillModal from '@/components/billing/BillModal.vue'
@@ -289,6 +290,9 @@ async function reverse(p: Payment) {
   )
   if (reason) await act(() => billingService.reverse(p.id, reason))
 }
+
+/** Photos and proofs open in the in-app viewer (components/ImageViewer.vue), not a new tab. */
+const { open: viewImages } = useImageViewer()
 </script>
 
 <style scoped>

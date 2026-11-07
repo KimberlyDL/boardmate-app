@@ -93,7 +93,7 @@
                   </p>
                   <p v-if="r.note" class="muted">{{ r.note }}</p>
                   <p v-if="r.reject_reason" class="warn">Rejected: {{ r.reject_reason }}</p>
-                  <a v-if="r.proof_url" :href="r.proof_url" target="_blank" rel="noopener" class="link">See screenshot</a>
+                  <a v-if="r.proof_url" :href="r.proof_url" target="_blank" rel="noopener" class="link" @click.prevent="viewImages([r.proof_url])">See screenshot</a>
                 </ion-label>
                 <ion-buttons v-if="r.can_decide" slot="end">
                   <ion-button size="small" :disabled="busy" @click="confirmRepayment(r)">Confirm</ion-button>
@@ -162,6 +162,7 @@
 </template>
 
 <script setup lang="ts">
+import { useImageViewer } from '@/composables/useImageViewer'
 import {
   IonBackButton,
   IonBadge,
@@ -307,6 +308,9 @@ async function setDefaultSplit(method: string) {
   if (!group.value || method === group.value.default_split_method) return
   await run(() => groupService.setDefaultSplit(groupId, method as 'equal' | 'occupant_days'))
 }
+
+/** Photos and proofs open in the in-app viewer (components/ImageViewer.vue), not a new tab. */
+const { open: viewImages } = useImageViewer()
 </script>
 
 <style scoped>

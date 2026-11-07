@@ -4,7 +4,7 @@
 
     <div class="grid">
       <div v-for="(photo, i) in property.photos" :key="photo.id" class="photo">
-        <img :src="photo.thumb_url" :alt="`Photo ${i + 1}`" loading="lazy" />
+        <img :src="photo.thumb_url" :alt="`Photo ${i + 1}`" loading="lazy" class="zoomable" @click="viewImages(property.photos.map((p) => p.url), i)" />
         <ion-badge v-if="photo.is_cover" class="cover">Cover</ion-badge>
         <div v-if="canEdit" class="tools">
           <ion-button size="small" fill="clear" :disabled="i === 0" aria-label="Move left" @click="move(i, -1)">
@@ -33,6 +33,7 @@
 </template>
 
 <script setup lang="ts">
+import { useImageViewer } from '@/composables/useImageViewer'
 import { IonBadge, IonButton } from '@ionic/vue'
 import { ChevronLeft, ChevronRight, Images, Star, Trash2 } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
@@ -109,6 +110,9 @@ async function remove(photoId: number) {
   if (!(await prompt.confirm('Delete photo?', 'This cannot be undone.', 'Delete'))) return
   await run(() => propertyService.removePhoto(props.property.id, photoId))
 }
+
+/** Photos and proofs open in the in-app viewer (components/ImageViewer.vue), not a new tab. */
+const { open: viewImages } = useImageViewer()
 </script>
 
 <style scoped>
@@ -125,6 +129,7 @@ async function remove(photoId: number) {
   background: var(--ion-color-light);
 }
 .photo img {
+  cursor: zoom-in;
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
