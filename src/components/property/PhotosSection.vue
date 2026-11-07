@@ -25,7 +25,7 @@
 
     <template v-if="canEdit && property.photos.length < 15">
       <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden @change="upload" />
-      <ion-button expand="block" fill="outline" :disabled="busy" @click="fileInput?.click()">
+      <ion-button expand="block" fill="outline" :disabled="busy" @click="openFilePicker(fileInput)">
         <Images slot="start" :size="18" aria-hidden="true" /> {{ progress ? `Uploading ${progress.done + 1} of ${progress.total}…` : busy ? 'Saving…' : 'Add photos' }}
       </ion-button>
     </template>
@@ -33,6 +33,7 @@
 </template>
 
 <script setup lang="ts">
+import { openFilePicker } from '@/lib/permissions'
 import { useImageViewer } from '@/composables/useImageViewer'
 import { IonBadge, IonButton } from '@ionic/vue'
 import { ChevronLeft, ChevronRight, Images, Star, Trash2 } from 'lucide-vue-next'

@@ -104,7 +104,7 @@
             </span>
             <button type="button" class="file-remove" aria-label="Remove file" @click="clearFile"><X :size="18" /></button>
           </div>
-          <button v-else type="button" class="drop" data-dl-focus @click="fileInput?.click()">
+          <button v-else type="button" class="drop" data-dl-focus @click="openFilePicker(fileInput)">
             <span class="drop-title"><Upload :size="16" aria-hidden="true" /> Tap to upload</span>
             <span class="dl-small">JPG, PNG, WebP or PDF</span>
           </button>
@@ -136,6 +136,7 @@
 </template>
 
 <script setup lang="ts">
+import { openFilePicker } from '@/lib/permissions'
 import {
   IonBackButton,
   IonButton,

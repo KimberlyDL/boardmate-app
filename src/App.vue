@@ -8,6 +8,8 @@
     <AppSidebar v-if="sidebar" class="sidebar" />
     <ion-router-outlet />
     <ImageViewer />
+    <!-- Android phone browsers only: offer to open this page in the app (Phase 17.3). -->
+    <OpenInAppBanner />
   </ion-app>
 </template>
 
@@ -17,6 +19,7 @@ import { computed } from 'vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import GlobalProgress from '@/components/GlobalProgress.vue';
 import ImageViewer from '@/components/ImageViewer.vue';
+import OpenInAppBanner from '@/components/OpenInAppBanner.vue';
 import OfflineNotice from '@/components/OfflineNotice.vue';
 import UpdatePrompt from '@/components/UpdatePrompt.vue';
 import { useScreen } from '@/composables/useScreen';

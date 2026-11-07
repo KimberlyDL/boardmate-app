@@ -3,6 +3,10 @@ import { ref } from 'vue'
 export interface ViewerImage {
   src: string
   alt?: string
+  /** "pdf" for a PDF whose link does not end in .pdf (receipts, statements, notices) */
+  kind?: 'image' | 'pdf'
+  /** File name for Download, e.g. "receipt-OR-2026-000012.pdf" */
+  filename?: string
 }
 
 /** What the viewer shows; one viewer for the whole app (components/ImageViewer.vue in App.vue). */
@@ -11,10 +15,9 @@ const index = ref(0)
 const isOpen = ref(false)
 
 /**
- * Show photos and screenshots in an overlay on the same page, instead of a new
- * tab: payment proofs, utility bill photos, repair photos, IDs, listing photos.
- * A PDF (some proofs and IDs are PDFs) shows an "Open file" button instead,
- * since phones cannot draw a PDF inside the page.
+ * Show photos, screenshots and PDFs in an overlay on the same page, instead of
+ * a new tab: payment proofs, utility bill photos, repair photos, IDs, listing
+ * photos, receipts, statements and notices (PDFs drawn in the app, Phase 17.1).
  */
 export function useImageViewer() {
   function open(list: (string | ViewerImage)[], start = 0): void {
@@ -35,6 +38,11 @@ export function useImageViewer() {
   }
 
   return { images, index, isOpen, open, close, go }
+}
+
+/** True when the item is a PDF: marked so, or its link ends in .pdf. */
+export function isPdf(item: ViewerImage): boolean {
+  return item.kind === 'pdf' || isPdfUrl(item.src)
 }
 
 /** True when a link points at a PDF (the stored file name keeps its extension, even in signed links). */

@@ -4,10 +4,29 @@ import type { AdminUser, PageMeta } from '@/types/roles'
 import type { OwnerVerificationStatus } from '@/types/enums'
 import type { Campus } from '@/types/booking'
 import type { PlatformStats } from '@/types/dashboard'
+import type { DocumentLink } from '@/types/billing'
 
 export type OwnerCounts = Record<OwnerVerificationStatus, number>
 
+/** A CSV the admin can download (summary, owners, properties, accounts) */
+export interface AdminExport {
+  key: string
+  label: string
+  description: string
+}
+
 export const adminService = {
+  async exports(): Promise<AdminExport[]> {
+    const { data } = await api.get<ApiEnvelope<AdminExport[]>>('/admin/exports')
+    return data.data
+  },
+
+  /** A short-lived download link for one export. */
+  async exportLink(key: string): Promise<DocumentLink> {
+    const { data } = await api.get<ApiEnvelope<DocumentLink>>(`/admin/exports/${key}/link`)
+    return data.data
+  },
+
   /** Counts across the platform: accounts, owners, listings, stays and monthly activity. */
   async stats(): Promise<PlatformStats> {
     const { data } = await api.get<ApiEnvelope<PlatformStats>>('/admin/stats')

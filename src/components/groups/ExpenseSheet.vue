@@ -49,7 +49,7 @@
         <template v-if="!line">
           <p class="muted small gap">Receipt or screenshot (optional, only the room sees it).</p>
           <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" hidden @change="pickFile" />
-          <ion-button size="small" fill="outline" @click="fileInput?.click()">{{ proof ? 'Change file' : 'Attach proof' }}</ion-button>
+          <ion-button size="small" fill="outline" @click="openFilePicker(fileInput)">{{ proof ? 'Change file' : 'Attach proof' }}</ion-button>
           <span v-if="proof" class="muted small"> {{ proof.name }}</span>
         </template>
 
@@ -60,6 +60,7 @@
 </template>
 
 <script setup lang="ts">
+import { openFilePicker } from '@/lib/permissions'
 import {
   IonButton,
   IonButtons,

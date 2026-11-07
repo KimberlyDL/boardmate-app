@@ -3,6 +3,8 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import ImageViewer from '@/components/ImageViewer.vue'
 import { isPdfUrl, useImageViewer } from '@/composables/useImageViewer'
 
+vi.mock('@/components/PdfPages.vue', () => ({ default: { props: ['src', 'zoom'], template: '<div class="pdf-stub" :data-src="src" :data-zoom="zoom" />' } }))
+
 const viewer = useImageViewer()
 const dialog = () => document.querySelector('[role="dialog"]')
 const key = (k: string) => document.dispatchEvent(new KeyboardEvent('keydown', { key: k }))
@@ -58,16 +60,18 @@ describe('ImageViewer', () => {
     expect(next).not.toHaveBeenCalled()
   })
 
-  test('offers to open a PDF, or a file it cannot draw, instead of showing it', async () => {
+  test('draws a PDF in the app with zoom and download, and offers to open a file it cannot draw', async () => {
     mountViewer()
-    const open = vi.spyOn(window, 'open').mockReturnValue(null)
-    viewer.open(['/api/v1/files/proofs%2Fabc.pdf?expires=1&signature=x'])
+    viewer.open([{ src: 'https://api.test/documents/receipts/41?signature=y', kind: 'pdf', filename: 'receipt.pdf' }])
     await flushPromises()
 
+    const pages = document.querySelector('.pdf-stub') as HTMLElement
+    expect(pages.dataset.src).toBe('https://api.test/documents/receipts/41?signature=y')
     expect(document.querySelector('.dl-viewer img')).toBeNull()
-    expect(document.body.textContent).toContain('This file is a PDF.')
-    ;(document.querySelector('.open') as HTMLButtonElement).click()
-    expect(open).toHaveBeenCalledWith('/api/v1/files/proofs%2Fabc.pdf?expires=1&signature=x', '_blank', 'noopener')
+    expect(document.querySelector('a[aria-label="Download"]')?.getAttribute('href')).toBe('https://api.test/documents/receipts/41?signature=y')
+    button('Zoom in').click()
+    await flushPromises()
+    expect((document.querySelector('.pdf-stub') as HTMLElement).dataset.zoom).toBe('1.5')
 
     viewer.open(['/broken.webp'])
     await flushPromises()

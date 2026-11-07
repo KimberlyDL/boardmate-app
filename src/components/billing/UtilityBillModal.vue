@@ -35,7 +35,7 @@
 
           <p class="muted small gap">Photo of the bill (optional, only staff see it).</p>
           <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" hidden @change="pickFile" />
-          <ion-button size="small" fill="outline" @click="fileInput?.click()">{{ photo ? 'Change file' : 'Attach photo' }}</ion-button>
+          <ion-button size="small" fill="outline" @click="openFilePicker(fileInput)">{{ photo ? 'Change file' : 'Attach photo' }}</ion-button>
           <span v-if="photo" class="muted small"> {{ photo.name }}</span>
 
           <ion-button expand="block" class="form-actions" :disabled="busy || needsWaiver.length > 0" @click="save">Bill the rooms</ion-button>
@@ -46,6 +46,7 @@
 </template>
 
 <script setup lang="ts">
+import { openFilePicker } from '@/lib/permissions'
 import { IonButton, IonButtons, IonContent, IonHeader, IonInput, IonItem, IonLabel, IonList, IonModal, IonTitle, IonToggle, IonToolbar } from '@ionic/vue'
 import { computed, ref, watch } from 'vue'
 import { manila } from '@/lib/dayjs'

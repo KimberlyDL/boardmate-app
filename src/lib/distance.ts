@@ -7,7 +7,7 @@ export function formatDistance(metres: number | null | undefined): string {
 }
 
 /** The Finder's "Within" choices, in km; null = any distance. */
-export const RADIUS_CHOICES_KM = [1, 2, 3, 5] as const
+export const RADIUS_CHOICES_KM = [1, 2, 3, 5, 10, 20, 50] as const
 /** How far to search at the start, in km */
 export const DEFAULT_RADIUS_KM = 1
 

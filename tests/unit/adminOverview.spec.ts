@@ -4,9 +4,17 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import AdminOverviewPage from '@/views/admin/AdminOverviewPage.vue'
 import { adminService } from '@/services/admin'
+import { downloadFile } from '@/lib/documents'
 import type { PlatformStats } from '@/types/dashboard'
 
-vi.mock('@/services/admin', () => ({ adminService: { stats: vi.fn() } }))
+vi.mock('@/services/admin', () => ({
+  adminService: {
+    stats: vi.fn(),
+    exports: vi.fn(async () => [{ key: 'owners', label: 'Owners', description: 'Every owner.' }]),
+    exportLink: vi.fn(async () => ({ url: 'https://api.test/owners.csv', expires_in_minutes: 5 })),
+  },
+}))
+vi.mock('@/lib/documents', () => ({ downloadFile: vi.fn(async (getLink: () => Promise<unknown>) => void (await getLink())) }))
 vi.mock('@/components/NotificationBell.vue', () => ({ default: { template: '<span />' } }))
 vi.mock('@/components/dl/DlChart.vue', () => ({ default: { props: ['label', 'labels'], template: '<div class="chart" :data-label="label" :data-labels="labels.join(\'|\')" />' } }))
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }))
@@ -49,5 +57,19 @@ describe('Admin overview (counts only)', () => {
     const charts = [...document.querySelectorAll('.chart')]
     expect(charts).toHaveLength(3)
     expect(charts[2].getAttribute('data-labels')).toBe('Verified|Waiting for review|Rejected')   // empty statuses left out
+  })
+
+  test('downloads an export from its link', async () => {
+    vi.mocked(adminService.stats).mockResolvedValue(stats())
+    mount(AdminOverviewPage, { global: { plugins: [IonicVue] }, attachTo: document.body })
+    await flushPromises()
+
+    expect(text()).toContain('no money and no phone numbers')
+    const item = [...document.querySelectorAll('ion-item')].find((i) => i.textContent?.includes('Owners')) as HTMLElement
+    item.click()
+    await flushPromises()
+
+    expect(downloadFile).toHaveBeenCalled()
+    expect(adminService.exportLink).toHaveBeenCalledWith('owners')
   })
 })

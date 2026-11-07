@@ -23,7 +23,7 @@
         <ion-input v-model="note" label="Note (optional)" label-placement="stacked" fill="outline" class="gap" :maxlength="255" />
         <p class="muted small gap">Screenshot (optional).</p>
         <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" hidden @change="pickFile" />
-        <ion-button size="small" fill="outline" @click="fileInput?.click()">{{ proof ? 'Change file' : 'Attach screenshot' }}</ion-button>
+        <ion-button size="small" fill="outline" @click="openFilePicker(fileInput)">{{ proof ? 'Change file' : 'Attach screenshot' }}</ion-button>
         <span v-if="proof" class="muted small"> {{ proof.name }}</span>
         <ion-button expand="block" class="form-actions" :disabled="busy" @click="save">{{ selfReceived ? 'Record it' : 'Mark as paid' }}</ion-button>
       </div>
@@ -32,6 +32,7 @@
 </template>
 
 <script setup lang="ts">
+import { openFilePicker } from '@/lib/permissions'
 import { IonButton, IonButtons, IonContent, IonHeader, IonInput, IonModal, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/vue'
 import { computed, ref, watch } from 'vue'
 import { peso, toCentavos, toPesoInput } from '@/lib/money'

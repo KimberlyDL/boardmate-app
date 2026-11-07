@@ -12,8 +12,9 @@
             v-model="filters.q"
             class="search"
             :debounce="500"
-            placeholder="City, barangay or name"
+            placeholder="Town, address or place name"
             @ion-input="search()"
+            @keyup.enter="findPlaces"
           />
           <div class="control-row">
             <ion-segment v-model="view" class="view-toggle" @ion-change="search()">
@@ -47,6 +48,29 @@
               <ion-select-option value="newest">Newest first</ion-select-option>
               <ion-select-option value="price">Lowest price first</ion-select-option>
             </ion-select>
+          </div>
+
+          <!-- Address search: places to measure distance from (OpenStreetMap) -->
+          <div v-if="placeQuery.length >= 3 || foundPlaces" class="places-panel">
+            <button v-if="!foundPlaces" type="button" class="find-place" :disabled="findingPlaces" @click="findPlaces">
+              <MapPin :size="16" aria-hidden="true" />
+              {{ findingPlaces ? 'Looking for it…' : `Find “${placeQuery}” on the map` }}
+            </button>
+            <template v-else>
+              <div class="places-head">
+                <span class="dl-eyebrow">Places</span>
+                <button type="button" class="link-btn" @click="foundPlaces = null">Close</button>
+              </div>
+              <p v-if="!foundPlaces.length" class="dl-small">No place found for “{{ foundFor }}”. Try adding the town or province.</p>
+              <ul v-else class="places-list">
+                <li v-for="p in foundPlaces" :key="`${p.latitude},${p.longitude}`">
+                  <button type="button" class="place-row" @click="usePlace(p)">
+                    <MapPin :size="16" aria-hidden="true" />
+                    <span><strong>{{ p.name }}</strong><span v-if="p.area" class="dl-small"> · {{ p.area }}</span></span>
+                  </button>
+                </li>
+              </ul>
+            </template>
           </div>
         </div>
       </ion-toolbar>
@@ -262,6 +286,7 @@
 <script setup lang="ts">
 import {
   actionSheetController,
+  alertController,
   type InfiniteScrollCustomEvent,
   IonBackButton,
   IonButton,
@@ -313,6 +338,7 @@ import type { RoomFilters } from '@/lib/floors'
 import { peso, toCentavos } from '@/lib/money'
 import { errorMessage } from '@/services/api'
 import { listingService, type ListingPlace } from '@/services/listings'
+import { placeService, type FoundPlace } from '@/services/places'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import type { ListingDetail, ListingSummary } from '@/types/booking'
@@ -416,6 +442,76 @@ onMounted(async () => {
   search()
 })
 
+/** Address search (OpenStreetMap through the API): pick a place, then measure distance from it. */
+const foundPlaces = ref<FoundPlace[] | null>(null)
+const foundFor = ref('')
+const findingPlaces = ref(false)
+const placeQuery = computed(() => filters.q.trim())
+
+watch(placeQuery, (q) => {
+  if (foundPlaces.value && q !== foundFor.value) foundPlaces.value = null
+})
+
+async function findPlaces() {
+  const q = placeQuery.value
+  if (q.length < 3 || findingPlaces.value) return
+  findingPlaces.value = true
+  try {
+    foundPlaces.value = await placeService.search(q)
+    foundFor.value = q
+  } catch (e) {
+    toast.error(errorMessage(e))
+  } finally {
+    findingPlaces.value = false
+  }
+}
+
+/** Measure from the chosen place; the typed words stop filtering listings by name. */
+async function usePlace(p: FoundPlace) {
+  foundPlaces.value = null
+  filters.q = ''
+  await distance.choosePlace(p.name, p.latitude, p.longitude)
+  measured()
+}
+
+/** "Search an address…" in the Measure-from menu: type it, then pick from what was found. */
+async function searchAddress() {
+  const ask = await alertController.create({
+    header: 'Search an address',
+    message: 'A town, barangay, street, school or landmark in the Philippines.',
+    inputs: [{ name: 'q', type: 'text', placeholder: 'e.g. Naujan, or J.P. Rizal St, Calapan', attributes: { enterkeyhint: 'search' } }],
+    buttons: [{ text: 'Cancel', role: 'cancel' }, { text: 'Search', role: 'confirm' }],
+  })
+  await ask.present()
+  // Enter (or the keyboard's Search key) searches, like the Search button.
+  const field = ask.querySelector('input')
+  field?.focus()
+  field?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') void ask.dismiss({ values: { q: field.value } }, 'confirm')
+  })
+  const { role, data } = await ask.onDidDismiss()
+  const q = String(data?.values?.q ?? '').trim()
+  if (role !== 'confirm') return
+  if (q.length < 3) return toast.error('Type at least 3 letters.')
+
+  let found: FoundPlace[]
+  try {
+    found = await placeService.search(q)
+  } catch (e) {
+    return toast.error(errorMessage(e))
+  }
+  if (!found.length) return toast.error(`No place found for “${q}”. Try adding the town or province.`)
+
+  const sheet = await actionSheetController.create({
+    header: 'Measure distance from',
+    buttons: [
+      ...found.map((p) => ({ text: p.area ? `${p.name} · ${p.area}` : p.name, handler: () => void usePlace(p) })),
+      { text: 'Cancel', role: 'cancel' },
+    ],
+  })
+  await sheet.present()
+}
+
 /** After choosing where to measure from, list the nearest places first. */
 function measured() {
   if (filters.sort === 'newest') filters.sort = 'nearest'
@@ -452,6 +548,7 @@ async function chooseFrom() {
           .chooseMyLocation()
           .then((ok) => (ok ? measured() : toast.error('Could not get your location. Choose a campus or a point instead.'))),
     },
+    { text: 'Search an address…', handler: () => void searchAddress() },
     {
       text: 'Choose a point on the map',
       handler: () => {
@@ -459,7 +556,7 @@ async function chooseFrom() {
         picking.value = true
       },
     },
-    { text: 'Anywhere in Calapan (no distance)', handler: () => void distance.clear().then(cleared) },
+    { text: 'Anywhere (no distance limit)', handler: () => void distance.clear().then(cleared) },
     { text: 'Cancel', role: 'cancel' },
   ]
   const sheet = await actionSheetController.create({ header: 'Measure distance from', buttons })
@@ -570,6 +667,75 @@ function clearArea() {
   --border-radius: 12px;
   --box-shadow: none;
   --background: var(--bm-surface-alt);
+}
+/* Address search results, under the search box (full width) */
+.places-panel {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 6px;
+}
+.find-place,
+.place-row,
+.link-btn {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.find-place {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--brand-primary-subtle);
+  color: var(--brand-primary);
+  font-weight: 600;
+}
+.find-place:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+.places-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.link-btn {
+  color: var(--brand-primary);
+  font-weight: 600;
+  padding: 4px;
+}
+.places-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--bm-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bm-surface-alt);
+}
+.places-list li + li {
+  border-top: 1px solid var(--bm-border);
+}
+.place-row {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  text-align: left;
+}
+.place-row:hover,
+.place-row:focus-visible {
+  background: var(--brand-primary-subtle);
+}
+.place-row svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--brand-primary);
 }
 .control-row {
   min-width: 0;

@@ -2,6 +2,7 @@ import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { IonicVue } from '@ionic/vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { useImageViewer } from '@/composables/useImageViewer'
 import BillingSection from '@/components/billing/BillingSection.vue'
 import RecordPaymentModal from '@/components/billing/RecordPaymentModal.vue'
 import ReportPaymentModal from '@/components/billing/ReportPaymentModal.vue'
@@ -287,9 +288,8 @@ describe('ReportPaymentModal', () => {
 })
 
 describe('MyBillsPage follow-up (C7) and documents (A9)', () => {
-  test('marks late and checked bills, and opens the statement and a receipt as PDFs', async () => {
-    const tab = { location: { href: '' }, close: vi.fn() }
-    const open = vi.spyOn(window, 'open').mockReturnValue(tab as unknown as Window)
+  test('marks late and checked bills, and opens the statement and a receipt as PDFs in the app', async () => {
+    const viewer = useImageViewer()
     vi.mocked(billingService.myBills).mockResolvedValue({
       items: [
         { ...october, property_name: 'Santos House', is_late: true, late_notice_number: 'NTC-2026-000001', under_review: null },
@@ -308,13 +308,14 @@ describe('MyBillsPage follow-up (C7) and documents (A9)', () => {
 
     await press('Statement (PDF)')
     expect(billingService.myStatementLink).toHaveBeenCalledWith(3)
-    expect(open).toHaveBeenCalledWith('', '_blank')
-    expect(tab.location.href).toBe('https://api.test/documents/statements/3/5?signature=x')
+    expect(viewer.images.value[0]).toMatchObject({ src: 'https://api.test/documents/statements/3/5?signature=x', kind: 'pdf' })
+    viewer.close()
 
     await showTab('payments')
     await press('Receipt (PDF)')
     expect(billingService.receiptLink).toHaveBeenCalledWith(41)
-    expect(tab.location.href).toBe('https://api.test/documents/receipts/41?signature=y')
-    open.mockRestore()
+    expect(viewer.images.value[0]).toMatchObject({ src: 'https://api.test/documents/receipts/41?signature=y', kind: 'pdf' })
+    expect(viewer.isOpen.value).toBe(true)
+    viewer.close()
   })
 })

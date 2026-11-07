@@ -14,6 +14,7 @@
 </template>
 
 <script setup lang="ts">
+import { locate } from '@/lib/permissions'
 import { IonButton } from '@ionic/vue'
 import { LocateFixed } from 'lucide-vue-next'
 import L from 'leaflet'
@@ -69,25 +70,14 @@ function clear() {
   emit('update:modelValue', null)
 }
 
-function useMyLocation() {
-  if (!navigator.geolocation) {
-    toast.error('This device cannot share its location.')
-    return
-  }
+/** Asks nicely first, and offers settings when location was turned off (Phase 17.2). */
+async function useMyLocation() {
   locating.value = true
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      locating.value = false
-      const value = { lat: pos.coords.latitude, lng: pos.coords.longitude }
-      place(value, true)
-      emit('update:modelValue', value)
-    },
-    () => {
-      locating.value = false
-      toast.error('Could not get your location. Tap the map instead.')
-    },
-    { enableHighAccuracy: true, timeout: 10000 },
-  )
+  const value = await locate()
+  locating.value = false
+  if (!value) return toast.error('Could not get your location. Tap the map instead.')
+  place(value, true)
+  emit('update:modelValue', value)
 }
 
 onMounted(() => {

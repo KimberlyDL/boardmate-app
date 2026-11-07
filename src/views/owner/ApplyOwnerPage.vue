@@ -107,7 +107,7 @@
           hidden
           @change="pickFiles"
         />
-        <ion-button size="small" fill="outline" :disabled="total >= MAX_DOCUMENTS" @click="fileInput?.click()">
+        <ion-button size="small" fill="outline" :disabled="total >= MAX_DOCUMENTS" @click="openFilePicker(fileInput)">
           <Paperclip slot="start" :size="18" aria-hidden="true" />
           Attach files
         </ion-button>
@@ -123,6 +123,7 @@
 </template>
 
 <script setup lang="ts">
+import { openFilePicker } from '@/lib/permissions'
 import {
   IonBackButton,
   IonButton,

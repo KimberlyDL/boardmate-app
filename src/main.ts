@@ -7,6 +7,7 @@ import './lib/dayjs';
 import './lib/installPrompt';
 import { initTheme } from './composables/useTheme';
 import { installBusyButtons } from './lib/busyButtons';
+import { installAppLinks } from './lib/appLinks';
 
 import { IonicVue } from '@ionic/vue';
 
@@ -56,4 +57,5 @@ const app = createApp(App)
 Promise.all([router.isReady(), initTheme()]).then(() => {
   app.mount('#app');
   installBusyButtons();
+  installAppLinks(router);
 });

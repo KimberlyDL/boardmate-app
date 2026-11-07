@@ -98,6 +98,20 @@
               </dl>
             </DlCard>
           </div>
+
+          <DlCard>
+            <h2 class="dl-title">Export</h2>
+            <p class="muted">Spreadsheet files (CSV) that open in Excel or Google Sheets. Counts and emails only: no money and no phone numbers.</p>
+            <ion-list lines="full" class="exports">
+              <ion-item v-for="e in exports" :key="e.key" button :detail="false" :disabled="downloading === e.key" @click="download(e)">
+                <Download slot="start" :size="18" aria-hidden="true" />
+                <ion-label class="ion-text-wrap">
+                  <h3>{{ e.label }}</h3>
+                  <p>{{ e.description }}</p>
+                </ion-label>
+              </ion-item>
+            </ion-list>
+          </DlCard>
         </template>
       </div>
     </ion-content>
@@ -105,7 +119,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonButtons, IonContent, IonHeader, IonPage, IonTitle, IonToolbar, onIonViewWillEnter } from '@ionic/vue'
+import { IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonPage, IonTitle, IonToolbar, onIonViewWillEnter } from '@ionic/vue'
+import { Download } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import NotificationBell from '@/components/NotificationBell.vue'
 import { DlCard, DlRefresher, DlSkeleton, DlStatCard } from '@/components/dl'
@@ -113,7 +128,8 @@ import DlChart from '@/components/dl/DlChart.vue'
 import { useToast } from '@/composables/useToast'
 import { monthLabel, type ChartTone } from '@/lib/charts'
 import { errorMessage } from '@/services/api'
-import { adminService } from '@/services/admin'
+import { adminService, type AdminExport } from '@/services/admin'
+import { downloadFile } from '@/lib/documents'
 import type { PlatformStats } from '@/types/dashboard'
 
 /** The platform admin's overview (A11): accounts, owners, listings, stays and monthly activity, in counts only. */
@@ -130,7 +146,26 @@ const ownerSlices = computed(() =>
     { label: 'Suspended', n: data.value!.owners.suspended, tone: 'muted' },
   ] as { label: string; n: number; tone: ChartTone }[]).filter((s) => s.n > 0))
 
+/** CSV exports (improvements Phase 5) */
+const exports = ref<AdminExport[]>([])
+const downloading = ref<string | null>(null)
+
+async function download(e: AdminExport) {
+  downloading.value = e.key
+  try {
+    await downloadFile(() => adminService.exportLink(e.key))
+  } catch (err) {
+    toast.error(errorMessage(err))
+  } finally {
+    downloading.value = null
+  }
+}
+
 async function load() {
+  adminService
+    .exports()
+    .then((list) => (exports.value = list))
+    .catch(() => {})
   try {
     data.value = await adminService.stats()
   } catch (e) {

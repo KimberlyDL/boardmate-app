@@ -15,6 +15,19 @@ export interface PlaceProvince {
   cities: PlaceCity[]
 }
 
+/** A place or address found by the address search (OpenStreetMap) */
+export interface FoundPlace {
+  /** e.g. "Naujan" or "J. P. Rizal Street" */
+  name: string
+  /** e.g. "Masipit, Calapan, Oriental Mindoro" */
+  area: string
+  label: string
+  /** town, city, village, road, school… */
+  kind: string
+  latitude: number
+  longitude: number
+}
+
 let cached: Promise<PlaceProvince[]> | null = null
 
 /** The official province and city list (PSGC) for location pickers; fetched once per app session. */
@@ -29,9 +42,15 @@ export const placeService = {
       })
     return cached
   },
+
+  /** Places and addresses in the Philippines matching the words (at least 3 letters). */
+  async search(q: string): Promise<FoundPlace[]> {
+    const { data } = await api.get<ApiEnvelope<FoundPlace[]>>('/places/search', { params: { q } })
+    return data.data
+  },
 }
 
 /** Lower case without accents, so "munoz" finds "Muñoz" and "las pinas" finds "Las Piñas". */
 export function searchKey(text: string): string {
-  return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
 }

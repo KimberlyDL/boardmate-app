@@ -8,7 +8,7 @@ import { reportService } from '@/services/reports'
 vi.mock('@/services/reports', () => ({ reportService: { list: vi.fn(), link: vi.fn() } }))
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }))
 vi.mock('@/composables/useToast', () => ({ useToast: () => toast }))
-const opened = vi.hoisted(() => ({ openDocument: vi.fn(async (get: () => Promise<unknown>) => void (await get())) }))
+const opened = vi.hoisted(() => ({ downloadFile: vi.fn(async (get: () => Promise<unknown>) => void (await get())) }))
 vi.mock('@/lib/documents', () => opened)
 vi.mock('@ionic/vue', async (original) => ({ ...(await original<typeof import('@ionic/vue')>()), onIonViewWillEnter: (cb: () => void) => cb() }))
 
@@ -62,7 +62,7 @@ describe('ReportsPage', () => {
 
     await press('Download')
     expect(reportService.link).toHaveBeenLastCalledWith('collections', null, null, null)
-    expect(opened.openDocument).toHaveBeenCalledTimes(1)
+    expect(opened.downloadFile).toHaveBeenCalledTimes(1)
 
     await openReport('Collections')
     await type('From', '2026-10-01')

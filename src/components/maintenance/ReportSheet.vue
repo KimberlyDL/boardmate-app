@@ -40,7 +40,7 @@
 
         <p class="label">Photos (optional, up to {{ MAX_PHOTOS }})</p>
         <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden @change="pickFiles" />
-        <ion-button size="small" fill="outline" :disabled="photos.length >= MAX_PHOTOS" @click="fileInput?.click()">Add photos</ion-button>
+        <ion-button size="small" fill="outline" :disabled="photos.length >= MAX_PHOTOS" @click="openFilePicker(fileInput)">Add photos</ion-button>
         <ul v-if="photos.length" class="files">
           <li v-for="(p, i) in photos" :key="i">
             {{ p.name }} <ion-button size="small" fill="clear" color="danger" @click="photos.splice(i, 1)">Remove</ion-button>
@@ -54,6 +54,7 @@
 </template>
 
 <script setup lang="ts">
+import { openFilePicker } from '@/lib/permissions'
 import {
   IonButton,
   IonButtons,

@@ -327,6 +327,7 @@ function parseFloor(value: unknown): number | null | undefined {
 
 async function openRoomActions(room: Room) {
   const buttons = []
+  if (canPrice.value && room.units.length) buttons.push({ text: 'Change rent', handler: () => void chooseUnitForRent(room) })
   if (room.rental_mode === 'bedspaces') {
     buttons.push({ text: 'Add bedspaces', handler: () => addBedspaces(room) })
     const option = room.units.find((u) => u.is_whole_option)
@@ -340,6 +341,22 @@ async function openRoomActions(room: Room) {
   buttons.push({ text: 'Remove room', role: 'destructive', handler: () => removeRoom(room) })
   buttons.push({ text: 'Cancel', role: 'cancel' })
   const sheet = await actionSheetController.create({ header: `Room ${room.label}`, buttons })
+  await sheet.present()
+}
+
+/** "Change rent" in a room's menu: one place goes straight to the rent box, several ask which first. */
+async function chooseUnitForRent(room: Room) {
+  if (room.units.length === 1) return changeRent(room.units[0])
+  const sheet = await actionSheetController.create({
+    header: `Change rent · Room ${room.label}`,
+    buttons: [
+      ...room.units.map((u) => ({
+        text: `${u.is_whole_option ? 'Whole room' : u.label} · ${u.rent_centavos === null ? 'no rent set' : peso(u.rent_centavos)}`,
+        handler: () => void changeRent(u),
+      })),
+      { text: 'Cancel', role: 'cancel' },
+    ],
+  })
   await sheet.present()
 }
 
@@ -363,7 +380,7 @@ async function openActions(unit: Unit) {
 async function changeRent(unit: Unit) {
   const alert = await alertController.create({
     header: `Rent for ${unit.label}`,
-    message: 'The current rent stays for earlier days. Pick when the new rent starts.',
+    message: 'The current rent stays for earlier days. Pick when the new rent starts. If someone stays here, a higher rent needs the notice days set in Settings.',
     inputs: [
       { name: 'amount', type: 'text', placeholder: 'Amount in ₱', value: toPesoInput(unit.rent_centavos), attributes: { inputmode: 'decimal' } },
       { name: 'from', type: 'date', value: manila().format('YYYY-MM-DD'), min: manila().format('YYYY-MM-DD') },

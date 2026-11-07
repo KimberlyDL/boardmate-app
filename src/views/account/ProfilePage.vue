@@ -13,7 +13,7 @@
         <div class="center">
           <DlAvatar :name="auth.user.name" :src="auth.user.photo_url" :size="96" class="avatar" />
           <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp" hidden @change="uploadPhoto" />
-          <ion-button size="small" class="dl-tonal" :disabled="photoBusy" @click="fileInput?.click()">
+          <ion-button size="small" class="dl-tonal" :disabled="photoBusy" @click="openFilePicker(fileInput)">
             {{ auth.user.photo_url ? 'Change photo' : 'Add photo' }}
           </ion-button>
           <ion-button v-if="auth.user.photo_url" size="small" fill="clear" color="medium" :disabled="photoBusy" @click="removePhoto">
@@ -179,6 +179,7 @@
 </template>
 
 <script setup lang="ts">
+import { openFilePicker } from '@/lib/permissions'
 import {
   IonBackButton,
   IonButton,

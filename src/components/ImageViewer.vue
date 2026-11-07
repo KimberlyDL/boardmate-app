@@ -5,16 +5,32 @@
       class="dl-viewer"
       role="dialog"
       aria-modal="true"
-      :aria-label="images.length > 1 ? `Photo ${index + 1} of ${images.length}` : 'Photo'"
+      :aria-label="pdf ? 'PDF' : images.length > 1 ? `Photo ${index + 1} of ${images.length}` : 'Photo'"
     >
       <div class="bar">
-        <span class="count dl-data">{{ images.length > 1 ? `${index + 1} / ${images.length}` : '' }}</span>
-        <button ref="closeButton" type="button" class="icon" aria-label="Close" @click="close">
-          <X :size="24" aria-hidden="true" />
-        </button>
+        <span class="count dl-data">{{ countLabel }}</span>
+        <span class="tools">
+          <template v-if="pdf">
+            <button type="button" class="icon" aria-label="Zoom out" :disabled="pdfZoom <= 1" @click="pdfZoom = Math.max(1, pdfZoom - 0.5)">
+              <ZoomOut :size="22" aria-hidden="true" />
+            </button>
+            <button type="button" class="icon" aria-label="Zoom in" :disabled="pdfZoom >= 3" @click="pdfZoom = Math.min(3, pdfZoom + 0.5)">
+              <ZoomIn :size="22" aria-hidden="true" />
+            </button>
+          </template>
+          <a class="icon" :href="current.src" :download="current.filename || ''" target="_blank" rel="noopener" aria-label="Download">
+            <Download :size="22" aria-hidden="true" />
+          </a>
+          <button ref="closeButton" type="button" class="icon" aria-label="Close" @click="close">
+            <X :size="24" aria-hidden="true" />
+          </button>
+        </span>
       </div>
 
+      <PdfPages v-if="pdf" :key="current.src" :src="current.src" :zoom="pdfZoom" @pages="pdfPages = $event" @open-outside="openFile" />
+
       <div
+        v-else
         class="stage"
         @pointerdown="onDown"
         @pointermove="onMove"
@@ -24,9 +40,9 @@
         @wheel.prevent="onWheel"
         @click.self="onBackdrop"
       >
-        <div v-if="pdf || failed" class="fallback">
+        <div v-if="failed" class="fallback">
           <FileText :size="40" aria-hidden="true" />
-          <p>{{ pdf ? 'This file is a PDF.' : 'This file can’t be shown here.' }}</p>
+          <p>This file can’t be shown here.</p>
           <button type="button" class="open" @click="openFile">Open file</button>
         </div>
         <template v-else>
@@ -59,20 +75,29 @@
 </template>
 
 <script setup lang="ts">
-import { ChevronLeft, ChevronRight, FileText, X } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight, Download, FileText, X, ZoomIn, ZoomOut } from 'lucide-vue-next'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import DlLoader from '@/components/dl/DlLoader.vue'
-import { isPdfUrl, useImageViewer } from '@/composables/useImageViewer'
+import PdfPages from '@/components/PdfPages.vue'
+import { isPdf, useImageViewer } from '@/composables/useImageViewer'
 
 /**
- * The app's one photo viewer (mounted in App.vue, opened with useImageViewer()).
+ * The app's one photo and PDF viewer (mounted in App.vue, opened with useImageViewer()).
+ * PDFs are drawn page by page (PdfPages) with zoom buttons; every item can be downloaded.
  * Close with ×, Esc, the phone's back button, a tap beside the photo or a swipe
  * down; arrows, arrow keys or a sideways swipe change photo; double-tap, pinch or
  * the mouse wheel zoom, and a zoomed photo can be dragged.
  */
 const { images, index, isOpen, close, go } = useImageViewer()
 const current = computed(() => images.value[index.value] ?? { src: '' })
-const pdf = computed(() => isPdfUrl(current.value.src))
+const pdf = computed(() => isPdf(current.value))
+const pdfZoom = ref(1)
+const pdfPages = ref(0)
+const countLabel = computed(() => {
+  if (images.value.length > 1) return `${index.value + 1} / ${images.value.length}`
+  if (pdf.value && pdfPages.value) return pdfPages.value === 1 ? '1 page' : `${pdfPages.value} pages`
+  return ''
+})
 
 const loaded = ref(false)
 const failed = ref(false)
@@ -92,6 +117,8 @@ function resetView(): void {
 }
 
 watch(current, () => {
+  pdfZoom.value = 1
+  pdfPages.value = 0
   loaded.value = false
   failed.value = false
   resetView()
@@ -294,6 +321,14 @@ img.hidden {
   background: rgb(255 255 255 / 0.1);
   color: #fff;
   cursor: pointer;
+}
+.tools {
+  display: inline-flex;
+  gap: 8px;
+}
+.icon:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 .icon:hover {
   background: rgb(255 255 255 / 0.2);

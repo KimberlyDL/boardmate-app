@@ -1,5 +1,6 @@
 import { Preferences } from '@capacitor/preferences'
 import { computed, ref } from 'vue'
+import { locate } from '@/lib/permissions'
 import { listingService } from '@/services/listings'
 import type { Campus } from '@/types/booking'
 
@@ -8,6 +9,8 @@ export type DistancePoint =
   | { kind: 'campus'; id: number; name: string; lat: number; lng: number }
   | { kind: 'me'; lat: number; lng: number }
   | { kind: 'point'; lat: number; lng: number }
+  /** A place or address found with the search bar ("Naujan") */
+  | { kind: 'place'; name: string; lat: number; lng: number }
 
 const KEY = 'dormlink.distanceFrom'
 const campuses = ref<Campus[]>([])
@@ -50,17 +53,6 @@ async function choose(next: DistancePoint | null) {
   await Preferences.set({ key: KEY, value: JSON.stringify(next) })
 }
 
-/** The phone's position, or null when it cannot or will not share it. */
-function locate(): Promise<{ lat: number; lng: number } | null> {
-  return new Promise((resolve) => {
-    if (!navigator.geolocation) return resolve(null)
-    navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => resolve(null),
-      { enableHighAccuracy: true, timeout: 10000 },
-    )
-  })
-}
 
 /**
  * The Finder's distance point, shared by the map and the list and remembered
@@ -71,7 +63,7 @@ export function useDistanceFrom() {
   const label = computed(() => {
     const p = point.value
     if (!p) return 'Anywhere'
-    if (p.kind === 'campus') return p.name
+    if (p.kind === 'campus' || p.kind === 'place') return p.name
     return p.kind === 'me' ? 'My location' : 'Chosen point'
   })
   return {
@@ -82,6 +74,7 @@ export function useDistanceFrom() {
     near: computed(() => (point.value ? { lat: point.value.lat, lng: point.value.lng } : null)),
     chooseCampus: (c: Campus) => choose(fromCampus(c)),
     choosePoint: (lat: number, lng: number) => choose({ kind: 'point', lat, lng }),
+    choosePlace: (name: string, lat: number, lng: number) => choose({ kind: 'place', name, lat, lng }),
     /** Stop measuring distance (remembered, so the default campus does not come back). */
     clear: () => choose(null),
     /** Uses the phone's location; false when it is not available. */

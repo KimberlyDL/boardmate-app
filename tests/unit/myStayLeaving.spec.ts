@@ -1,6 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { IonicVue } from '@ionic/vue'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { useImageViewer } from '@/composables/useImageViewer'
 import MyStayPage from '@/views/boarder/MyStayPage.vue'
 import { tenancyService } from '@/services/tenancies'
 import type { Tenancy } from '@/types/tenancy'
@@ -104,8 +105,7 @@ describe('MyStayPage leaving', () => {
   })
 
   test('lists past stays: waiting for the deposit, or settled with the summary', async () => {
-    const tab = { location: { href: '' }, close: vi.fn() }
-    const open = vi.spyOn(window, 'open').mockReturnValue(tab as unknown as Window)
+    const viewer = useImageViewer()
     vi.mocked(tenancyService.settlementSummaryLink).mockResolvedValue({ url: 'https://api.test/documents/settlements/2?signature=z', expires_in_minutes: 30 })
     serve([], [
       { ...kim, id: 8, status: 'settled', moved_out_on: '2026-11-25', is_settled: true } as Tenancy,
@@ -120,7 +120,7 @@ describe('MyStayPage leaving', () => {
     expect(text()).toContain('The owner will settle your deposit soon.')
     await press('Settlement summary (PDF)')
     expect(tenancyService.settlementSummaryLink).toHaveBeenCalledWith(8)
-    expect(tab.location.href).toBe('https://api.test/documents/settlements/2?signature=z')
-    open.mockRestore()
+    expect(viewer.images.value[0]).toMatchObject({ src: 'https://api.test/documents/settlements/2?signature=z', kind: 'pdf' })
+    viewer.close()
   })
 })

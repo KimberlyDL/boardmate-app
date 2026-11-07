@@ -75,7 +75,7 @@ import {
 } from '@ionic/vue'
 import { computed, ref } from 'vue'
 import DlLoader from '@/components/dl/DlLoader.vue'
-import { openDocument } from '@/lib/documents'
+import { downloadFile } from '@/lib/documents'
 import { firstError } from '@/services/api'
 import { reportService, type ReportInfo } from '@/services/reports'
 import { useAuthStore } from '@/stores/auth'
@@ -116,7 +116,7 @@ async function download() {
   if ((from.value && !to.value) || (!from.value && to.value)) return toast.error('Choose both dates, or neither.')
   busy.value = true
   try {
-    await openDocument(() => reportService.link(r.key, propertyId.value || null, from.value || null, to.value || null))
+    await downloadFile(() => reportService.link(r.key, propertyId.value || null, from.value || null, to.value || null))
     chosen.value = null
   } catch (e) {
     toast.error(firstError(e))

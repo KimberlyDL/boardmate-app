@@ -38,7 +38,7 @@
 
         <p class="muted small">Proof (optional): a photo or PDF of the receipt or transfer.</p>
         <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" hidden @change="pickFile" />
-        <ion-button size="small" fill="outline" @click="fileInput?.click()">{{ proof ? 'Change file' : 'Attach proof' }}</ion-button>
+        <ion-button size="small" fill="outline" @click="openFilePicker(fileInput)">{{ proof ? 'Change file' : 'Attach proof' }}</ion-button>
         <span v-if="proof" class="muted small"> {{ proof.name }}</span>
 
         <p class="muted small gap">It is applied to the oldest bills first (rent, then utilities, then other charges). Extra money is kept as credit. A numbered receipt is issued.</p>
@@ -49,6 +49,7 @@
 </template>
 
 <script setup lang="ts">
+import { openFilePicker } from '@/lib/permissions'
 import {
   IonButton,
   IonButtons,
