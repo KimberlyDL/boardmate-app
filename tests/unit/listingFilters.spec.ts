@@ -66,3 +66,13 @@ describe('route query round trip', () => {
     expect(fromRouteQuery({ mode: 'castle', includes: 'gold,water' })).toEqual({ includes: ['water'] })
   })
 })
+
+describe('location filters', () => {
+  test('send the chosen province and city, count as filters and survive the URL', () => {
+    const f = { ...emptyFilters(), province: 'Oriental Mindoro', city: 'Calapan City' }
+    expect(toQuery(f)).toEqual({ page: 1, province: 'Oriental Mindoro', city: 'Calapan City' })
+    expect(activeCount(f)).toBe(2)
+    expect(fromRouteQuery(toRouteQuery(f))).toEqual({ province: 'Oriental Mindoro', city: 'Calapan City' })
+    expect(toQuery({ ...f, province: '', city: '' })).toEqual({ page: 1 })
+  })
+})

@@ -12,6 +12,9 @@ export interface FinderFilters {
   whoCanStay: '' | 'female' | 'male'
   /** Hide full places */
   availableOnly: boolean
+  /** Exact names from the official list (Phase 4); '' = any */
+  province: string
+  city: string
   /** "nearest" needs a distance point (see toQuery's `near`) */
   sort: 'newest' | 'price' | 'nearest'
   /** south, west, north, east — set by "Search this area" on the map. */
@@ -27,6 +30,8 @@ export const emptyFilters = (): FinderFilters => ({
   who: '',
   whoCanStay: '',
   availableOnly: false,
+  province: '',
+  city: '',
   sort: 'newest',
   bbox: null,
 })
@@ -52,6 +57,8 @@ export function toQuery(
   if (f.who.trim()) query.who = f.who.trim()
   if (f.whoCanStay) query.who_can_stay = f.whoCanStay
   if (f.availableOnly) query.available = 1
+  if (f.province) query.province = f.province
+  if (f.city) query.city = f.city
   if (near) query.near = `${near.lat.toFixed(6)},${near.lng.toFixed(6)}`
   if (f.sort === 'price' || (f.sort === 'nearest' && near)) query.sort = f.sort
   if (f.bbox) query.bbox = f.bbox.map((n) => n.toFixed(5)).join(',')
@@ -60,7 +67,7 @@ export function toQuery(
 
 /** How many filters are active (for the "Filters (3)" button). */
 export function activeCount(f: FinderFilters): number {
-  return [f.minPrice, f.maxPrice, f.mode, f.who, f.whoCanStay, f.availableOnly].filter(Boolean).length + f.includes.length + (f.bbox ? 1 : 0)
+  return [f.minPrice, f.maxPrice, f.mode, f.who, f.whoCanStay, f.availableOnly, f.province, f.city].filter(Boolean).length + f.includes.length + (f.bbox ? 1 : 0)
 }
 
 /** The Dorm Finder filters as URL query params (what the landing search sends to /find). */
@@ -72,6 +79,8 @@ export function toRouteQuery(f: FinderFilters): Record<string, string> {
   if (f.mode) query.mode = f.mode
   if (f.includes.length) query.includes = f.includes.join(',')
   if (f.who.trim()) query.who = f.who.trim()
+  if (f.province) query.province = f.province
+  if (f.city) query.city = f.city
   return query
 }
 
@@ -88,5 +97,7 @@ export function fromRouteQuery(query: Record<string, unknown>): Partial<FinderFi
   const includes = first(query.includes).split(',').filter((u) => ['water', 'electricity', 'internet'].includes(u))
   if (includes.length) out.includes = includes
   if (first(query.who)) out.who = first(query.who)
+  if (first(query.province)) out.province = first(query.province)
+  if (first(query.city)) out.city = first(query.city)
   return out
 }

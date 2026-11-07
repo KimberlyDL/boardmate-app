@@ -197,6 +197,25 @@
         <ion-content class="ion-padding">
           <div class="filters">
             <section>
+              <h3 class="filter-label">Location</h3>
+              <PlaceSelect
+                v-model="filters.province"
+                label="Province"
+                :options="placeProvinces"
+                clearable
+                placeholder="Any province"
+                :helper-text="placesHint"
+              />
+              <PlaceSelect
+                v-model="filters.city"
+                label="City or municipality"
+                :options="placeCities"
+                clearable
+                :disabled="!filters.province"
+                :placeholder="filters.province ? 'Any city or municipality' : 'Choose a province first'"
+              />
+            </section>
+            <section>
               <h3 class="filter-label">Monthly price (₱)</h3>
               <div class="row">
                 <ion-input v-model="filters.minPrice" inputmode="decimal" label="Min" label-placement="stacked" fill="outline" />
@@ -283,6 +302,7 @@ import {
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ListingMap from '@/components/ListingMap.vue'
+import PlaceSelect from '@/components/PlaceSelect.vue'
 import { useScreen } from '@/composables/useScreen'
 import ListingRooms from '@/components/rooms/ListingRooms.vue'
 import { DlCard, DlChip, DlEmptyState, DlListingCard, DlSkeleton } from '@/components/dl'
@@ -292,7 +312,7 @@ import { activeCount, emptyFilters, type FinderFilters, fromRouteQuery, toQuery 
 import type { RoomFilters } from '@/lib/floors'
 import { peso, toCentavos } from '@/lib/money'
 import { errorMessage } from '@/services/api'
-import { listingService } from '@/services/listings'
+import { listingService, type ListingPlace } from '@/services/listings'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import type { ListingDetail, ListingSummary } from '@/types/booking'
@@ -340,7 +360,7 @@ const active = computed(() => activeCount(filters))
 /** How far to search, in km (0 means any distance) */
 const radiusKm = ref<number>(DEFAULT_RADIUS_KM)
 /** Searching by name ignores the distance */
-const searching = computed(() => !!filters.q.trim())
+const searching = computed(() => !!filters.q.trim() || !!filters.province)
 /** True when the distance limit is used */
 const radiusActive = computed(() => radiusKm.value > 0 && !!distance.near.value && !searching.value && !filters.bbox)
 
@@ -373,7 +393,24 @@ async function search(reset = true) {
   }
 }
 
+/** Provinces and cities that have places, for the Location filter (Phase 4). */
+const places = ref<ListingPlace[]>([])
+const placeProvinces = computed(() => places.value.map((p) => p.name))
+const placeCities = computed(() => places.value.find((p) => p.name === filters.province)?.cities.map((c) => c.name) ?? [])
+const placesHint = computed(() => (places.value.length ? 'Only places with listings are shown.' : undefined))
+
+watch(
+  () => filters.province,
+  () => {
+    if (filters.city && !placeCities.value.includes(filters.city)) filters.city = ''
+  },
+)
+
 onMounted(async () => {
+  listingService
+    .places()
+    .then((list) => (places.value = list))
+    .catch(() => {})
   await distance.ready
   if (filters.sort === 'nearest' && !distance.near.value) filters.sort = 'newest'
   search()

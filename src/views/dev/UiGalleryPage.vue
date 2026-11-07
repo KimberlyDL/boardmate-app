@@ -147,11 +147,24 @@
           </div>
         </DlSection>
 
+        <DlSection title="Location pickers">
+          <DlCard>
+            <PropertyDetailsForm v-model="place" part="location" :errors="{}" />
+          </DlCard>
+        </DlSection>
+
         <DlSection title="Loading and empty">
           <DlCard>
             <div class="skel">
               <DlSkeleton :width="40" :height="40" :radius="12" />
               <div class="skel-lines"><DlSkeleton width="60%" :height="14" /><DlSkeleton width="40%" :height="10" /></div>
+            </div>
+          </DlCard>
+          <DlCard>
+            <div class="loaders">
+              <DlLoader label="Loading your rooms" />
+              <DlLoader :size="28" />
+              <ion-button disabled><DlLoader variant="ring" :size="20" /></ion-button>
             </div>
           </DlCard>
           <DlCard>
@@ -203,12 +216,15 @@ import {
   DlListRow,
   DlRefresher,
   DlSection,
+  DlLoader,
   DlSkeleton,
   DlStatCard,
   DlStatusTag,
   DlSticker,
 } from '@/components/dl'
 import DlChart from '@/components/dl/DlChart.vue'
+import PropertyDetailsForm from '@/components/property/PropertyDetailsForm.vue'
+import type { PropertyDetailsInput } from '@/services/properties'
 import { useTheme } from '@/composables/useTheme'
 import { useToast } from '@/composables/useToast'
 
@@ -216,12 +232,19 @@ import { useToast } from '@/composables/useToast'
 const { isDark, setMode } = useTheme()
 const toast = useToast()
 const chip = ref('all')
+const place = ref<PropertyDetailsInput>({ name: 'Sample', province: 'Oriental Mindoro', city: 'Calapan' })
 const seg = ref('unpaid')
 const wait = () => new Promise((resolve) => setTimeout(resolve, 800))
 const months = ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct']
 </script>
 
 <style scoped>
+.loaders {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
 .hero { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
 .gap { height: 16px; }
 .gap-top { margin-top: 12px; }

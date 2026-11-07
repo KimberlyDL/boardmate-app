@@ -75,10 +75,24 @@
     </template>
 
     <template v-if="part !== 'details'">
-      <ion-input v-model="model.street" label="Street and number" label-placement="stacked" fill="outline" :readonly="readonly" class="ion-margin-top" />
+      <PlaceSelect
+        v-model="model.province"
+        label="Province"
+        :options="provinceNames"
+        :disabled="readonly"
+        :error-text="errors.province?.[0] ?? placesError"
+        placeholder="Choose the province"
+      />
+      <PlaceSelect
+        v-model="model.city"
+        label="City or municipality"
+        :options="cityNames"
+        :disabled="readonly || !model.province"
+        :error-text="errors.city?.[0]"
+        :placeholder="model.province ? 'Choose the city or municipality' : 'Choose the province first'"
+      />
       <ion-input v-model="model.barangay" label="Barangay" label-placement="stacked" fill="outline" :readonly="readonly" class="ion-margin-top" />
-      <ion-input v-model="model.city" label="City or municipality" label-placement="stacked" fill="outline" :readonly="readonly" class="ion-margin-top" />
-      <ion-input v-model="model.province" label="Province" label-placement="stacked" fill="outline" :readonly="readonly" class="ion-margin-top" />
+      <ion-input v-model="model.street" label="Street and number" label-placement="stacked" fill="outline" :readonly="readonly" class="ion-margin-top" />
       <p class="label">Map pin</p>
       <map-picker v-if="!readonly" v-model="pin" />
       <p v-else class="muted">{{ pin ? `${pin.lat.toFixed(5)}, ${pin.lng.toFixed(5)}` : 'Not pinned' }}</p>
@@ -89,8 +103,10 @@
 
 <script setup lang="ts">
 import { IonChip, IonInput, IonNote, IonSelect, IonSelectOption, IonTextarea } from '@ionic/vue'
-import { computed } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import MapPicker, { type LatLng } from '@/components/MapPicker.vue'
+import PlaceSelect from '@/components/PlaceSelect.vue'
+import { placeService, type PlaceProvince } from '@/services/places'
 import type { PropertyDetailsInput } from '@/services/properties'
 import { PropertyTypeLabels } from '@/types/enums'
 
@@ -102,6 +118,29 @@ const model = defineModel<PropertyDetailsInput>({ required: true })
 defineProps<{ part?: 'details' | 'location'; readonly?: boolean; errors: Record<string, string[]> }>()
 
 const WHO_OPTIONS = ['Female only', 'Male only', 'Students', 'Working professionals', 'Couples welcome', 'Anyone']
+
+/** The official province and city list (Phase 4): the city list follows the chosen province. */
+const provinces = ref<PlaceProvince[]>([])
+const placesError = ref<string | undefined>()
+const provinceNames = computed(() => provinces.value.map((p) => p.name))
+const cityNames = computed(() => provinces.value.find((p) => p.name === model.value.province)?.cities.map((c) => c.name) ?? [])
+
+onMounted(async () => {
+  try {
+    provinces.value = await placeService.provinces()
+  } catch {
+    placesError.value = 'The list of places could not load. Check your connection and open this page again.'
+  }
+})
+
+/** Changing to another province clears a city that is not in it (not when the form first fills in). */
+watch(
+  () => model.value.province,
+  (province, before) => {
+    if (!before || province === before || !provinces.value.length) return
+    if (model.value.city && !cityNames.value.includes(model.value.city)) model.value.city = null
+  },
+)
 
 const pin = computed<LatLng | null>({
   get: () => (model.value.latitude != null && model.value.longitude != null ? { lat: model.value.latitude, lng: model.value.longitude } : null),
