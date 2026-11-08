@@ -48,7 +48,7 @@
             <DlListRow :icon="DoorOpen" title="Rooms and stays" :subtitle="`Each room of ${single.name}, then each stay`" @click="openProperty(single.id)" />
           </DlCard>
 
-          <FinanceOverview :totals="data.totals" :previous="data.previous" :series="data.series" :period="data.period" />
+          <FinanceOverview :totals="data.totals" :previous="data.previous" :series="data.series" :occupancy="data.occupancy_series" :house="data.house" :period="data.period" />
 
           <!-- Each property, when looking at all of them -->
           <DlSection v-if="!propertyId && data.by_property.length > 1" title="By property">

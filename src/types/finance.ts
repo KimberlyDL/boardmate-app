@@ -67,6 +67,40 @@ export interface FinanceMonth {
   collected: number
 }
 
+/** Places taken at the end of a month (today for this month). `rate` is null when there were no places. */
+export interface OccupancyMonth {
+  /** YYYY-MM */
+  month: string
+  places: number
+  occupied: number
+  rate: number | null
+}
+
+/** Repairs and late entries in the period (FR-87), with the period before. */
+export interface HouseFigures {
+  repairs: {
+    reported: number
+    fixed: number
+    cancelled: number
+    /** Days from reported to fixed, for repairs fixed in the period; null when none. */
+    average_days_to_fix: number | null
+    /** As of today, whatever the period. */
+    open_now: number
+    urgent_open_now: number
+    /** Reported in the period, most first, empty kinds left out. */
+    by_kind: { kind: string; label: string; count: number }[]
+  }
+  late_entries: {
+    requests: { approved: number; declined: number; waiting: number; cancelled: number }
+    /** Nights back after curfew without approval. */
+    curfew_violations: number
+    /** Violations in the period that put a stay on the list. */
+    repeat_count: number
+    repeated: { stay: { id: number; tenant: string | null; room: string | null }; nights: number }[]
+  }
+  previous: { repairs_reported: number; repairs_fixed: number; late_requests: number; curfew_violations: number }
+}
+
 /** GET finance: every property I see finances of, or one. */
 export interface PortfolioFinance {
   /** Every property I may pick. */
@@ -77,6 +111,9 @@ export interface PortfolioFinance {
   by_property: (FinanceFigures & { property: FinanceRef })[]
   /** 12 months ending with the period's last month, oldest first. */
   series: FinanceMonth[]
+  /** Places taken, the same 12 months. */
+  occupancy_series: OccupancyMonth[]
+  house: HouseFigures
 }
 
 /** GET properties/{p}/finance: a property by room. `room` null = money of rooms since deleted. */
@@ -87,6 +124,8 @@ export interface PropertyFinance {
   previous: FinancePrevious
   rooms: (FinanceFigures & { room: FinanceRoomRef | null })[]
   series: FinanceMonth[]
+  occupancy_series: OccupancyMonth[]
+  house: HouseFigures
 }
 
 /** A stay's totals since move-in, as of today. */
@@ -119,6 +158,8 @@ export interface RoomFinance {
   /** Stays in the room during the period, newest first. */
   stays: (StayTotals & { stay: FinanceStayRef })[]
   series: FinanceMonth[]
+  occupancy_series: OccupancyMonth[]
+  house: HouseFigures
 }
 
 /** GET tenancies/{t}/finance: one stay from move-in to today. */

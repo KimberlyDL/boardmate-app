@@ -1,6 +1,6 @@
 import type { Dayjs } from 'dayjs'
 import { manila, manilaDate } from './dayjs'
-import type { FinanceFigures, FinancePeriod, OutstandingAgeing } from '@/types/finance'
+import type { FinanceFigures, FinancePeriod, OccupancyMonth, OutstandingAgeing } from '@/types/finance'
 
 /** The Insights screen's helpers (A11): periods, "vs last period" and chart rows. */
 
@@ -123,3 +123,15 @@ export function billedSlices(billed: FinanceFigures['billed']): { label: string;
 
 /** "1 of 2 places taken" as a 0–1 share, or null with no places. */
 export const occupancyRate = (o: FinanceFigures['occupancy']) => (o.places ? o.occupied / o.places : null)
+
+/**
+ * The places-taken trend in a sentence's parts: the latest month with places
+ * ("8 of 10") and the average share over the months that had places.
+ * Null when no month had places.
+ */
+export function occupancySummary(series: OccupancyMonth[]): { latest: OccupancyMonth; average: number } | null {
+  const counted = series.filter((m) => m.rate !== null)
+  if (!counted.length) return null
+  const average = counted.reduce((sum, m) => sum + (m.rate ?? 0), 0) / counted.length
+  return { latest: counted[counted.length - 1], average }
+}

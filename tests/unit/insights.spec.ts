@@ -4,7 +4,7 @@ import { AxiosError, AxiosHeaders } from 'axios'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { manilaDate } from '@/lib/dayjs'
-import { ageingRows, billedSlices, change, periodDates, periodFromQuery, periodText, periodToQuery, presetRange, rateChange } from '@/lib/insights'
+import { ageingRows, billedSlices, change, occupancySummary, periodDates, periodFromQuery, periodText, periodToQuery, presetRange, rateChange } from '@/lib/insights'
 import InsightsPage from '@/views/account/InsightsPage.vue'
 import PropertyInsightsPage from '@/views/account/PropertyInsightsPage.vue'
 import RoomInsightsPage from '@/views/account/RoomInsightsPage.vue'
@@ -30,6 +30,16 @@ vi.mock('@ionic/vue', async (original) => ({ ...(await original<typeof import('@
 
 describe('insights helpers', () => {
   const today = manilaDate('2026-11-04')
+
+  test('sums up places taken: the latest month with places and the average', () => {
+    const series = [
+      { month: '2026-09', places: 0, occupied: 0, rate: null },
+      { month: '2026-10', places: 2, occupied: 2, rate: 1 },
+      { month: '2026-11', places: 4, occupied: 2, rate: 0.5 },
+    ]
+    expect(occupancySummary(series)).toEqual({ latest: series[2], average: 0.75 })
+    expect(occupancySummary([series[0]])).toBeNull()
+  })
 
   test('turns presets into whole months', () => {
     expect(presetRange('this_month', today)).toEqual({ from: '2026-11-01', to: '2026-11-30' })
@@ -98,6 +108,20 @@ const portfolio = (): PortfolioFinance => ({
     { property: { id: 3, name: 'Santos House' }, ...figures() },
   ],
   series: [{ month: '2026-11', billed: 510000, collected: 400000 }],
+  occupancy_series: [
+    { month: '2026-10', places: 0, occupied: 0, rate: null },
+    { month: '2026-11', places: 2, occupied: 1, rate: 0.5 },
+  ],
+  house: {
+    repairs: { reported: 3, fixed: 1, cancelled: 0, average_days_to_fix: 2.5, open_now: 2, urgent_open_now: 1, by_kind: [{ kind: 'plumbing', label: 'Plumbing', count: 3 }] },
+    late_entries: {
+      requests: { approved: 2, declined: 1, waiting: 0, cancelled: 0 },
+      curfew_violations: 4,
+      repeat_count: 3,
+      repeated: [{ stay: { id: 21, tenant: 'Ben', room: '2' }, nights: 3 }],
+    },
+    previous: { repairs_reported: 1, repairs_fixed: 1, late_requests: 0, curfew_violations: 6 },
+  },
 })
 
 const page = () => document.body
@@ -135,12 +159,22 @@ describe('Insights screen', () => {
     expect(text()).toContain('+100% vs before')   // ₱4,000 against ₱2,000
     expect(text()).toContain('75%')               // paid on time
     expect(text()).toContain('₱800 overdue')
+    expect(text()).toContain('1 of 2 in Nov 2026')   // places taken, latest month
     expect([...page().querySelectorAll('.chart')].map((c) => c.getAttribute('data-label'))).toEqual([
       'Billed and collected each month for the last 12 months',
+      'Share of places taken at the end of each month for the last 12 months',
       'Unpaid bills by how many days overdue',
       'What was billed, by kind',
       'Utilities billed to boarders and provider bills',
+      'Repairs reported in this period, by kind',
     ])
+    expect(text()).toContain('2 open now · 1 urgent')
+    expect(text()).toContain('3 (+2)')            // repairs reported vs before
+    expect(text()).toContain('2.5 days')
+    expect(text()).toContain('4 (−2)')            // late without asking vs before
+    expect(text()).toContain('3 nights')
+    await tap('.dl-list-row, [role=button], button', 'Ben')
+    expect(nav.push).toHaveBeenCalledWith('/insights/stays/21')
   })
 
   test('lists each property, which opens its rooms with the same period', async () => {
@@ -184,6 +218,8 @@ describe('Insights screen', () => {
 describe('Insights drill-down', () => {
   const previous = portfolio().previous
   const series = portfolio().series
+  const occupancy_series = portfolio().occupancy_series
+  const house = portfolio().house
 
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -196,7 +232,7 @@ describe('Insights drill-down', () => {
 
   test('a property keeps the period from the link and opens a room', async () => {
     const data: PropertyFinance = {
-      property: { id: 3, name: 'Santos House' }, period: { from: '2026-09-01', to: '2026-11-30' }, totals: figures(), previous, series,
+      property: { id: 3, name: 'Santos House' }, period: { from: '2026-09-01', to: '2026-11-30' }, totals: figures(), previous, series, occupancy_series, house,
       rooms: [
         { room: { id: 12, label: 'Room 201', floor: 2 }, ...figures({ collected: { payments: 0, first_rent: 0, total: 150000, unapplied: null } }) },
         { room: null, ...figures() },
@@ -216,7 +252,7 @@ describe('Insights drill-down', () => {
   test('a room lists its stays with what is still unpaid, and opens one', async () => {
     const data: RoomFinance = {
       property: { id: 3, name: 'Santos House' }, room: { id: 12, label: 'Room 201', floor: 2 },
-      period: { from: '2026-09-01', to: '2026-11-30' }, totals: figures({ utilities: { billed: 70000, provider_cost: null, waived: null } }), previous, series,
+      period: { from: '2026-09-01', to: '2026-11-30' }, totals: figures({ utilities: { billed: 70000, provider_cost: null, waived: null } }), previous, series, occupancy_series, house,
       stays: [{
         stay: { id: 40, status: 'active', tenant: { id: 7, name: 'Kim' }, unit: { id: 5, label: 'Bed 1' }, moved_in_on: '2026-09-01', moved_out_on: null },
         billed: 510000, paid: 400000, paid_from_deposit: 30000, balance: 80000, overdue: 80000, deposit_received: 400000, deposit_held: 400000,

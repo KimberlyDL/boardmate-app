@@ -24,7 +24,7 @@
         <template v-else>
           <p class="dl-eyebrow period">{{ data.property.name }} · {{ data.room.label }} · {{ periodText(data.period) }}</p>
 
-          <FinanceOverview :totals="data.totals" :previous="data.previous" :series="data.series" :period="data.period" />
+          <FinanceOverview :totals="data.totals" :previous="data.previous" :series="data.series" :occupancy="data.occupancy_series" :house="data.house" :period="data.period" />
 
           <DlSection title="Stays in this period">
             <DlCard v-if="!data.stays.length">

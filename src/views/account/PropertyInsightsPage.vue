@@ -24,7 +24,7 @@
         <template v-else>
           <p class="dl-eyebrow period">{{ data.property.name }} · {{ periodText(data.period) }}</p>
 
-          <FinanceOverview :totals="data.totals" :previous="data.previous" :series="data.series" :period="data.period" />
+          <FinanceOverview :totals="data.totals" :previous="data.previous" :series="data.series" :occupancy="data.occupancy_series" :house="data.house" :period="data.period" />
 
           <DlSection title="By room" :meta="`${data.rooms.length}`">
             <DlCard padding="4px 16px">
