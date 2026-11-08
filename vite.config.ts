@@ -77,5 +77,8 @@ export default defineConfig({
     environment: 'jsdom',
     // A device zone ahead of Manila, where date-only values used to show a day early.
     env: { TZ: 'Asia/Tokyo' },
+    // A page test takes 1–2 s alone, but the first one in a file also loads Ionic and the page,
+    // which took over the 5 s default when every file runs at once on a busy PC.
+    testTimeout: 20000,
   }
 })

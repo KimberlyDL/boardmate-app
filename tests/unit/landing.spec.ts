@@ -12,12 +12,17 @@ vi.mock('vue-router', async (original) => ({ ...(await original<typeof import('v
 
 const text = () => document.body.textContent ?? ''
 
+const StartPage = (await import('@/views/public/StartPage.vue')).default
+
+/**
+ * StartPage picks its half when it is shown (not when its file loads), so one import serves
+ * every test; reloading every module per test made the first test slow enough to time out
+ * when the whole suite runs at once.
+ */
 async function mountStart() {
-  vi.resetModules()
-  const StartPage = (await import('@/views/public/StartPage.vue')).default
   mount(StartPage, { global: { plugins: [IonicVue], stubs: { RouterLink: { template: '<a><slot /></a>' } } }, attachTo: document.body })
   // Only the chosen half is loaded, lazily: wait until it shows.
-  await vi.waitFor(() => expect(text()).not.toBe(''), { timeout: 5000 })
+  await vi.waitFor(() => expect(text()).not.toBe(''), { timeout: 10000 })
   await flushPromises()
 }
 
