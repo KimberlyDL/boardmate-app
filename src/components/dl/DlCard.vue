@@ -1,6 +1,7 @@
 <template>
   <component
     :is="tappable ? 'button' : 'div'"
+    v-if="hasContent()"
     :type="tappable ? 'button' : undefined"
     class="dl-card"
     :class="[`tone-${tone}`, { tappable }]"
@@ -13,6 +14,7 @@
 </template>
 
 <script setup lang="ts">
+import { Comment, Fragment, Text, useSlots, type VNode } from 'vue'
 import type { PaletteTone } from './types'
 import { useTap } from './useTap'
 
@@ -32,6 +34,20 @@ const props = withDefaults(
 )
 
 const { tappable, go } = useTap(props)
+
+/**
+ * Nothing to show inside (every row hidden by v-if, or an empty v-for): the card is not
+ * drawn at all, instead of a thin empty box. Checked on each render.
+ */
+const slots = useSlots()
+const visible = (nodes: VNode[]): boolean =>
+  nodes.some((n) => {
+    if (n.type === Comment) return false
+    if (n.type === Fragment) return Array.isArray(n.children) && visible(n.children as VNode[])
+    if (n.type === Text) return String(n.children ?? '').trim() !== ''
+    return true
+  })
+const hasContent = () => visible(slots.default?.() ?? [])
 </script>
 
 <style scoped>

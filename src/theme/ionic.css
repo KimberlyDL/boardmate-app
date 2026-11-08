@@ -156,6 +156,9 @@ ion-card.ion-color .muted { color: inherit; opacity: 0.85; }
   overflow: hidden;
 }
 :root ion-list.list-inset { margin: 0 0 var(--card-gap); }
+/* A list with no rows (an empty v-for) is not drawn, instead of a thin empty card. Vue leaves
+   empty text placeholders inside, so this looks for element children rather than using :empty. */
+:root ion-list:not(:has(> *)) { display: none; }
 :root ion-card ion-list:not(ion-popover ion-list) { background: transparent; padding: 0; margin: 0; }
 ion-item {
   --background: transparent;
