@@ -79,6 +79,10 @@ export interface Tenancy {
   first_day_on: string
   anchor_day: number
   next_rent_due_on: string
+  /** Added as an existing tenant (already living here before DormLink) */
+  is_existing_tenant: boolean
+  /** Existing tenant: DormLink bills the rent periods from this day on */
+  billing_starts_on: string | null
   rent_centavos: number | null
   discount: { label: string; kind: DiscountKind; value: number; amount_centavos: number; effective_from: string } | null
   rent_after_discount_centavos: number | null
@@ -116,6 +120,10 @@ export interface MoveInQuote {
   deposit_centavos: number
   first_rent_centavos: number
   activation_required: boolean
+  /** Existing tenant only: the first period DormLink bills starts on this day */
+  billing_starts_on?: string | null
+  /** Existing tenant only: when the first DormLink bill comes */
+  first_bill_due_on?: string | null
 }
 
 export interface MoveInPayment {
@@ -150,6 +158,10 @@ export interface MoveInRequest {
 export interface WalkInRequest extends MoveInRequest {
   unit_id: number
   email: string
+  /** Already living here before the place used DormLink: no back bills */
+  existing_tenant?: boolean
+  /** Existing tenant: what they still owe from before DormLink, one one-time charge */
+  opening_balance_centavos?: number
 }
 
 export interface NewOccupantInput {

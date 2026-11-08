@@ -58,26 +58,50 @@ export async function locate(): Promise<LatLng | null> {
   return native() ? locateInApp() : locateInBrowser()
 }
 
+/** The plugin's error code ("OS-PLUG-GLOC-0007"), or '' for anything else. */
+const errorCode = (e: unknown) => String((e as { code?: unknown })?.code ?? '')
+
+/** Location (GPS) switched off for the whole phone: the plugin throws these before asking anything. */
+const SERVICES_OFF = ['OS-PLUG-GLOC-0007', 'OS-PLUG-GLOC-0009', 'OS-PLUG-GLOC-0017']
+
+/** The phone's Location is off: offer its Location settings page. */
+async function servicesOff(): Promise<void> {
+  const open = await ask('Location is off', "Turn on your phone's Location, then tap My location again.", 'Open settings')
+  if (open) await NativeSettings.openAndroid({ option: AndroidSettings.Location }).catch(() => undefined)
+}
+
 async function locateInApp(): Promise<LatLng | null> {
   try {
-    let state = (await Geolocation.checkPermissions()).location
-    if (state === 'denied') {
-      await turnedOff('Location')
-      return null
-    }
-    if (state !== 'granted') {
-      if (!(await ask('Use your location?', LOCATION_WHY, 'Continue'))) return null
-      state = (await Geolocation.requestPermissions({ permissions: ['location', 'coarseLocation'] })).location
-      if (state !== 'granted') {
-        const coarse = (await Geolocation.checkPermissions()).coarseLocation
-        if (coarse !== 'granted') return null
+    let perms = await Geolocation.checkPermissions()
+    const allowed = () => perms.location === 'granted' || perms.coarseLocation === 'granted'
+    if (!allowed()) {
+      // "denied" only after "Don't ask again" (or two refusals): Android will not ask any more.
+      if (perms.location === 'denied' && perms.coarseLocation === 'denied') {
+        await turnedOff('Location')
+        return null
       }
+      if (!(await ask('Use your location?', LOCATION_WHY, 'Continue'))) return null
+      perms = await Geolocation.requestPermissions({ permissions: ['location', 'coarseLocation'] })
+      if (!allowed()) return null
     }
-    const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 })
-    return { lat: pos.coords.latitude, lng: pos.coords.longitude }
-  } catch {
-    // Location services (GPS) switched off for the whole phone, or no fix in time.
+    return await position(perms.location === 'granted')
+  } catch (e) {
+    if (SERVICES_OFF.includes(errorCode(e))) await servicesOff()
     return null
+  }
+}
+
+/**
+ * A precise fix first (only when precise location is allowed), then any recent
+ * or rough one: indoors the GPS often has no fix within the first try.
+ */
+async function position(precise: boolean): Promise<LatLng> {
+  const toLatLng = (p: { coords: { latitude: number; longitude: number } }) => ({ lat: p.coords.latitude, lng: p.coords.longitude })
+  try {
+    return toLatLng(await Geolocation.getCurrentPosition({ enableHighAccuracy: precise, timeout: 10000, maximumAge: 60000 }))
+  } catch (e) {
+    if (SERVICES_OFF.includes(errorCode(e)) || !precise) throw e
+    return toLatLng(await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }))
   }
 }
 
@@ -138,9 +162,17 @@ export async function openFilePicker(input: HTMLInputElement | null | undefined)
       if (!go) return
     }
   }
+  // The Android app shell opens the camera only when the input accepts exactly "image/*"
+  // (a list like "image/jpeg,image/png" gets the file picker instead), so widen it for this
+  // tap. The photo comes back as a JPEG, which every upload accepts.
+  const accept = input.accept
+  input.accept = 'image/*'
   input.setAttribute('capture', 'environment')
   input.click()
   // Back to a normal picker for next time.
-  setTimeout(() => input.removeAttribute('capture'), 1000)
+  setTimeout(() => {
+    input.removeAttribute('capture')
+    input.accept = accept
+  }, 1000)
 }
 

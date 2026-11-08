@@ -101,17 +101,36 @@
 
           <DlCard>
             <h2 class="dl-title">Export</h2>
-            <p class="muted">Spreadsheet files (CSV) that open in Excel or Google Sheets. Counts and emails only: no money and no phone numbers.</p>
+            <p class="muted">Excel, PDF or CSV. Tap one to preview it first. Counts and emails only: no money and no phone numbers.</p>
+            <FormatPicker v-model="format" />
             <ion-list lines="full" class="exports">
-              <ion-item v-for="e in exports" :key="e.key" button :detail="false" :disabled="downloading === e.key" @click="download(e)">
-                <Download slot="start" :size="18" aria-hidden="true" />
+              <ion-item v-for="e in exports" :key="e.key" button :detail="false" @click="showPreview(e)">
+                <Eye slot="start" :size="18" aria-hidden="true" />
                 <ion-label class="ion-text-wrap">
                   <h3>{{ e.label }}</h3>
                   <p>{{ e.description }}</p>
                 </ion-label>
+                <ion-button
+                  slot="end"
+                  fill="clear"
+                  :disabled="downloading !== null"
+                  :aria-label="`Download ${e.label}`"
+                  @click.stop="download(e.key, format)"
+                >
+                  <Download :size="20" aria-hidden="true" />
+                </ion-button>
               </ion-item>
             </ion-list>
           </DlCard>
+
+          <TablePreviewSheet
+            :open="previewing !== null"
+            :preview="preview"
+            :busy="downloading"
+            :preferred="format"
+            @close="previewing = null"
+            @download="(f) => previewing && download(previewing, f)"
+          />
         </template>
       </div>
     </ion-content>
@@ -119,10 +138,13 @@
 </template>
 
 <script setup lang="ts">
-import { IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonPage, IonTitle, IonToolbar, onIonViewWillEnter } from '@ionic/vue'
-import { Download } from 'lucide-vue-next'
+import { IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonPage, IonTitle, IonToolbar, onIonViewWillEnter } from '@ionic/vue'
+import { Download, Eye } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import NotificationBell from '@/components/NotificationBell.vue'
+import FormatPicker from '@/components/reports/FormatPicker.vue'
+import TablePreviewSheet from '@/components/reports/TablePreviewSheet.vue'
+import type { TableFormat, TablePreview } from '@/services/reports'
 import { DlCard, DlRefresher, DlSkeleton, DlStatCard } from '@/components/dl'
 import DlChart from '@/components/dl/DlChart.vue'
 import { useToast } from '@/composables/useToast'
@@ -146,18 +168,32 @@ const ownerSlices = computed(() =>
     { label: 'Suspended', n: data.value!.owners.suspended, tone: 'muted' },
   ] as { label: string; n: number; tone: ChartTone }[]).filter((s) => s.n > 0))
 
-/** CSV exports (improvements Phase 5) */
+/** Exports (improvements Phase 5) as Excel, PDF or CSV, with a preview of the first rows. */
 const exports = ref<AdminExport[]>([])
-const downloading = ref<string | null>(null)
+const format = ref<TableFormat>('xlsx')
+const downloading = ref<TableFormat | null>(null)
+const previewing = ref<string | null>(null)
+const preview = ref<TablePreview | null>(null)
 
-async function download(e: AdminExport) {
-  downloading.value = e.key
+async function download(key: string, as: TableFormat) {
+  downloading.value = as
   try {
-    await downloadFile(() => adminService.exportLink(e.key))
+    await downloadFile(() => adminService.exportLink(key, as))
   } catch (err) {
     toast.error(errorMessage(err))
   } finally {
     downloading.value = null
+  }
+}
+
+async function showPreview(e: AdminExport) {
+  preview.value = null
+  previewing.value = e.key
+  try {
+    preview.value = await adminService.exportPreview(e.key)
+  } catch (err) {
+    previewing.value = null
+    toast.error(errorMessage(err))
   }
 }
 

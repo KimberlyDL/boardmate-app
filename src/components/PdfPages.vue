@@ -23,8 +23,8 @@ import DlLoader from '@/components/dl/DlLoader.vue'
 const props = withDefaults(defineProps<{ src: string; zoom?: number }>(), { zoom: 1 })
 const emit = defineEmits<{ pages: [count: number]; 'open-outside': [] }>()
 
-type PdfDoc = import('pdfjs-dist').PDFDocumentProxy
-type PdfTask = import('pdfjs-dist').PDFDocumentLoadingTask
+type PdfDoc = import('pdfjs-dist/legacy/build/pdf.mjs').PDFDocumentProxy
+type PdfTask = import('pdfjs-dist/legacy/build/pdf.mjs').PDFDocumentLoadingTask
 
 const scroller = ref<HTMLElement | null>(null)
 const canvases: HTMLCanvasElement[] = []
@@ -43,8 +43,10 @@ async function load(): Promise<void> {
   task = null
   doc = null
   try {
-    const pdfjs = await import('pdfjs-dist')
-    const worker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url')
+    // The legacy build: the standard one needs features (Promise.withResolvers,
+    // Map.getOrInsertComputed) that many phones' Android System WebView does not have yet.
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
+    const worker = await import('pdfjs-dist/legacy/build/pdf.worker.min.mjs?url')
     pdfjs.GlobalWorkerOptions.workerSrc = worker.default
     task = pdfjs.getDocument({ url: props.src })
     doc = await task.promise

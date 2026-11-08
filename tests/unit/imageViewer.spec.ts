@@ -3,6 +3,8 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import ImageViewer from '@/components/ImageViewer.vue'
 import { isPdfUrl, useImageViewer } from '@/composables/useImageViewer'
 
+const files = vi.hoisted(() => ({ saveFile: vi.fn() }))
+vi.mock('@/lib/documents', () => files)
 vi.mock('@/components/PdfPages.vue', () => ({ default: { props: ['src', 'zoom'], template: '<div class="pdf-stub" :data-src="src" :data-zoom="zoom" />' } }))
 
 const viewer = useImageViewer()
@@ -68,7 +70,9 @@ describe('ImageViewer', () => {
     const pages = document.querySelector('.pdf-stub') as HTMLElement
     expect(pages.dataset.src).toBe('https://api.test/documents/receipts/41?signature=y')
     expect(document.querySelector('.dl-viewer img')).toBeNull()
-    expect(document.querySelector('a[aria-label="Download"]')?.getAttribute('href')).toBe('https://api.test/documents/receipts/41?signature=y')
+    // Download hands the file to saveFile (the phone's browser in the app, a download link on the website).
+    button('Download').click()
+    expect(files.saveFile).toHaveBeenCalledWith('https://api.test/documents/receipts/41?signature=y', 'receipt.pdf')
     button('Zoom in').click()
     await flushPromises()
     expect((document.querySelector('.pdf-stub') as HTMLElement).dataset.zoom).toBe('1.5')

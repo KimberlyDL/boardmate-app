@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios'
 import { tokenStorage } from './tokenStorage'
 import { requestFinished, requestStarted } from '@/lib/activity'
+import { shrinkPhotosIn } from '@/lib/images'
 import type { ApiErrorBody } from '@/types/api'
 
 /**
@@ -18,6 +19,10 @@ api.interceptors.request.use(async (config) => {
   const token = await tokenStorage.get()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
+  }
+  // Uploads: big phone photos are resized first (lib/images.ts), under the 5 MB limit.
+  if (config.data instanceof FormData) {
+    config.data = await shrinkPhotosIn(config.data)
   }
   return config
 })

@@ -18,9 +18,9 @@
               <ZoomIn :size="22" aria-hidden="true" />
             </button>
           </template>
-          <a class="icon" :href="current.src" :download="current.filename || ''" target="_blank" rel="noopener" aria-label="Download">
+          <button type="button" class="icon" aria-label="Download" @click="saveFile(current.src, current.filename)">
             <Download :size="22" aria-hidden="true" />
-          </a>
+          </button>
           <button ref="closeButton" type="button" class="icon" aria-label="Close" @click="close">
             <X :size="24" aria-hidden="true" />
           </button>
@@ -80,6 +80,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import DlLoader from '@/components/dl/DlLoader.vue'
 import PdfPages from '@/components/PdfPages.vue'
 import { isPdf, useImageViewer } from '@/composables/useImageViewer'
+import { saveFile } from '@/lib/documents'
 
 /**
  * The app's one photo and PDF viewer (mounted in App.vue, opened with useImageViewer()).
@@ -135,8 +136,9 @@ watch(isOpen, async (open) => {
   }
 })
 
+/** When a file cannot be shown here: the phone's browser (app) or a new tab (website) opens it. */
 function openFile(): void {
-  window.open(current.value.src, '_blank', 'noopener')
+  saveFile(current.value.src, current.value.filename)
 }
 
 function onKey(e: KeyboardEvent): void {

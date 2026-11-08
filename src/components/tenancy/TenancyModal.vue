@@ -23,6 +23,10 @@
                 {{ manilaDate(tenancy.first_day_on).format('MMM D') }}.<br />
                 Rent due every month on the <strong>{{ tenancy.anchor_day }}</strong>; next
                 <strong>{{ manilaDate(tenancy.next_rent_due_on).format('MMM D, YYYY') }}</strong>.
+                <template v-if="tenancy.is_existing_tenant && tenancy.billing_starts_on">
+                  <br />Existing tenant: billed in DormLink from {{ manilaDate(tenancy.billing_starts_on).format('MMM D, YYYY') }}; earlier
+                  months were settled before DormLink.
+                </template>
               </p>
               <p>
                 Rent <strong>{{ peso(tenancy.rent_centavos) }}</strong>

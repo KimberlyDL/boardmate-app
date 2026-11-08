@@ -5,10 +5,11 @@ import type { OwnerVerificationStatus } from '@/types/enums'
 import type { Campus } from '@/types/booking'
 import type { PlatformStats } from '@/types/dashboard'
 import type { DocumentLink } from '@/types/billing'
+import type { TableFormat, TablePreview } from './reports'
 
 export type OwnerCounts = Record<OwnerVerificationStatus, number>
 
-/** A CSV the admin can download (summary, owners, properties, accounts) */
+/** An export the admin can preview and download as Excel, PDF or CSV (summary, owners, properties, accounts) */
 export interface AdminExport {
   key: string
   label: string
@@ -21,9 +22,15 @@ export const adminService = {
     return data.data
   },
 
-  /** A short-lived download link for one export. */
-  async exportLink(key: string): Promise<DocumentLink> {
-    const { data } = await api.get<ApiEnvelope<DocumentLink>>(`/admin/exports/${key}/link`)
+  /** A short-lived download link for one export, in that format. */
+  async exportLink(key: string, format: TableFormat = 'csv'): Promise<DocumentLink & { filename?: string }> {
+    const { data } = await api.get<ApiEnvelope<DocumentLink & { filename?: string }>>(`/admin/exports/${key}/link`, { params: { format } })
+    return data.data
+  },
+
+  /** The first rows of an export and how many there are. */
+  async exportPreview(key: string): Promise<TablePreview> {
+    const { data } = await api.get<ApiEnvelope<TablePreview>>(`/admin/exports/${key}/preview`)
     return data.data
   },
 

@@ -25,6 +25,10 @@ export interface OccupantForm {
 
 export interface MoveInForm {
   moved_in_on: string
+  /** Walk-ins only: already living here before the place used DormLink (no first rent, no back bills) */
+  existingTenant: boolean
+  /** Existing tenant: pesos still owed from before DormLink (empty = nothing) */
+  openingBalance: string
   emergency: { name: string; relationship: string; phone: string }
   discountKind: DiscountKind | ''
   /** Pesos for a fixed discount, percent for a percent one */
@@ -48,6 +52,8 @@ export function emptyPayment(): PaymentForm {
 export function emptyMoveIn(today: string): MoveInForm {
   return {
     moved_in_on: today,
+    existingTenant: false,
+    openingBalance: '',
     emergency: { name: '', relationship: '', phone: '' },
     discountKind: '',
     discountValue: '',
@@ -83,13 +89,14 @@ export function paymentOf(p: PaymentForm): MoveInPayment | undefined {
 }
 
 /** What the quote asks for and the form has not recorded in full, in centavos (0 = fine). */
-export function shortfalls(form: Pick<MoveInForm, 'deposit' | 'firstRent'>, quote: MoveInQuote | null): { deposit: number; firstRent: number } {
-  if (!quote || !quote.activation_required) return { deposit: 0, firstRent: 0 }
+export function shortfalls(form: Pick<MoveInForm, 'deposit' | 'firstRent' | 'existingTenant'>, quote: MoveInQuote | null): { deposit: number; firstRent: number } {
+  // An existing tenant paid all that before DormLink: nothing is required now.
+  if (!quote || !quote.activation_required || form.existingTenant) return { deposit: 0, firstRent: 0 }
   const missing = (expected: number, p: PaymentForm) => Math.max(0, expected - (paymentOf(p)?.amount_centavos ?? 0))
   return { deposit: missing(quote.deposit_centavos, form.deposit), firstRent: missing(quote.first_rent_centavos, form.firstRent) }
 }
 
-export function needsOverride(form: Pick<MoveInForm, 'deposit' | 'firstRent'>, quote: MoveInQuote | null): boolean {
+export function needsOverride(form: Pick<MoveInForm, 'deposit' | 'firstRent' | 'existingTenant'>, quote: MoveInQuote | null): boolean {
   const s = shortfalls(form, quote)
   return s.deposit > 0 || s.firstRent > 0
 }
@@ -122,9 +129,10 @@ export function buildMoveIn(form: MoveInForm, room: { whole: boolean }): MoveInR
   if (discount) body.discount = discount
   const deposit = paymentOf(form.deposit)
   if (deposit) body.deposit = deposit
-  const firstRent = paymentOf(form.firstRent)
+  // An existing tenant's first rent was paid long ago, outside DormLink.
+  const firstRent = form.existingTenant ? undefined : paymentOf(form.firstRent)
   if (firstRent) body.first_rent = firstRent
-  if (form.overrideReason.trim()) body.override_reason = form.overrideReason.trim()
+  if (!form.existingTenant && form.overrideReason.trim()) body.override_reason = form.overrideReason.trim()
 
   const leads = room.whole || form.makeLeader
   if (leads) body.leader_consent = form.leaderConsent

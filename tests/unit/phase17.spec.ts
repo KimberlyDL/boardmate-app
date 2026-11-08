@@ -32,10 +32,12 @@ beforeEach(() => {
   sheet.alerts = []
   sheet.confirm = true
   sheet.choice = 'files'
-  try {
-    localStorage.clear()
-  } catch {
-    // ignore
+  for (const storage of [() => localStorage, () => sessionStorage]) {
+    try {
+      storage().clear()
+    } catch {
+      // ignore
+    }
   }
 })
 afterEach(() => {
@@ -70,6 +72,46 @@ describe('Open in the app banner', () => {
     )
     await banner.find('button.close').trigger('click')
     expect(banner.find('.open-in-app').exists()).toBe(false)
+  })
+
+  test('shows once per visit: × until the next visit, Not for 7 days for a week, Open for a day', async () => {
+    setUserAgent('Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/130 Mobile')
+    setPointer(true)
+    // Node's own (empty) localStorage hides jsdom's here, so each storage is a plain in-memory one.
+    const memory = () => {
+      const items = new Map<string, string>()
+      return {
+        getItem: (k: string) => items.get(k) ?? null,
+        setItem: (k: string, v: string) => void items.set(k, String(v)),
+        removeItem: (k: string) => void items.delete(k),
+        clear: () => items.clear(),
+      }
+    }
+    vi.stubGlobal('localStorage', memory())
+    vi.stubGlobal('sessionStorage', memory())
+    const now = Date.now()
+    const day = 86_400_000
+
+    // A reload in the same tab is the same visit: not again.
+    expect((await mountBanner()).find('.open-in-app').exists()).toBe(true)
+    expect((await mountBanner()).find('.open-in-app').exists()).toBe(false)
+
+    // A new visit (new tab): back, until "Not for 7 days".
+    sessionStorage.clear()
+    const banner = await mountBanner()
+    await banner.find('button.snooze').trigger('click')
+    expect(Number(localStorage.getItem('dormlink.openInAppHiddenUntil'))).toBeGreaterThanOrEqual(now + 7 * day)
+    sessionStorage.clear()
+    expect((await mountBanner()).find('.open-in-app').exists()).toBe(false)
+
+    // Once the week is over it comes back; Open hides it for a day.
+    localStorage.setItem('dormlink.openInAppHiddenUntil', String(now - 1))
+    const again = await mountBanner()
+    await again.find('a.open').trigger('click')
+    const until = Number(localStorage.getItem('dormlink.openInAppHiddenUntil'))
+    expect(until).toBeGreaterThanOrEqual(now + day)
+    expect(until).toBeLessThan(now + 2 * day)
+    vi.unstubAllGlobals()
   })
 
   test('never shows on a computer or an iPhone', async () => {

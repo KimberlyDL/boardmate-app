@@ -79,6 +79,9 @@ const routes: Array<RouteRecordRaw> = [
   { path: '/forgot-password', name: 'forgot-password', component: () => import('@/views/auth/ForgotPasswordPage.vue'), meta: { guestOnly: true } },
   { path: '/reset-password', name: 'reset-password', component: () => import('@/views/auth/ResetPasswordPage.vue') },
   { path: '/email-verified', name: 'email-verified', component: () => import('@/views/auth/EmailVerifiedPage.vue') },
+  // Confirmation links in emails land here (website or app), then go on to /email-verified.
+  { path: '/verify-email/:id(\\d+)/:hash', name: 'verify-email', component: () => import('@/views/auth/ConfirmEmailPage.vue'), props: { kind: 'verify' } },
+  { path: '/confirm-new-email/:id(\\d+)/:hash', name: 'confirm-new-email', component: () => import('@/views/auth/ConfirmEmailPage.vue'), props: { kind: 'change' } },
 
   // Any signed-in user (pushed over the tabs)
   { path: '/profile', name: 'profile', component: () => import('@/views/account/ProfilePage.vue'), meta: { requiresAuth: true } },

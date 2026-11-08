@@ -26,14 +26,25 @@
         </p>
 
         <h3>Move-in</h3>
+        <!-- Walk-ins only: someone already living here before the place used DormLink -->
+        <ion-item v-if="!application" lines="none">
+          <ion-toggle :checked="form.existingTenant" @ion-change="setExisting($event.detail.checked)">
+            <span class="ion-text-wrap">Already living here (existing tenant)</span>
+          </ion-toggle>
+        </ion-item>
+        <p v-if="form.existingTenant" class="muted small">
+          For someone who moved in before you used DormLink. Their real move-in date is kept, but no back bills are made:
+          rent up to now counts as already paid, and DormLink bills from their next due date.
+        </p>
         <ion-input
           v-model="form.moved_in_on"
           type="date"
           :min="earliest"
-          :max="today"
+          :max="latest"
           label="Move-in date"
           label-placement="stacked"
           fill="outline"
+          :class="{ gap: form.existingTenant }"
         />
         <p class="muted small">Rent is due every month on this day. The first day of stay is the day after.</p>
 
@@ -70,13 +81,31 @@
               <div v-if="quote.discount_centavos" class="line"><span>Agreed rate</span><span>−{{ peso(quote.discount_centavos) }}</span></div>
               <div class="line"><strong>Rent after discount</strong><strong>{{ peso(quote.rent_after_discount_centavos) }}</strong></div>
               <div class="line"><span>Deposit</span><span>{{ peso(quote.deposit_centavos) }}</span></div>
-              <div class="line"><span>First rent (advance, no utilities)</span><span>{{ peso(quote.first_rent_centavos) }}</span></div>
+              <template v-if="form.existingTenant">
+                <div v-if="quote.first_bill_due_on" class="line">
+                  <span>First DormLink bill due</span>
+                  <strong>{{ quote.first_bill_due_on === today ? 'Today' : manilaDate(quote.first_bill_due_on).format('MMM D, YYYY') }}</strong>
+                </div>
+                <p v-if="quote.first_bill_due_on === today" class="warning small">
+                  Their rent is due today, so DormLink bills it today. Collect today's rent through DormLink, not by hand, so it is
+                  not paid twice or missed.
+                </p>
+                <p v-if="quote.first_bill_due_on" class="muted small">
+                  Rent from {{ manilaDate(quote.billing_starts_on!).format('MMM D, YYYY') }} on, plus fixed utilities for the month before it
+                  (at today's prices if they were set only now). Nothing is billed for earlier months.
+                </p>
+                <p v-else class="muted small">Choose the move-in date to see when the first bill comes.</p>
+              </template>
+              <div v-else class="line"><span>First rent (advance, no utilities)</span><span>{{ peso(quote.first_rent_centavos) }}</span></div>
             </template>
           </ion-card-content>
         </ion-card>
 
-        <h3>Received now</h3>
-        <p class="muted small">The deposit and the advance rent for the first period. Utilities are billed later, after the period.</p>
+        <h3>{{ form.existingTenant ? 'Deposit held (optional)' : 'Received now' }}</h3>
+        <p v-if="form.existingTenant" class="muted small">
+          If they paid a deposit when they moved in and you still hold it, record it so it counts at move-out. Leave it empty if not.
+        </p>
+        <p v-else class="muted small">The deposit and the advance rent for the first period. Utilities are billed later, after the period.</p>
         <div v-for="row in paymentRows" :key="row.key" class="payment">
           <strong>{{ row.label }}</strong>
           <div class="row">
@@ -94,6 +123,15 @@
           </div>
           <ion-input v-if="row.form.method !== 'cash'" v-model="row.form.reference" label="Reference number" label-placement="stacked" fill="outline" />
         </div>
+
+        <template v-if="form.existingTenant">
+          <h3>Still owed from before (optional)</h3>
+          <p class="muted small">
+            Unpaid rent or other money from before you used DormLink. It becomes one bill, "Unpaid balance from before DormLink",
+            due like any one-time charge. Leave it empty if they owe nothing.
+          </p>
+          <ion-input v-model="form.openingBalance" inputmode="decimal" label="Amount still owed (₱)" label-placement="stacked" fill="outline" />
+        </template>
 
         <ion-card v-if="override" color="warning">
           <ion-card-content>
@@ -169,7 +207,7 @@ import {
 } from '@ionic/vue'
 import { computed, reactive, ref, watch } from 'vue'
 import { manila, manilaDate } from '@/lib/dayjs'
-import { peso, toPesoInput } from '@/lib/money'
+import { peso, toCentavos, toPesoInput } from '@/lib/money'
 import { buildMoveIn, discountOf, emptyMoveIn, emptyOccupant, needsOverride, shortfalls } from '@/lib/moveIn'
 import { errorMessage, firstError } from '@/services/api'
 import { houseRuleService } from '@/services/houseRules'
@@ -204,7 +242,11 @@ const emit = defineEmits<{ close: []; done: [message: string, tenancy: Tenancy] 
 
 const toast = useToast()
 const today = ref(manila().format('YYYY-MM-DD'))
-const earliest = computed(() => manila().subtract(30, 'day').format('YYYY-MM-DD'))
+// A normal move-in: today or up to 30 days back. An existing tenant: up to 10 years back, before today.
+const earliest = computed(() =>
+  form.existingTenant ? manila().subtract(10, 'year').format('YYYY-MM-DD') : manila().subtract(30, 'day').format('YYYY-MM-DD'),
+)
+const latest = computed(() => (form.existingTenant ? manila().subtract(1, 'day').format('YYYY-MM-DD') : today.value))
 const form = reactive(emptyMoveIn(today.value))
 const email = ref('')
 const unitId = ref<number | null>(null)
@@ -232,8 +274,23 @@ const shortNote = computed(() => {
 })
 const paymentRows = computed(() => [
   { key: 'deposit', label: 'Deposit', form: form.deposit, touch: () => (typed.deposit = true) },
-  { key: 'firstRent', label: 'First rent', form: form.firstRent, touch: () => (typed.firstRent = true) },
+  // An existing tenant's first rent was paid long ago, outside DormLink.
+  ...(form.existingTenant ? [] : [{ key: 'firstRent', label: 'First rent', form: form.firstRent, touch: () => (typed.firstRent = true) }]),
 ])
+
+/** An existing tenant's balance from before DormLink, in centavos (null when empty or not a peso amount). */
+const openingBalance = computed(() => toCentavos(form.openingBalance) || null)
+
+/** Switching to an existing tenant: pick their real move-in date, and the deposit starts empty (it may not be held). */
+function setExisting(on: boolean) {
+  form.existingTenant = on
+  form.openingBalance = ''
+  form.moved_in_on = on ? '' : today.value
+  typed.deposit = typed.firstRent = false
+  form.deposit.amount = ''
+  form.firstRent.amount = ''
+  form.overrideReason = ''
+}
 
 // A fresh form each time the sheet opens, with what approval already noted.
 watch(
@@ -270,7 +327,7 @@ watch(
 // Re-quote when the unit, the date or the discount changes (after a short pause while typing).
 let timer: ReturnType<typeof setTimeout> | undefined
 watch(
-  () => [props.open, unitId.value, form.moved_in_on, form.discountKind, form.discountValue] as const,
+  () => [props.open, unitId.value, form.moved_in_on, form.existingTenant, form.discountKind, form.discountValue] as const,
   () => {
     clearTimeout(timer)
     if (!props.open || !unitId.value || !form.moved_in_on) return
@@ -285,10 +342,13 @@ async function requote() {
     const q = await tenancyService.preview(props.property.id, {
       unit_id: unitId.value,
       moved_in_on: form.moved_in_on,
+      ...(form.existingTenant ? { existing_tenant: 1 as const } : {}),
       ...(discount ? { discount_kind: discount.kind, discount_value: discount.value } : {}),
     })
     quote.value = q
     quoteError.value = ''
+    // An existing tenant's deposit is typed only if it is held; nothing is filled in.
+    if (form.existingTenant) return
     // Fill what is owed, until the amount has been typed by hand.
     if (!typed.deposit) form.deposit.amount = q.deposit_centavos ? toPesoInput(q.deposit_centavos) : ''
     if (!typed.firstRent) form.firstRent.amount = q.first_rent_centavos ? toPesoInput(q.first_rent_centavos) : ''
@@ -301,6 +361,8 @@ async function requote() {
 async function submit() {
   if (!unitId.value) return toast.error('Choose a room or bedspace.')
   if (!props.application && !email.value.trim()) return toast.error('Enter the email of their DormLink account.')
+  if (!form.moved_in_on) return toast.error('Choose the move-in date.')
+  if (form.existingTenant && form.openingBalance.trim() && !openingBalance.value) return toast.error('Enter the amount still owed in pesos, or leave it empty.')
   if (!form.emergency.name.trim() || !form.emergency.phone.trim()) return toast.error('Add an emergency contact for the tenant.')
   if (override.value && form.overrideReason.trim().length < 3) return toast.error('Give a reason for moving in without the full deposit and first rent.')
   if (leads.value && !form.leaderConsent) return toast.error('Confirm that the tenant agreed to be the room\'s leader.')
@@ -312,7 +374,13 @@ async function submit() {
     if (needsRulesInPerson.value) body.house_rules_accepted_in_person = true
     const result = props.application
       ? await tenancyService.moveIn(props.application.id, body)
-      : await tenancyService.moveInWalkIn(props.property.id, { ...body, unit_id: unitId.value, email: email.value.trim() })
+      : await tenancyService.moveInWalkIn(props.property.id, {
+          ...body,
+          unit_id: unitId.value,
+          email: email.value.trim(),
+          ...(form.existingTenant ? { existing_tenant: true } : {}),
+          ...(form.existingTenant && openingBalance.value ? { opening_balance_centavos: openingBalance.value } : {}),
+        })
     emit('done', result.message, result.tenancy)
   } catch (e) {
     toast.error(firstError(e) || errorMessage(e))
@@ -343,6 +411,10 @@ async function submit() {
 }
 .error {
   color: var(--ion-color-danger);
+}
+.warning {
+  color: var(--ion-color-warning-shade);
+  margin-top: 4px;
 }
 .payment {
   margin-top: 12px;

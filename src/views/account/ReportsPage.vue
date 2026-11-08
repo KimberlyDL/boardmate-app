@@ -9,7 +9,7 @@
 
     <ion-content class="ion-padding">
       <div class="narrow">
-        <p class="muted small">Spreadsheet files (CSV) that open in Excel or Google Sheets. Amounts are in pesos.</p>
+        <p class="muted small">Download as Excel, PDF or CSV, or preview first. Amounts are in pesos.</p>
         <DlLoader v-if="loading" label="Loading reports" />
         <p v-else-if="!reports.length" class="muted center">No reports for you yet. They come with the properties you own or look after.</p>
         <ion-list v-else lines="full">
@@ -46,10 +46,21 @@
             </template>
             <p v-else class="muted small">As of today.</p>
 
-            <ion-button expand="block" class="form-actions" :disabled="busy" @click="download">Download</ion-button>
+            <FormatPicker v-model="format" />
+
+            <div class="actions">
+              <ion-button fill="outline" :disabled="busy !== null" @click="showPreview">
+                <Eye slot="start" :size="18" aria-hidden="true" />Preview
+              </ion-button>
+              <ion-button :disabled="busy !== null" @click="download(format)">
+                <Download slot="start" :size="18" aria-hidden="true" />Download
+              </ion-button>
+            </div>
           </div>
         </ion-content>
       </ion-modal>
+
+      <TablePreviewSheet :open="previewOpen" :preview="preview" :busy="busy" :preferred="format" @close="closePreview" @download="download" />
     </ion-content>
   </ion-page>
 </template>
@@ -73,20 +84,30 @@ import {
   IonToolbar,
   onIonViewWillEnter,
 } from '@ionic/vue'
+import { Download, Eye } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
+import FormatPicker from '@/components/reports/FormatPicker.vue'
+import TablePreviewSheet from '@/components/reports/TablePreviewSheet.vue'
 import DlLoader from '@/components/dl/DlLoader.vue'
-import { downloadFile } from '@/lib/documents'
+import { downloadFile, openDocument } from '@/lib/documents'
 import { firstError } from '@/services/api'
-import { reportService, type ReportInfo } from '@/services/reports'
+import { reportService, type ReportChoice, type ReportInfo, type TableFormat, type TablePreview } from '@/services/reports'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 
-/** CSV reports (A10): pick one, a property (or all) and dates, then download through a short-lived link. */
+/**
+ * Reports (A10): pick one, a property (or all), dates and a file type (Excel, PDF or CSV), then
+ * download through a short-lived link, or preview first: a PDF opens in the viewer, Excel and CSV
+ * as a table over the page with the first rows.
+ */
 const toast = useToast()
 const auth = useAuthStore()
 const reports = ref<ReportInfo[]>([])
 const loading = ref(true)
-const busy = ref(false)
+const busy = ref<TableFormat | null>(null)
+const format = ref<TableFormat>('xlsx')
+const previewOpen = ref(false)
+const preview = ref<TablePreview | null>(null)
 const chosen = ref<ReportInfo | null>(null)
 const propertyId = ref(0)
 const from = ref('')
@@ -111,24 +132,69 @@ function choose(r: ReportInfo) {
   to.value = ''
 }
 
-async function download() {
-  const r = chosen.value!
-  if ((from.value && !to.value) || (!from.value && to.value)) return toast.error('Choose both dates, or neither.')
-  busy.value = true
+/** The choice in the form, or null (with a message) when only one date is filled in. */
+function currentChoice(): ReportChoice | null {
+  if ((from.value && !to.value) || (!from.value && to.value)) {
+    toast.error('Choose both dates, or neither.')
+    return null
+  }
+  return { propertyId: propertyId.value || null, from: from.value || null, to: to.value || null }
+}
+
+async function download(as: TableFormat) {
+  const r = chosen.value
+  const choice = currentChoice()
+  if (!r || !choice) return
+  busy.value = as
   try {
-    await downloadFile(() => reportService.link(r.key, propertyId.value || null, from.value || null, to.value || null))
-    chosen.value = null
+    await downloadFile(() => reportService.link(r.key, choice, as))
   } catch (e) {
     toast.error(firstError(e))
   } finally {
-    busy.value = false
+    busy.value = null
   }
+}
+
+/** PDF: the real file in the viewer. Excel and CSV: the first rows as a table over the page. */
+async function showPreview() {
+  const r = chosen.value
+  const choice = currentChoice()
+  if (!r || !choice) return
+  if (format.value === 'pdf') {
+    busy.value = 'pdf'
+    try {
+      await openDocument(() => reportService.link(r.key, choice, 'pdf'), r.label)
+    } catch (e) {
+      toast.error(firstError(e))
+    } finally {
+      busy.value = null
+    }
+    return
+  }
+  preview.value = null
+  previewOpen.value = true
+  try {
+    preview.value = await reportService.preview(r.key, choice)
+  } catch (e) {
+    previewOpen.value = false
+    toast.error(firstError(e))
+  }
+}
+
+function closePreview() {
+  previewOpen.value = false
 }
 </script>
 
 <style scoped>
 .small {
   font-size: 0.85rem;
+}
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
 }
 .row {
   display: grid;

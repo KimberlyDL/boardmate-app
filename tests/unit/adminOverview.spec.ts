@@ -11,7 +11,8 @@ vi.mock('@/services/admin', () => ({
   adminService: {
     stats: vi.fn(),
     exports: vi.fn(async () => [{ key: 'owners', label: 'Owners', description: 'Every owner.' }]),
-    exportLink: vi.fn(async () => ({ url: 'https://api.test/owners.csv', expires_in_minutes: 5 })),
+    exportLink: vi.fn(async () => ({ url: 'https://api.test/owners.xlsx', expires_in_minutes: 5 })),
+    exportPreview: vi.fn(async () => ({ title: 'Owners', subtitle: 'Platform · As of Nov 8, 2026', headers: ['Owner ID', 'Name'], rows: [['7', 'Ana']], total: 1, money_columns: [] })),
   },
 }))
 vi.mock('@/lib/documents', () => ({ downloadFile: vi.fn(async (getLink: () => Promise<unknown>) => void (await getLink())) }))
@@ -59,17 +60,31 @@ describe('Admin overview (counts only)', () => {
     expect(charts[2].getAttribute('data-labels')).toBe('Verified|Waiting for review|Rejected')   // empty statuses left out
   })
 
-  test('downloads an export from its link', async () => {
+  test('previews an export, and downloads it in the chosen format', async () => {
     vi.mocked(adminService.stats).mockResolvedValue(stats())
     mount(AdminOverviewPage, { global: { plugins: [IonicVue] }, attachTo: document.body })
     await flushPromises()
-
     expect(text()).toContain('no money and no phone numbers')
+
+    // Tapping the export opens its preview over the page.
     const item = [...document.querySelectorAll('ion-item')].find((i) => i.textContent?.includes('Owners')) as HTMLElement
     item.click()
     await flushPromises()
+    expect(adminService.exportPreview).toHaveBeenCalledWith('owners')
+    expect(document.querySelector('.table-preview td')?.textContent).toBe('7')
 
-    expect(downloadFile).toHaveBeenCalled()
-    expect(adminService.exportLink).toHaveBeenCalledWith('owners')
+    // The preview downloads any format; the row button uses the one picked above the list.
+    ;([...document.querySelectorAll('.table-preview .get')].find((b) => b.textContent?.includes('PDF')) as HTMLElement).click()
+    await flushPromises()
+    expect(adminService.exportLink).toHaveBeenLastCalledWith('owners', 'pdf')
+
+    ;(document.querySelector('.table-preview .close') as HTMLElement).click()
+    await flushPromises()
+    ;([...document.querySelectorAll('.format')].find((b) => b.textContent?.includes('CSV')) as HTMLElement).click()
+    ;(item.querySelector('ion-button') as HTMLElement).click()
+    await flushPromises()
+    expect(downloadFile).toHaveBeenCalledTimes(2)
+    expect(adminService.exportLink).toHaveBeenLastCalledWith('owners', 'csv')
+    expect(adminService.exportPreview).toHaveBeenCalledTimes(1)   // the download button does not open the preview
   })
 })

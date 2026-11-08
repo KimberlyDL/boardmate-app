@@ -104,7 +104,7 @@ export const tenancyService = {
   },
 
   /** Rent, discount, deposit and first rent for a unit on a day. */
-  async preview(propertyId: number, params: { unit_id: number; moved_in_on: string; discount_kind?: string; discount_value?: number }): Promise<MoveInQuote> {
+  async preview(propertyId: number, params: { unit_id: number; moved_in_on: string; existing_tenant?: 1; discount_kind?: string; discount_value?: number }): Promise<MoveInQuote> {
     const { data } = await api.get<ApiEnvelope<MoveInQuote>>(`/properties/${propertyId}/tenancies/preview`, { params })
     return data.data
   },

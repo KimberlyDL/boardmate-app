@@ -1,9 +1,12 @@
 <template>
   <div v-if="show" class="open-in-app" role="region" aria-label="Open in the app">
     <img :src="ICON" alt="" width="28" height="28" />
-    <p><strong>Have the DormLink app?</strong> Open this page in it.</p>
-    <a class="open" :href="intentUrl" @click="remember">Open</a>
-    <button type="button" class="close" aria-label="Not now" @click="dismiss">
+    <div class="copy">
+      <p><strong>Have the DormLink app?</strong> Open this page in it.</p>
+      <button type="button" class="snooze" @click="snooze(SNOOZE_DAYS)">Not for {{ SNOOZE_DAYS }} days</button>
+    </div>
+    <a class="open" :href="intentUrl" @click="snooze(1)">Open</a>
+    <button type="button" class="close" aria-label="Not now" @click="hideForVisit">
       <X :size="18" aria-hidden="true" />
     </button>
   </div>
@@ -18,24 +21,41 @@ import { ANDROID_APP_ID, WEB_HOST } from '@/lib/site'
 
 /**
  * "Open in the app" (Phase 17.3): only in a browser on an Android phone, never
- * in the app itself or the installed web app. Dismissing it is remembered on
- * this device. Without the app, Android stays on the page (the fallback).
+ * in the app itself or the installed web app. It shows once per visit, when the
+ * website is opened (not again on every page or when the tab comes back):
+ * × hides it for this visit, "Not for 7 days" for a week, and Open for a day.
+ * Without the app, Android stays on the page (the fallback).
  */
-const KEY = 'dormlink.openInAppDismissed'
+const SNOOZE_DAYS = 7
+/** localStorage: the time (ms) until which it stays hidden. */
+const UNTIL_KEY = 'dormlink.openInAppHiddenUntil'
+/** sessionStorage: already shown during this visit (this tab), so it does not come back on a reload. */
+const VISIT_KEY = 'dormlink.openInAppThisVisit'
+/** The old "never again" choice, replaced by the snooze. */
+const OLD_KEY = 'dormlink.openInAppDismissed'
 const ICON = '/favicon.png'
 const route = useRoute()
 
-function dismissedBefore(): boolean {
+const safely = <T,>(run: () => T, fallback: T): T => {
   try {
-    return localStorage.getItem(KEY) === '1'
+    return run()
   } catch {
-    return false
+    return fallback
   }
+}
+
+function hiddenNow(): boolean {
+  safely(() => localStorage.removeItem(OLD_KEY), undefined)
+  const until = Number(safely(() => localStorage.getItem(UNTIL_KEY), null) ?? 0)
+  // Shown (or closed) earlier in this tab: a reload or a link inside the site is the same visit.
+  const thisVisit = safely(() => sessionStorage.getItem(VISIT_KEY), null) !== null
+  return thisVisit || until > Date.now()
 }
 
 const androidBrowser =
   !Capacitor.isNativePlatform() && /Android/i.test(navigator.userAgent) && !window.matchMedia?.('(display-mode: standalone)').matches
-const show = ref(androidBrowser && !dismissedBefore())
+const show = ref(androidBrowser && !hiddenNow())
+if (show.value) safely(() => sessionStorage.setItem(VISIT_KEY, 'shown'), undefined)
 
 /** An Android intent link: opens the app on the same page, or stays here when the app is not installed. */
 const intentUrl = computed(() => {
@@ -43,17 +63,17 @@ const intentUrl = computed(() => {
   return `intent://${here}#Intent;scheme=https;package=${ANDROID_APP_ID};S.browser_fallback_url=${encodeURIComponent(`https://${here}`)};end`
 })
 
-function dismiss(): void {
+/** Gone for the rest of this visit (private mode: it may come back next visit, which is fine). */
+function hideForVisit(): void {
   show.value = false
-  try {
-    localStorage.setItem(KEY, '1')
-  } catch {
-    // Private mode: it comes back next visit, which is fine.
-  }
+  safely(() => sessionStorage.setItem(VISIT_KEY, 'closed'), undefined)
 }
 
-/** Opening it once is enough: the banner does not come back. */
-const remember = dismiss
+/** Gone for some days on this phone, and for this visit. */
+function snooze(days: number): void {
+  hideForVisit()
+  safely(() => localStorage.setItem(UNTIL_KEY, String(Date.now() + days * 86_400_000)), undefined)
+}
 </script>
 
 <style scoped>
@@ -79,11 +99,25 @@ const remember = dismiss
   border-radius: 8px;
   flex-shrink: 0;
 }
+.copy {
+  flex: 1;
+  min-width: 0;
+}
 p {
   margin: 0;
-  flex: 1;
   font-size: 14px;
   line-height: 18px;
+}
+.snooze {
+  margin-top: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
 }
 .open {
   flex-shrink: 0;
