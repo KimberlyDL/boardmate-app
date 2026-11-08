@@ -34,6 +34,8 @@ export function toPublicRoom(room: Room): PublicRoom {
     rent_from_centavos: rents.length ? Math.min(...rents) : null,
     availability_label: whole ? `Whole room for up to ${capacity}` : `${free.length} of ${units.length} bedspaces available`,
     whole_option: option ? { available: isUnitFree(option), rent_centavos: option.rent_centavos, capacity: option.capacity } : null,
+    // The owner sets utilities in the Utilities tab; the room preview leaves them out.
+    utilities: [],
   }
 }
 

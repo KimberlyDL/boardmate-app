@@ -48,6 +48,16 @@
     <p v-if="room.whole_option && !room.whole_option.available" class="muted small">
       Also rented as one room for up to {{ room.whole_option.capacity }}, only while every bedspace is free.
     </p>
+
+    <template v-if="room.utilities?.length">
+      <p class="utilities-title">Utilities for this room</p>
+      <ul class="utilities">
+        <li v-for="u in room.utilities" :key="`${u.type}-${u.name}-${u.applies_to ?? ''}`">
+          <component :is="utilityIcon(u.type)" :size="16" aria-hidden="true" />
+          <span><strong>{{ u.name }}</strong> · {{ utilityText(u) }}</span>
+        </li>
+      </ul>
+    </template>
     <p class="muted small">Shared spaces such as the CR and kitchen are described in the place's details.</p>
   </div>
 </template>
@@ -57,6 +67,7 @@ import { IonBadge, IonButton, IonChip } from '@ionic/vue'
 import { defineAsyncComponent } from 'vue'
 import { roomStatusText, roomType } from '@/lib/floors'
 import { peso } from '@/lib/money'
+import { utilityIcon, utilityText } from '@/lib/utilities'
 import type { PublicRoom } from '@/types/booking'
 
 /** Everything about one room, shown in the side panel or the bottom sheet */
@@ -128,5 +139,28 @@ const badge = {
 }
 .facts dd {
   margin: 0;
+}
+.utilities-title {
+  margin-top: 10px !important;
+  font-size: 14px;
+  font-weight: 700;
+}
+.utilities {
+  list-style: none;
+  margin: 4px 0 6px;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+}
+.utilities li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.utilities li :deep(svg) {
+  flex: none;
+  margin-top: 2px;
+  color: var(--text-muted);
 }
 </style>

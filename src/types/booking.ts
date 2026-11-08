@@ -56,6 +56,25 @@ export interface PublicRoom {
   availability_label: string
   /** A bedspace room the owner also rents as one room; available only while every bedspace is free */
   whole_option: { available: boolean; rent_centavos: number | null; capacity: number } | null
+  /** What this room pays, by the same rule as its bills. */
+  utilities: RoomUtility[]
+}
+
+/** A utility as the public sees it. */
+export interface ListingUtility {
+  type: string
+  name: string
+  method: string
+  method_label: string
+  billed_by: 'owner' | 'group'
+  amount_centavos: number | null
+  /** Only for one room (its own meter or price). */
+  for_room?: boolean
+}
+
+/** A utility one room pays; in a room that can also be rented whole, fixed prices say which way they apply. */
+export interface RoomUtility extends ListingUtility {
+  applies_to: 'bedspace' | 'whole_room' | null
 }
 
 export interface ListingDetail extends ListingSummary {
@@ -67,14 +86,8 @@ export interface ListingDetail extends ListingSummary {
   photo_thumbs: string[]
   rooms: PublicRoom[]
   slots: { id: number; label: string; kind: string; room: { id: number; code: string; door_no: string | null; label: string; floor: number | null; who_can_stay: string; who_can_stay_label: string } | null; capacity: number; rent_centavos: number | null }[]
-  utilities: {
-    type: string
-    name: string
-    method: string
-    method_label: string
-    billed_by: 'owner' | 'group'
-    amount_centavos: number | null
-  }[]
+  /** Every account of the property; what one room pays is in `rooms[].utilities`. */
+  utilities: ListingUtility[]
   deposit: { rule: string | null; label: string | null; fixed_centavos: number | null }
   curfew_time: string | null
   /** D3: the rules in force, or null if the place has none yet. */

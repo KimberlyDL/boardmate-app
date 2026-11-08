@@ -73,15 +73,16 @@
         <DlSection title="Utilities">
           <DlCard padding="4px 16px">
             <DlListRow
-              v-for="(u, i) in listing.utilities"
-              :key="u.type + u.name"
+              v-for="(u, i) in utilityRows"
+              :key="u.key"
               :icon="utilityIcon(u.type)"
               :title="u.name"
-              :subtitle="utilityText(u)"
+              :subtitle="u.text ?? 'Depends on the room'"
               :divider="i > 0"
             />
-            <DlListRow v-if="!listing.utilities.length" :icon="Info" title="Ask the owner" subtitle="No utilities listed yet" />
+            <DlListRow v-if="!utilityRows.length" :icon="Info" title="Ask the owner" subtitle="No utilities listed yet" />
           </DlCard>
+          <p v-if="utilityRows.some((u) => u.text === null)" class="dl-small">Open a room above to see what it pays.</p>
         </DlSection>
 
         <DlSection title="Good to know">
@@ -123,7 +124,7 @@
 <script setup lang="ts">
 import { useImageViewer } from '@/composables/useImageViewer'
 import { IonButton, IonContent, IonFooter, IonPage, onIonViewWillEnter, useIonRouter } from '@ionic/vue'
-import { ChevronLeft, Clock, Droplets, House, Image as ImageIcon, Info, Receipt, UserRound, Wallet, Wifi, Zap } from 'lucide-vue-next'
+import { ChevronLeft, Clock, House, Image as ImageIcon, Info, UserRound, Wallet } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import ListingMap from '@/components/ListingMap.vue'
@@ -132,6 +133,7 @@ import ListingRooms from '@/components/rooms/ListingRooms.vue'
 import { DlBanner, DlCard, DlEmptyState, DlIconButton, DlListRow, DlSection, DlSkeleton, DlStatCard, DlStatusTag } from '@/components/dl'
 import { clockTime, manilaDate } from '@/lib/dayjs'
 import { peso } from '@/lib/money'
+import { propertyUtilityRows, utilityIcon } from '@/lib/utilities'
 import { errorMessage } from '@/services/api'
 import { listingService } from '@/services/listings'
 import type { BookingApplication, ListingDetail } from '@/types/booking'
@@ -154,21 +156,14 @@ const depositText = computed(() => {
   return d.label ?? '—'
 })
 
-function utilityText(u: ListingDetail['utilities'][number]): string {
-  if (u.billed_by === 'group') return 'Shared and paid by the boarders themselves'
-  if (u.method === 'included') return 'Included in the rent'
-  if (u.method === 'actual_bill') return 'Your share of the actual bill'
-  return `${u.method_label}: ${peso(u.amount_centavos)} / month`
-}
+/** One row per utility; a price only when every room pays it the same way. */
+const utilityRows = computed(() => (listing.value ? propertyUtilityRows(listing.value.rooms, listing.value.utilities) : []))
 
 function goBack() {
   if (ionRouter.canGoBack()) ionRouter.back()
   else ionRouter.navigate('/find', 'back', 'replace')
 }
 
-function utilityIcon(type: string) {
-  return ({ water: Droplets, electricity: Zap, internet: Wifi } as Record<string, typeof Wifi>)[type] ?? Receipt
-}
 
 onIonViewWillEnter(async () => {
   try {
