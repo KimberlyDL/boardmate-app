@@ -132,6 +132,8 @@ export interface BookingApplication {
   decided_by?: string | null
   /** Others who will stay, noted at approval (a room rented whole); with emergency contacts */
   planned_occupants?: PlannedOccupant[]
+  /** Reviewer: the emergency contact the applicant gave (older applications have none) */
+  emergency_contact?: { name: string; relationship: string | null; phone: string } | null
 }
 
 export interface BookableUnit {

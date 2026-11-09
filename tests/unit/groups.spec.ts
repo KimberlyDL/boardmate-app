@@ -143,7 +143,7 @@ describe('GroupPage', () => {
 
     expect(text()).toContain('Electricity, September')
     expect(text()).toContain('You: ₱1,000.00')
-    expect(buttons()).toContain('Add expense')
+    expect(buttons()).toContain('Add a shared bill')
 
     await openTab('balances')
     expect(text()).toContain('Ana Cruz → Kim Santos')
@@ -211,7 +211,7 @@ describe('GroupPage', () => {
 
     expect(text()).toContain('you see the members and the owner\'s bills only')
     expect(text()).not.toContain('Balances')
-    expect(buttons()).not.toContain('Add expense')
+    expect(buttons()).not.toContain('Add a shared bill')
     expect(groupService.balances).not.toHaveBeenCalled()
     expect(groupService.repayments).not.toHaveBeenCalled()
   })
@@ -265,8 +265,28 @@ describe('ExpenseSheet', () => {
 
     await fill('What for', 'Water refills')
     await fill('Amount (₱)', '90')
-    await press('Add expense')
+    await press('Add bill')
     expect(groupService.addExpense).toHaveBeenCalledWith(4, expect.objectContaining({ description: 'Water refills', amount_centavos: 9000, participants: [1, 2, 3], method: 'equal' }))
     expect(wrapper.emitted('done')).toEqual([['Expense added.']])
+  })
+
+  test('lets the leader collect first for a bill due later', async () => {
+    vi.mocked(groupService.addExpense).mockResolvedValue({ line: {} as GroupLine, message: 'Bill added.' })
+    const leaderGroup = { ...memberGroup, can_manage: true, me: { ...memberGroup.me!, role: 'admin' as const } }
+    const wrapper = mount(ExpenseSheet, { props: { open: false, group: leaderGroup }, global: { plugins: [IonicVue] }, attachTo: document.body })
+    await wrapper.setProps({ open: true })
+    await flushPromises()
+
+    const due = document.querySelector('ion-segment') as HTMLIonSegmentElement
+    due.dispatchEvent(new CustomEvent('ionChange', { detail: { value: 'collect' } }))
+    await flushPromises()
+    await fill('What for', 'Internet, November')
+    await fill('Amount (₱)', '1500')
+    await press('Start collecting')
+
+    const [, input] = vi.mocked(groupService.addExpense).mock.calls.at(-1)!
+    expect(input).toMatchObject({ description: 'Internet, November', amount_centavos: 150000, participants: [1, 2, 3] })
+    expect(input.due_on).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    expect(input.spent_on).toBeUndefined()
   })
 })

@@ -8,6 +8,7 @@ function expenseForm(input: Partial<ExpenseInput>): FormData {
   if (input.description !== undefined) form.append('description', input.description)
   if (input.amount_centavos !== undefined) form.append('amount_centavos', String(input.amount_centavos))
   if (input.spent_on) form.append('spent_on', input.spent_on)
+  if (input.due_on) form.append('due_on', input.due_on)
   if (input.method) form.append('method', input.method)
   if (input.paid_by_member_id) form.append('paid_by_member_id', String(input.paid_by_member_id))
   ;(input.participants ?? []).forEach((id) => form.append('participants[]', String(id)))
@@ -20,8 +21,24 @@ function expenseForm(input: Partial<ExpenseInput>): FormData {
 /** Room groups (D5): shared bills, members' expenses, repayments. */
 export const groupService = {
   async mine(): Promise<GroupSummary[]> {
-    const { data } = await api.get<ApiEnvelope<GroupSummary[]>>('/me/groups')
-    return data.data
+    return (await this.list()).items
+  },
+
+  /** My groups; `hidden` lists the ones I hid too. `hiddenCount` is how many are hidden. */
+  async list(hidden = false): Promise<{ items: GroupSummary[]; hiddenCount: number }> {
+    const { data } = await api.get<ApiEnvelope<GroupSummary[], { hidden_count: number | null }>>('/me/groups', { params: hidden ? { hidden: 1 } : {} })
+    return { items: data.data, hiddenCount: data.meta?.hidden_count ?? 0 }
+  },
+
+  /** Hide an old group from my list (after leaving and settling up). */
+  async hide(groupId: number): Promise<string> {
+    const { data } = await api.post<ApiEnvelope<unknown>>(`/groups/${groupId}/hide`)
+    return data.message ?? ''
+  },
+
+  async unhide(groupId: number): Promise<string> {
+    const { data } = await api.post<ApiEnvelope<unknown>>(`/groups/${groupId}/unhide`)
+    return data.message ?? ''
   },
 
   async get(groupId: number): Promise<Group> {
@@ -74,6 +91,15 @@ export const groupService = {
   },
 
   /** `changes`: member id => signed centavos. For an owner bill they add up to ₱0. */
+  /** Collect first: the collector paid the bill (optional receipt). */
+  async markPaid(groupId: number, lineId: number, paidOn: string, proof?: File | null): Promise<{ line: GroupLine; message: string }> {
+    const form = new FormData()
+    form.append('paid_on', paidOn)
+    if (proof) form.append('proof', proof)
+    const { data } = await api.post<ApiEnvelope<GroupLine>>(`/groups/${groupId}/expenses/${lineId}/paid`, form)
+    return { line: data.data, message: data.message ?? '' }
+  },
+
   async correct(groupId: number, lineId: number, changes: Record<number, number>, reason: string) {
     const { data } = await api.post<ApiEnvelope<GroupLine>>(`/groups/${groupId}/expenses/${lineId}/corrections`, { changes, reason })
     return { line: data.data, message: data.message ?? '' }

@@ -93,8 +93,10 @@
 
           <DlCard padding="4px 16px">
             <DlListRow :icon="Receipt" title="My bills" subtitle="What to pay now, receipts and statements" to="/boarder/bills" />
-            <DlListRow :icon="Users" title="Room group" subtitle="Shared costs and paybacks" to="/groups" divider />
+            <DlListRow :icon="Users" title="Room group" subtitle="Shared bills and paybacks" to="/groups" divider />
           </DlCard>
+
+          <MyDataExport />
         </template>
       </div>
     </ion-content>
@@ -107,6 +109,7 @@ import { Receipt, Users, Wallet } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import { DlCard, DlEmptyState, DlListRow, DlRefresher, DlSkeleton, DlStatCard } from '@/components/dl'
 import DlChart from '@/components/dl/DlChart.vue'
+import MyDataExport from '@/components/reports/MyDataExport.vue'
 import { useToast } from '@/composables/useToast'
 import { monthLabel, type ChartTone } from '@/lib/charts'
 import { manilaDate } from '@/lib/dayjs'

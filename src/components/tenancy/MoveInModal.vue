@@ -49,6 +49,9 @@
         <p class="muted small">Rent is due every month on this day. The first day of stay is the day after.</p>
 
         <h3>Emergency contact</h3>
+        <p class="muted small">
+          {{ application?.emergency_contact ? 'Given by the applicant. You can change it.' : 'Leave empty to use the one in their DormLink profile.' }}
+        </p>
         <ion-input v-model="form.emergency.name" label="Name" label-placement="stacked" fill="outline" :maxlength="120" />
         <div class="row">
           <ion-input v-model="form.emergency.relationship" label="Relationship" label-placement="stacked" fill="outline" :maxlength="50" />
@@ -311,6 +314,9 @@ watch(
       .catch(() => (rulesVersion.value = null))
     unitId.value = props.application?.unit?.id ?? props.units?.[0]?.id ?? null
     if (props.application) {
+      // The applicant gave it when applying; the owner can still change it.
+      const contact = props.application.emergency_contact
+      if (contact) form.emergency = { name: contact.name, relationship: contact.relationship ?? '', phone: contact.phone }
       form.makeLeader = props.application.leader_on_move_in
       form.occupants = (props.application.planned_occupants ?? []).map((o) => ({
         ...emptyOccupant(),
@@ -363,7 +369,8 @@ async function submit() {
   if (!props.application && !email.value.trim()) return toast.error('Enter the email of their DormLink account.')
   if (!form.moved_in_on) return toast.error('Choose the move-in date.')
   if (form.existingTenant && form.openingBalance.trim() && !openingBalance.value) return toast.error('Enter the amount still owed in pesos, or leave it empty.')
-  if (!form.emergency.name.trim() || !form.emergency.phone.trim()) return toast.error('Add an emergency contact for the tenant.')
+  // Left empty: the server uses the one the tenant gave (application or profile), or says it is missing.
+  if (!!form.emergency.name.trim() !== !!form.emergency.phone.trim()) return toast.error('Add both the name and the phone of the emergency contact.')
   if (override.value && form.overrideReason.trim().length < 3) return toast.error('Give a reason for moving in without the full deposit and first rent.')
   if (leads.value && !form.leaderConsent) return toast.error('Confirm that the tenant agreed to be the room\'s leader.')
   if (needsRulesInPerson.value && !rulesInPerson.value) return toast.error('Confirm that the tenant read and accepted the house rules.')

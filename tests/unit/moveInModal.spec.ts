@@ -111,13 +111,15 @@ describe('MoveInModal (from a reservation)', () => {
     expect([field('Amount (₱)', 0).value, field('Amount (₱)', 1).value]).toEqual(['4000', '4000'])
   })
 
-  test('refuses without an emergency contact, and sends nothing', async () => {
+  test('refuses half an emergency contact, and sends nothing', async () => {
     const wrapper = mountModal()
     await open(wrapper)
 
+    // Left fully empty, the server uses the one the tenant gave; only a name is not enough.
+    await type('Name', 'Marta Santos')
     await press('Move in')
 
-    expect(toast.error).toHaveBeenCalledWith('Add an emergency contact for the tenant.')
+    expect(toast.error).toHaveBeenCalledWith('Add both the name and the phone of the emergency contact.')
     expect(tenancyService.moveIn).not.toHaveBeenCalled()
   })
 

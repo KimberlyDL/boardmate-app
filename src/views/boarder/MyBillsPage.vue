@@ -21,14 +21,49 @@
         <!-- Desktop: what I owe and how to pay on the left, the bills on the right; stacked on phones. -->
         <div class="desk-cols">
           <div class="col">
-            <DlCard v-if="!loading && !places.length">
+            <DlCard v-if="!loading && !places.length && !roomShares.length">
               <DlEmptyState note="no bills yet" :icon="Receipt">Your bills start after you move in somewhere.</DlEmptyState>
+            </DlCard>
+
+            <!-- Room groups: what I pay in (for someone listed in a renter's room, this is all their money) -->
+            <DlCard
+              v-for="r in roomShares"
+              :key="r.group_id"
+              :tone="r.owe_centavos > 0 && !places.length ? 'ink' : undefined"
+              :padding="20"
+              class="place"
+            >
+              <span class="dl-eyebrow eyebrow">ROOM {{ r.room_label }} · {{ r.property_name }} · ROOM GROUP</span>
+              <span class="big">{{ r.owe_centavos > 0 ? `You owe ${peso(r.owe_centavos)}` : 'Nothing to pay in' }}</span>
+              <p v-if="!places.length" class="dl-small soft">
+                The owner bills the person who rents the room. Your part of the shared bills is paid to them in the room group.
+              </p>
+              <ul v-if="r.items.length" class="shares">
+                <li v-for="i in r.items" :key="i.line_id">
+                  <span class="share-text">
+                    <strong>{{ i.description }}</strong>
+                    <span class="dl-small soft">Pay {{ i.owed_to }} · {{ i.is_overdue ? 'overdue since' : 'due' }} {{ manilaDate(i.due_on).format('MMM D') }}</span>
+                  </span>
+                  <span class="share-amount">
+                    {{ peso(i.my_left_centavos) }}
+                    <DlStatusTag v-if="i.is_overdue" status="overdue" />
+                  </span>
+                </li>
+              </ul>
+              <p v-if="r.owed_to_me_centavos" class="dl-small soft">Others owe you {{ peso(r.owed_to_me_centavos) }} here.</p>
+              <ion-button size="small" class="dl-tonal statement" :router-link="`/groups/${r.group_id}`">
+                {{ r.owe_centavos > 0 ? 'Pay back in the room group' : 'Open room group' }}
+              </ion-button>
             </DlCard>
 
             <!-- Each place: what is owed, and how to pay -->
             <DlCard v-for="p in places" :key="p.property_id" :tone="p.owed_centavos > 0 ? 'ink' : 'pine'" :padding="20" class="place">
               <span class="dl-eyebrow eyebrow">{{ p.property_name }}</span>
-              <span class="big">{{ p.owed_centavos > 0 ? `You owe ${peso(p.owed_centavos)}` : 'All paid' }}</span>
+              <span class="big">{{ p.owed_centavos > 0 ? `You owe ${peso(p.owed_centavos)}` : p.upcoming_rent ? 'Nothing due now' : 'All paid' }}</span>
+              <p v-if="p.upcoming_rent" class="dl-small soft">
+                Coming up: {{ p.upcoming_rent.label }}<template v-if="p.upcoming_rent.estimate_centavos !== null">, about {{ peso(p.upcoming_rent.estimate_centavos) }}</template>,
+                due {{ manilaDate(p.upcoming_rent.due_on).format('MMM D') }}. Utilities are added on the bill.
+              </p>
               <p v-if="p.credit_centavos" class="dl-small soft">You have {{ peso(p.credit_centavos) }} credit. It is used on your next bills.</p>
 
               <div class="how">
@@ -154,11 +189,12 @@ import { toneOf } from '@/lib/tones'
 import { firstError } from '@/services/api'
 import { billingService } from '@/services/billing'
 import { useToast } from '@/composables/useToast'
-import type { Bill, MyPlace, Payment } from '@/types/billing'
+import type { Bill, MyPlace, Payment, RoomShares } from '@/types/billing'
 
 const toast = useToast()
 const view = ref('unpaid')
 const places = ref<MyPlace[]>([])
+const roomShares = ref<RoomShares[]>([])
 const bills = ref<Bill[]>([])
 const payments = ref<Payment[]>([])
 const page = ref(1)
@@ -180,6 +216,7 @@ async function load(reset = true) {
       const { items, meta } = await billingService.myBills({ status: view.value as 'unpaid' | 'paid', page: next })
       bills.value = reset ? items : [...bills.value, ...items]
       places.value = meta.places
+      roomShares.value = meta.room_shares ?? []
       page.value = meta.current_page
       lastPage.value = meta.last_page
     }
@@ -193,7 +230,9 @@ async function load(reset = true) {
 /** The places card shows on every view, so payments need it loaded too. */
 async function loadPlaces() {
   try {
-    places.value = (await billingService.myBills({ status: 'unpaid' })).meta.places
+    const { meta } = await billingService.myBills({ status: 'unpaid' })
+    places.value = meta.places
+    roomShares.value = meta.room_shares ?? []
   } catch {
     /* the list shows its own error */
   }
@@ -358,5 +397,31 @@ function reported(message: string) {
   align-items: flex-start;
   gap: 12px;
   width: 100%;
+}
+.shares {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.shares li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.share-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.share-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 </style>

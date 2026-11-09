@@ -46,6 +46,18 @@ export const useNotificationStore = defineStore('notifications', () => {
     unreadCount.value = 0
   }
 
+  async function remove(notification: AppNotification) {
+    await notificationService.remove(notification.id)
+    items.value = items.value.filter((n) => n.id !== notification.id)
+    if (!notification.read_at) unreadCount.value = Math.max(0, unreadCount.value - 1)
+  }
+
+  async function clear(readOnly = false) {
+    await notificationService.clear(readOnly)
+    items.value = readOnly ? items.value.filter((n) => !n.read_at) : []
+    if (!readOnly) unreadCount.value = 0
+  }
+
   function $reset() {
     items.value = []
     unreadCount.value = 0
@@ -53,5 +65,5 @@ export const useNotificationStore = defineStore('notifications', () => {
     lastPage.value = 1
   }
 
-  return { items, unreadCount, page, lastPage, loading, refreshCount, load, markRead, markAllRead, $reset }
+  return { items, unreadCount, page, lastPage, loading, refreshCount, load, markRead, markAllRead, remove, clear, $reset }
 })

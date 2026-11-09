@@ -1,3 +1,4 @@
+import type { UpcomingRent } from './billing'
 import type { AuditEntry } from '@/services/audit'
 
 /** One property's dashboard (A10). Money is integer centavos; a widget the viewer may not see is null. */
@@ -23,7 +24,11 @@ export interface MyDashboard {
 /** The tenant's home (A10). Everything but the notifications count is null when not staying anywhere. */
 export interface TenantHome {
   stay: {
-    id: number
+    /** null for someone listed in a renter's whole room (no stay of their own) */
+    id: number | null
+    /** Listed in a renter's whole room: no bills of their own, only room-group shares */
+    is_member: boolean
+    renter_name: string | null
     property: { id: number; name: string }
     room_label: string | null
     unit_label: string | null
@@ -35,6 +40,8 @@ export interface TenantHome {
     credit_centavos: number
     overdue_centavos: number
     next_bill: { id: number; number: string; due_on: string; balance_centavos: number } | null
+    /** The next rent, not billed yet */
+    upcoming_rent: UpcomingRent | null
   } | null
   requests: { repairs_open: number; repairs_to_confirm: number; late_entries_waiting: number; visitors_waiting: number } | null
   group: {
@@ -44,6 +51,8 @@ export interface TenantHome {
     is_leader: boolean
     /** Leaders only */
     members_owing_me: { name: string | null; amount_centavos: number }[] | null
+    /** My share of the soonest shared bill not paid yet that I still have to pay in */
+    next_due: { description: string; due_on: string; my_left_centavos: number; is_overdue: boolean } | null
   } | null
   house_rules_to_accept: boolean
   unread_notifications: number

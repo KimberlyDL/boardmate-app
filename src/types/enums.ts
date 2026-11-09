@@ -344,12 +344,14 @@ export const FinalUtilityHandlingLabels: Record<FinalUtilityHandling, string> = 
 export const GroupExpenseKind = {
   OwnerBill: 'owner_bill',
   MemberExpense: 'member_expense',
+  Collection: 'collection',
   Adjustment: 'adjustment',
 } as const
 export type GroupExpenseKind = (typeof GroupExpenseKind)[keyof typeof GroupExpenseKind]
 export const GroupExpenseKindLabels: Record<GroupExpenseKind, string> = {
   'owner_bill': 'Owner bill',
-  'member_expense': 'Shared expense',
+  'member_expense': 'Paid by a member',
+  'collection': 'Collect first',
   'adjustment': 'Correction',
 }
 

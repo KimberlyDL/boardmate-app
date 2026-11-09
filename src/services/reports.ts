@@ -68,3 +68,28 @@ export const reportService = {
     return data.data
   },
 }
+
+/** One of my own exports (a boarder's data): spending by month, bills, payments. */
+export interface MyExportInfo {
+  key: string
+  label: string
+  description: string
+}
+
+/** A boarder's own data as files, with a preview first. */
+export const myExportService = {
+  async list(): Promise<MyExportInfo[]> {
+    const { data } = await api.get<ApiEnvelope<MyExportInfo[]>>('/me/exports')
+    return data.data
+  },
+
+  async link(key: string, format: TableFormat = 'xlsx'): Promise<ReportLink> {
+    const { data } = await api.get<ApiEnvelope<ReportLink>>(`/me/exports/${key}/link`, { params: { format } })
+    return data.data
+  },
+
+  async preview(key: string): Promise<TablePreview> {
+    const { data } = await api.get<ApiEnvelope<TablePreview>>(`/me/exports/${key}/preview`)
+    return data.data
+  },
+}

@@ -15,6 +15,12 @@ export interface ApplyInput {
   id_document?: File | null
   /** D3: the house-rules version read and accepted (required when the place has rules) */
   house_rules_version?: number | null
+  /** Someone to call in an emergency (filled in from the profile) */
+  emergency_contact_name: string
+  emergency_contact_relationship?: string
+  emergency_contact_phone: string
+  /** Also keep it in my profile */
+  save_to_profile?: boolean
 }
 
 /** Booking (F2): the boarder's applications and the owner/Manager review. */
@@ -28,6 +34,10 @@ export const bookingService = {
     if (input.message) form.append('message', input.message)
     if (input.id_document) form.append('id_document', input.id_document)
     if (input.house_rules_version) form.append('house_rules_version', String(input.house_rules_version))
+    form.append('emergency_contact_name', input.emergency_contact_name)
+    form.append('emergency_contact_phone', input.emergency_contact_phone)
+    if (input.emergency_contact_relationship) form.append('emergency_contact_relationship', input.emergency_contact_relationship)
+    if (input.save_to_profile) form.append('save_to_profile', '1')
     const { data } = await api.post<ApiEnvelope<BookingApplication>>(`/listings/${propertyId}/applications`, form)
     return { application: data.data, message: data.message ?? '' }
   },

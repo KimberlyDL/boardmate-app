@@ -11,7 +11,22 @@
       <div v-if="line" class="narrow">
         <p>
           <strong>{{ line.description }}</strong><br />
-          {{ peso(line.amount_centavos) }} · paid by {{ line.paid_by.name }} · {{ manilaDate(line.spent_on).format('MMM D, YYYY') }}
+          <template v-if="line.kind === 'collection'">
+            {{ peso(line.amount_centavos) }} · {{ line.paid_by.name }} collects · due {{ manilaDate(line.due_on!).format('MMM D, YYYY') }}
+          </template>
+          <template v-else>{{ peso(line.amount_centavos) }} · paid by {{ line.paid_by.name }} · {{ manilaDate(line.spent_on).format('MMM D, YYYY') }}</template>
+        </p>
+        <p v-if="line.due_on && line.kind !== 'adjustment'" class="small" :class="{ warn: line.is_overdue }">
+          <template v-if="line.kind === 'collection' && line.paid_on">Bill paid on {{ manilaDate(line.paid_on).format('MMM D, YYYY') }}.</template>
+          <template v-else-if="line.kind === 'owner_bill' && line.is_settled">Paid to the owner.</template>
+          <template v-else-if="line.is_overdue">Overdue since {{ manilaDate(line.due_on).format('MMM D') }}: the bill is not paid yet.</template>
+          <template v-else>Bill due {{ manilaDate(line.due_on).format('MMM D, YYYY') }}.</template>
+        </p>
+        <div v-if="line.collected_centavos !== undefined && line.kind !== 'adjustment'" class="progress" aria-hidden="true">
+          <span :style="{ width: `${Math.min(100, Math.round((100 * line.collected_centavos) / Math.max(1, line.amount_centavos)))}%` }" />
+        </div>
+        <p v-if="line.collected_centavos !== undefined && line.kind !== 'adjustment'" class="muted small">
+          {{ peso(line.collected_centavos) }} of {{ peso(line.amount_centavos) }} paid in
         </p>
         <ion-badge v-if="line.is_locked" color="medium">Owner bill: the amount is fixed</ion-badge>
         <p v-if="line.reason" class="muted small">{{ line.reason }}</p>
@@ -21,11 +36,18 @@
           <h3>Shares <span class="muted small">({{ line.split_label }})</span></h3>
           <ion-list lines="full">
             <ion-item v-for="s in line.shares" :key="s.member_id">
-              <ion-label>{{ s.name }}</ion-label>
+              <ion-label>
+                {{ s.name }}
+                <p v-if="s.member_id === line.paid_by.id" class="muted small">{{ line.kind === 'collection' ? 'collector' : 'paid it' }}</p>
+                <p v-else-if="s.amount_centavos > 0 && s.paid_centavos >= s.amount_centavos" class="ok small">paid</p>
+                <p v-else-if="s.amount_centavos > 0" class="muted small">{{ peso(s.amount_centavos - s.paid_centavos) }} to pay</p>
+              </ion-label>
               <ion-note slot="end">{{ peso(s.amount_centavos) }}</ion-note>
             </ion-item>
           </ion-list>
         </template>
+
+        <ion-button v-if="line.can_mark_paid" expand="block" class="gap" :disabled="busy" @click="markPaid">I paid the bill</ion-button>
 
         <div v-if="line.kind !== 'adjustment'" class="actions">
           <ion-button v-if="group.can_manage" size="small" fill="outline" @click="mode = 'split'">Change split</ion-button>
@@ -113,7 +135,7 @@ import {
   IonToolbar,
 } from '@ionic/vue'
 import { computed, reactive, ref, watch } from 'vue'
-import { manilaDate } from '@/lib/dayjs'
+import { manila, manilaDate } from '@/lib/dayjs'
 import { peso, toCentavos } from '@/lib/money'
 import { firstError } from '@/services/api'
 import { groupService } from '@/services/groups'
@@ -134,7 +156,7 @@ const changes = reactive<Record<number, string>>({})
 const reason = ref('')
 
 /** A member's own expense: the leader, a moderator or whoever added it may edit it. */
-const canEdit = computed(() => props.line?.kind === 'member_expense' && props.group.me?.is_current && (props.group.can_manage || props.line.added_by_me))
+const canEdit = computed(() => (props.line?.kind === 'member_expense' || props.line?.kind === 'collection') && props.group.me?.is_current && (props.group.can_manage || props.line.added_by_me))
 /** Everyone in the room (current and former), for splits and corrections. */
 const shareMembers = computed(() => props.group.members.filter((m) => !m.left_on || props.line?.shares?.some((s) => s.member_id === m.id)))
 
@@ -185,6 +207,29 @@ async function saveCorrection() {
   await act(async () => (await groupService.correct(props.group.id, line.id, map, reason.value.trim())).message)
 }
 
+/** Collect first: the collector paid the bill. Members who have not paid still owe their share. */
+async function markPaid() {
+  if (!props.line) return
+  const left = props.line.amount_centavos - (props.line.collected_centavos ?? 0)
+  const ok = await prompt.confirm(
+    'Bill paid?',
+    left > 0
+      ? `${peso(left)} is not paid in yet. Those members still owe you their share after this.`
+      : 'Everyone has paid in. The bill moves to the history.',
+    'Yes, it is paid',
+  )
+  if (!ok) return
+  busy.value = true
+  try {
+    const { message } = await groupService.markPaid(props.group.id, props.line.id, manila().format('YYYY-MM-DD'))
+    emit('changed', message)
+  } catch (e) {
+    toast.error(firstError(e))
+  } finally {
+    busy.value = false
+  }
+}
+
 async function remove() {
   const line = props.line!
   if (!(await prompt.confirm('Delete this expense?', `${line.description}, ${peso(line.amount_centavos)}. Everyone's share of it goes away.`, 'Delete'))) return
@@ -211,6 +256,25 @@ const { open: viewImages } = useImageViewer()
 .link {
   color: var(--ion-color-primary);
   font-size: 0.85rem;
+}
+.warn {
+  color: var(--ion-color-danger);
+}
+.progress {
+  height: 6px;
+  margin: 6px 0 2px;
+  border-radius: var(--radius-full);
+  background: var(--brand-primary-subtle);
+  overflow: hidden;
+}
+.progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand-primary);
+}
+.ok {
+  color: var(--ion-color-success);
 }
 .warn {
   color: var(--ion-color-danger);

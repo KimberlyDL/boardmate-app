@@ -27,11 +27,34 @@
         <div v-else-if="home?.stay" class="desk-cols">
           <div class="col">
               <!-- Money: the one ink card -->
-              <DlCard v-if="home.money" tone="ink" :padding="20" class="bill" to="/boarder/bills">
+              <!-- Listed in a renter's room: my money is what I pay in to the room group -->
+              <DlCard v-if="home.stay.is_member" tone="ink" :padding="20" class="bill" to="/boarder/bills">
+                <div class="row">
+                  <span class="dl-eyebrow on-ink">ROOM SHARES</span>
+                  <DlStatusTag v-if="home.group?.next_due?.is_overdue" status="overdue" />
+                  <DlStatusTag v-else-if="home.group?.next_due" status="due">Due {{ manilaDate(home.group.next_due.due_on).format('D MMM') }}</DlStatusTag>
+                  <DlStatusTag v-else status="paid">All paid in</DlStatusTag>
+                </div>
+                <template v-if="home.group?.owe_centavos">
+                  <span class="dl-small on-ink">You owe in the room group</span>
+                  <span class="big">{{ peso(home.group.owe_centavos) }}</span>
+                  <span v-if="home.group.next_due" class="dl-small on-ink-strong">
+                    Next: {{ home.group.next_due.description }}, {{ peso(home.group.next_due.my_left_centavos) }}
+                    {{ home.group.next_due.is_overdue ? 'overdue' : `due ${upcomingDay(home.group.next_due.due_on)}` }}.
+                  </span>
+                </template>
+                <template v-else>
+                  <span class="big">Nothing to pay in</span>
+                  <span class="dl-small on-ink-strong">Your shares of the room's bills show up here.</span>
+                </template>
+              </DlCard>
+
+              <DlCard v-else-if="home.money" tone="ink" :padding="20" class="bill" to="/boarder/bills">
                 <div class="row">
                   <span class="dl-eyebrow on-ink">{{ home.money.next_bill ? `BILL ${home.money.next_bill.number}` : 'MY BILLS' }}</span>
                   <DlStatusTag v-if="home.money.overdue_centavos" status="overdue" />
                   <DlStatusTag v-else-if="home.money.next_bill" status="due">Due {{ manilaDate(home.money.next_bill.due_on).format('D MMM') }}</DlStatusTag>
+                  <DlStatusTag v-else-if="home.money.upcoming_rent" status="due">Next {{ manilaDate(home.money.upcoming_rent.due_on).format('D MMM') }}</DlStatusTag>
                   <DlStatusTag v-else status="paid">All paid</DlStatusTag>
                 </div>
                 <template v-if="home.money.owed_centavos > 0">
@@ -42,8 +65,12 @@
                   </span>
                 </template>
                 <template v-else>
-                  <span class="big">All paid</span>
-                  <span class="dl-small on-ink-strong">Nothing to pay right now.</span>
+                  <span class="big">Nothing due now</span>
+                  <span v-if="home.money.upcoming_rent" class="dl-small on-ink-strong">
+                    Next rent<template v-if="home.money.upcoming_rent.estimate_centavos !== null"> {{ peso(home.money.upcoming_rent.estimate_centavos) }}</template>
+                    on {{ upcomingDay(home.money.upcoming_rent.due_on) }}.
+                  </span>
+                  <span v-else class="dl-small on-ink-strong">Nothing to pay right now.</span>
                 </template>
               </DlCard>
 
@@ -53,14 +80,14 @@
                   v-if="home.group"
                   :label="home.group.owe_centavos ? 'Group · you owe' : 'Group · owed to you'"
                   :value="peso(home.group.owe_centavos || home.group.owed_to_me_centavos)"
-                  :caption="home.group.owe_centavos || home.group.owed_to_me_centavos ? 'In your room group' : 'Everyone is even'"
+:caption="groupCaption"
                   tone="butter"
                   :to="`/groups/${home.group.id}`"
                 />
               </div>
 
               <!-- Quick actions -->
-              <nav class="quick" aria-label="Quick actions">
+              <nav v-if="!home.stay.is_member" class="quick" aria-label="Quick actions">
                 <router-link v-for="a in quickActions" :key="a.label" :to="a.to" class="quick-item">
                   <DlIconTile :icon="a.icon" />
                   <span>{{ a.label }}</span>
@@ -85,7 +112,23 @@
 
           <div class="col">
               <!-- My stay -->
-              <DlSection title="My unit" link-label="Details" to="/stay">
+              <DlSection v-if="home.stay.is_member" title="My room">
+                <DlCard tone="pine" class="unit">
+                  <div class="row top">
+                    <div class="stack">
+                      <span class="dl-title">Room {{ home.stay.room_label }}</span>
+                      <span class="dl-data upper">{{ home.stay.property.name }}</span>
+                      <span class="dl-small">{{ home.stay.renter_name ?? 'Someone' }} rents this room and listed you as staying in it.</span>
+                    </div>
+                    <DlIconTile :icon="BedSingle" tone="pine" :size="40" />
+                  </div>
+                  <div v-if="home.stay.emergency_numbers" class="emergency">
+                    <span class="dl-eyebrow">EMERGENCY NUMBERS</span>
+                    <p class="pre">{{ home.stay.emergency_numbers }}</p>
+                  </div>
+                </DlCard>
+              </DlSection>
+              <DlSection v-else title="My unit" link-label="Details" to="/stay">
                 <DlCard tone="pine" class="unit">
                   <div class="row top">
                     <div class="stack">
@@ -196,6 +239,25 @@ const home = ref<TenantHome | null>(null)
 const reservation = ref<BookingApplication | null>(null)
 const pending = ref(0)
 const loaded = ref(false)
+
+/** The room group card: my next shared bill to pay in, else where I stand. */
+const groupCaption = computed(() => {
+  const g = home.value?.group
+  if (!g) return ''
+  if (g.next_due) {
+    const when = g.next_due.is_overdue ? 'overdue' : `due ${upcomingDay(g.next_due.due_on)}`
+    return `${g.next_due.description}: ${peso(g.next_due.my_left_centavos)} ${when}`
+  }
+  return g.owe_centavos || g.owed_to_me_centavos ? 'In your room group' : 'Everyone is even'
+})
+
+/** "today", "tomorrow" or "Dec 9" for when the next rent is due. */
+function upcomingDay(day: string): string {
+  const d = manilaDate(day)
+  if (d.isSame(manila(), 'day')) return 'today'
+  if (d.isSame(manila().add(1, 'day'), 'day')) return 'tomorrow'
+  return d.format('MMM D')
+}
 
 const greeting = computed(() => {
   const h = manila().hour()

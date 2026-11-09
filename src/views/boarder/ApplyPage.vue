@@ -94,6 +94,50 @@
         </section>
 
         <section class="block">
+          <h2 class="dl-h2">Emergency contact</h2>
+          <p class="muted-copy">
+            Someone the owner can call if something happens to you. Only the owner and the managers of this place see it.
+            <template v-if="fromProfile"> Filled in from your profile.</template>
+          </p>
+          <ion-input
+            v-model="form.emergency_contact_name"
+            label="Name"
+            label-placement="stacked"
+            fill="outline"
+            :maxlength="120"
+            :class="{ 'ion-invalid ion-touched': errors.emergency_contact_name }"
+            :error-text="errors.emergency_contact_name?.[0]"
+          />
+          <ion-input
+            v-model="form.emergency_contact_relationship"
+            label="Relationship (optional)"
+            label-placement="stacked"
+            fill="outline"
+            :maxlength="50"
+            placeholder="e.g. Mother"
+          />
+          <ion-input
+            v-model="form.emergency_contact_phone"
+            type="tel"
+            inputmode="tel"
+            label="Phone"
+            label-placement="stacked"
+            fill="outline"
+            :class="{ 'ion-invalid ion-touched': errors.emergency_contact_phone }"
+            :error-text="errors.emergency_contact_phone?.[0]"
+          />
+          <ion-checkbox
+            v-if="contactChanged"
+            :checked="saveToProfile"
+            label-placement="end"
+            justify="start"
+            @ion-change="saveToProfile = $event.detail.checked"
+          >
+            <span class="ion-text-wrap">Save this to my profile for next time</span>
+          </ion-checkbox>
+        </section>
+
+        <section class="block">
           <span class="field-label">Valid ID (optional)</span>
           <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" hidden @change="pickFile" />
           <div v-if="idFile" class="file-row">
@@ -194,12 +238,25 @@ watch(chosen, (room) => {
   else if (room.available === 0) rentAs.value = 'whole'
 })
 // `?room=` comes from the room tapped on "Rooms & availability".
+const saved = auth.user?.boarder_profile ?? null
 const form = reactive({
   contact_phone: auth.user?.phone ?? '',
+  emergency_contact_name: saved?.emergency_contact_name ?? '',
+  emergency_contact_relationship: saved?.emergency_contact_relationship ?? '',
+  emergency_contact_phone: saved?.emergency_contact_phone ?? '',
   planned_move_in_on: today,
   message: '',
   room_id: Number(route.query.room) || (null as number | null),
 })
+const fromProfile = !!saved?.emergency_contact_name
+// Offer to save only what differs from the profile (on by default when the profile has none).
+const contactChanged = computed(
+  () =>
+    form.emergency_contact_name.trim() !== (saved?.emergency_contact_name ?? '') ||
+    form.emergency_contact_relationship.trim() !== (saved?.emergency_contact_relationship ?? '') ||
+    form.emergency_contact_phone.trim() !== (saved?.emergency_contact_phone ?? ''),
+)
+const saveToProfile = ref(!fromProfile)
 const idFile = ref<File | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 const errors = ref<Record<string, string[]>>({})
@@ -247,7 +304,12 @@ async function submit() {
       whole: rentAs.value === 'whole',
       id_document: idFile.value,
       house_rules_version: houseRules.value?.version ?? null,
+      emergency_contact_name: form.emergency_contact_name.trim(),
+      emergency_contact_relationship: form.emergency_contact_relationship.trim(),
+      emergency_contact_phone: form.emergency_contact_phone.trim(),
+      save_to_profile: contactChanged.value && saveToProfile.value,
     })
+    if (contactChanged.value && saveToProfile.value) await auth.refresh().catch(() => undefined)
     toast.success(message)
     await router.replace('/boarder/bookings')
   } catch (e) {

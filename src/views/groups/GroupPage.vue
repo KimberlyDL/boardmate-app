@@ -31,20 +31,51 @@
           <!-- Bills: the owner's shared bills and members' own expenses -->
           <template v-if="tab === 'lines'">
             <ion-button v-if="group.me?.is_current" expand="block" class="gap" @click="expenseOpen = true">
-              <Plus slot="start" :size="18" aria-hidden="true" /> Add expense
+              <Plus slot="start" :size="18" aria-hidden="true" /> Add a shared bill
             </ion-button>
             <DlCard v-if="!lines.length">
               <DlEmptyState note="nothing to share yet" :icon="Receipt">Nothing to share yet. The owner's shared bills for this room show up here.</DlEmptyState>
             </DlCard>
-            <ion-list v-else lines="full">
-              <ion-item v-for="l in lines" :key="l.id" button :detail="false" @click="selected = l">
+
+            <!-- Coming up and overdue: bills not paid yet (owner bills, "collect first") -->
+            <template v-if="upcoming.length">
+              <h2 class="section">Coming up and overdue</h2>
+              <ion-list lines="full">
+                <ion-item v-for="l in upcoming" :key="l.id" button :detail="false" @click="selected = l">
+                  <ion-label class="ion-text-wrap">
+                    <h2>
+                      {{ l.description }}
+                      <ion-badge v-if="l.is_overdue" color="danger">Overdue</ion-badge>
+                      <ion-badge v-else color="warning">Due {{ manilaDate(l.due_on!).format('MMM D') }}</ion-badge>
+                    </h2>
+                    <p>
+                      {{ l.kind === 'collection' ? `${l.paid_by.name} collects` : 'Owner bill' }}
+                      <template v-if="l.collected_centavos !== undefined"> · {{ peso(l.collected_centavos) }} of {{ peso(l.amount_centavos) }} paid in</template>
+                    </p>
+                    <div v-if="l.collected_centavos !== undefined" class="progress" aria-hidden="true">
+                      <span :style="{ width: `${Math.min(100, Math.round((100 * l.collected_centavos) / Math.max(1, l.amount_centavos)))}%` }" />
+                    </div>
+                  </ion-label>
+                  <ion-note slot="end" class="amounts">
+                    {{ peso(l.amount_centavos) }}
+                    <template v-if="myLeft(l) > 0"><br />You: {{ peso(myLeft(l)) }}</template>
+                    <template v-else-if="l.my_share_centavos"><br />You paid</template>
+                  </ion-note>
+                </ion-item>
+              </ion-list>
+              <h2 v-if="history.length" class="section">History</h2>
+            </template>
+
+            <ion-list v-if="history.length" lines="full">
+              <ion-item v-for="l in history" :key="l.id" button :detail="false" @click="selected = l">
                 <ion-label class="ion-text-wrap">
                   <h2>
                     {{ l.description }}
                     <ion-badge v-if="l.is_locked" color="medium">Owner bill</ion-badge>
                     <ion-badge v-else-if="l.kind === 'adjustment'" color="warning">Correction</ion-badge>
+                    <ion-badge v-else-if="l.kind === 'collection'" color="medium">Collected</ion-badge>
                   </h2>
-                  <p>{{ manilaDate(l.spent_on).format('MMM D, YYYY') }} · paid by {{ l.paid_by.name }}</p>
+                  <p>{{ manilaDate(l.paid_on ?? l.spent_on).format('MMM D, YYYY') }} · paid by {{ l.paid_by.name }}</p>
                 </ion-label>
                 <ion-note slot="end" class="amounts">
                   {{ peso(l.amount_centavos) }}
@@ -219,6 +250,16 @@ const editing = ref<GroupLine | null>(null)
 const repay = ref<RepayPreset | null>(null)
 
 const isMember = computed(() => group.value?.view === 'member')
+/** Bills not paid yet that have a due date, soonest first; everything else is history. */
+const upcoming = computed(() =>
+  lines.value.filter((l) => !l.is_settled && l.due_on && l.kind !== 'adjustment').sort((a, b) => a.due_on!.localeCompare(b.due_on!)),
+)
+const history = computed(() => lines.value.filter((l) => !upcoming.value.includes(l)))
+
+/** What I still have to pay of my share of a line. */
+function myLeft(l: GroupLine): number {
+  return Math.max(0, (l.my_share_centavos ?? 0) - (l.my_paid_centavos ?? 0))
+}
 
 async function load() {
   try {
@@ -349,6 +390,24 @@ const { open: viewImages } = useImageViewer()
 }
 .amounts {
   text-align: right;
+}
+.section {
+  margin: 16px 0 6px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.progress {
+  height: 6px;
+  margin-top: 6px;
+  border-radius: var(--radius-full);
+  background: var(--brand-primary-subtle);
+  overflow: hidden;
+}
+.progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand-primary);
 }
 .link {
   color: var(--ion-color-primary);

@@ -92,6 +92,18 @@ export interface MyPlace {
     bank_account_name: string | null
     bank_account_number: string | null
   } | null
+  /** The next rent not billed yet, where I stay now */
+  upcoming_rent: UpcomingRent | null
+}
+
+/** A rent that is not billed yet: when it is due and about how much (today's rent and agreed rate). */
+export interface UpcomingRent {
+  kind: 'rent'
+  label: string
+  due_on: string
+  period_start_on: string
+  period_end_on: string
+  estimate_centavos: number | null
 }
 
 export interface MyBillsMeta {
@@ -99,6 +111,18 @@ export interface MyBillsMeta {
   last_page: number
   total: number
   places: MyPlace[]
+  /** My room groups now: what I owe there and my unpaid part of each shared bill */
+  room_shares: RoomShares[]
+}
+
+/** What I have to pay in to one room group (the only money of someone listed in a renter's whole room). */
+export interface RoomShares {
+  group_id: number
+  property_name: string
+  room_label: string
+  owe_centavos: number
+  owed_to_me_centavos: number
+  items: { line_id: number; description: string; kind: string; due_on: string; my_left_centavos: number; is_overdue: boolean; owed_to: string }[]
 }
 
 export interface Payment {

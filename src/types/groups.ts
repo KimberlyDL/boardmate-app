@@ -9,6 +9,10 @@ export interface GroupSummary {
   my_role: GroupRole
   my_role_label: string
   is_current: boolean
+  /** Hidden from my list (I left and settled up) */
+  is_hidden: boolean
+  /** I may hide it now: left the room and settled up */
+  can_hide: boolean
 }
 
 export interface GroupMemberRow {
@@ -48,13 +52,25 @@ export interface GroupLine {
   paid_by: { id: number; name: string }
   adjusts_expense_id: number | null
   reason: string | null
+  /** When the bill itself is due: the owner's bill, or a "collect first" bill */
+  due_on: string | null
+  /** "Collect first": when the collector paid the bill (null while collecting) */
+  paid_on: string | null
+  /** The bill itself is paid (to the owner, or by the collector) */
+  is_settled: boolean
+  is_overdue: boolean
   /** Members only */
   proof_url?: string | null
   added_by_me?: boolean
   split_method?: SplitMethod
   split_label?: string
-  shares?: { member_id: number; name: string; amount_centavos: number }[]
+  shares?: { member_id: number; name: string; amount_centavos: number; paid_centavos: number }[]
   my_share_centavos?: number
+  /** How much of my share I already paid to the one it is owed to */
+  my_paid_centavos?: number
+  /** Paid in so far, counting the payer's own share */
+  collected_centavos?: number
+  can_mark_paid?: boolean
 }
 
 export interface Balances {
@@ -83,7 +99,10 @@ export interface Repayment {
 export interface ExpenseInput {
   description: string
   amount_centavos: number
-  spent_on: string
+  /** Already paid: when */
+  spent_on?: string
+  /** Collect first: when the bill is due (leader or moderator) */
+  due_on?: string
   participants?: number[]
   method?: 'equal' | 'weights' | 'custom'
   weights?: Record<number, number>

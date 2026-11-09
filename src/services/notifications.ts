@@ -29,6 +29,16 @@ export const notificationService = {
     await api.post('/notifications/read-all')
   },
 
+  /** Remove one from my list. */
+  async remove(id: string): Promise<void> {
+    await api.delete(`/notifications/${id}`)
+  },
+
+  /** Empty my list (or only the ones already read). */
+  async clear(readOnly = false): Promise<void> {
+    await api.post('/notifications/clear', { read_only: readOnly })
+  },
+
   async preferences(): Promise<NotificationPreference[]> {
     const { data } = await api.get<ApiEnvelope<NotificationPreference[]>>('/me/notification-preferences')
     return data.data
